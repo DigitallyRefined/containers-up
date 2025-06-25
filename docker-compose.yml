@@ -14,6 +14,8 @@ services:
       - /home/your-user/data/stacks:/data/stacks
       - /home/your-user/data/manual:/data/manual # Optionally add other directories
       - /home/your-user/data/test:/data/test # Optionally add other directories
+    env_file:
+      - .env
     networks:
         - "traefik"
     labels:
@@ -25,7 +27,8 @@ services:
       traefik.http.routers.containers-up.tls.certresolver: production-cloudflare-dns
       traefik.http.routers.containers-up.service: containers-up
       traefik.http.services.containers-up.loadbalancer.server.port: 3000
-      traefik.http.routers.containers-up.middlewares: oidc-auth-admin-only@file
+      traefik.http.middlewares.containers-up-headers.headers.customrequestheaders.X-Proxy-Key: ${PROXY_KEY}
+      traefik.http.routers.containers-up.middlewares: oidc-auth-admin-only@file,containers-up-headers@docker
 
       traefik.http.routers.containers-up-webhook.entrypoints: websecure
       traefik.http.routers.containers-up-webhook.rule: Host(`containers-up.example.com`) && PathPrefix(`/api/webhook`)

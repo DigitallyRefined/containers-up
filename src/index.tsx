@@ -4,6 +4,17 @@ import index from "./index.html";
 import { getContainers } from './backend/endpoints/containers';
 import { githubWebhookHandler } from './backend/webhook/github';
 
+const PROXY_KEY = process.env.PROXY_KEY;
+const API_KEY = process.env.API_KEY;
+
+const requireApiKey = (req: Request, headerKey: string, expectedKey?: string) => {
+  const key = req.headers.get(`x-${headerKey}-key`);
+  if (!expectedKey || key !== expectedKey) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  return null;
+};
+
 const devServerOptions = {  
   development: process.env.NODE_ENV !== "production" && {
     // Enable browser hot reloading in development
@@ -21,6 +32,8 @@ const server = serve({
 
     "/api/containers": {
       async GET(req) {
+        const auth = requireApiKey(req, 'proxy', PROXY_KEY);
+        if (auth) return auth;
         return Response.json(await getContainers());
       },
     },
@@ -36,6 +49,8 @@ const webhookServer = serve({
   routes: {
     "/api/webhook/github": {
       async POST(req) {
+        const auth = requireApiKey(req, 'api', API_KEY);
+        if (auth) return auth;
         return Response.json(await githubWebhookHandler());
       },
     },
