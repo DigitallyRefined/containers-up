@@ -9,6 +9,10 @@ RUN bun build src/index.* --minify --target=bun --outdir=dist
 
 FROM oven/bun:alpine
 
+RUN apk add --no-cache \
+    docker \
+    jq
+
 COPY --from=builder /home/bun/app/dist .
 
 EXPOSE 3000
