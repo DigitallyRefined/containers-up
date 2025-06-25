@@ -1,0 +1,39 @@
+services:
+  containers-up:
+    build: .
+    container_name: containers-up
+    # Disable Core Dumps
+    ulimits:
+      core:
+        soft: 0
+        hard: 0
+    volumes:
+      # - /var/run/docker.sock:/var/run/docker.sock # Docker running as root
+      - /run/user/1000/docker.sock:/var/run/docker.sock # Rootless Docker
+      # - .:/home/bun/app
+      - /home/your-user/data/stacks:/data/stacks
+      - /home/your-user/data/manual:/data/manual # Optionally add other directories
+      - /home/your-user/data/test:/data/test # Optionally add other directories
+    networks:
+        - "traefik"
+    labels:
+      traefik.enable: true
+
+      traefik.http.routers.containers-up.entrypoints: websecure
+      traefik.http.routers.containers-up.rule: Host(`containers-up.example.com`)
+      traefik.http.routers.containers-up.tls: true
+      traefik.http.routers.containers-up.tls.certresolver: production-cloudflare-dns
+      traefik.http.routers.containers-up.service: containers-up
+      traefik.http.services.containers-up.loadbalancer.server.port: 3000
+      traefik.http.routers.containers-up.middlewares: oidc-auth-admin-only@file
+
+      traefik.http.routers.containers-up-webhook.entrypoints: websecure
+      traefik.http.routers.containers-up-webhook.rule: Host(`containers-up.example.com`) && PathPrefix(`/api/webhook`)
+      traefik.http.routers.containers-up-webhook.tls: true
+      traefik.http.routers.containers-up-webhook.tls.certresolver: production-cloudflare-dns
+      traefik.http.routers.containers-up-webhook.service: containers-up-webhook
+      traefik.http.services.containers-up-webhook.loadbalancer.server.port: 3001
+
+networks:
+  traefik:
+    external: true

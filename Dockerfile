@@ -11,5 +11,11 @@ FROM oven/bun:alpine
 
 COPY --from=builder /home/bun/app/dist .
 
+EXPOSE 3000
+EXPOSE 3001
+
+# Development mode
+# CMD ["bun", "dev"]
+
 ENV NODE_ENV=production
 CMD ["bun", "."]

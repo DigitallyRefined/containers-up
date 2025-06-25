@@ -44,13 +44,13 @@ export function APITester() {
         <Input
           type="text"
           name="endpoint"
-          defaultValue="/api/hello"
+          defaultValue="/api/containers"
           className={cn(
             "flex-1 font-mono",
             "bg-transparent border-0 shadow-none",
             "focus-visible:ring-0 focus-visible:ring-offset-0",
           )}
-          placeholder="/api/hello"
+          placeholder="/api/containers"
         />
 
         <Button type="submit" variant="secondary">
