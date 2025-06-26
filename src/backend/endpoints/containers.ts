@@ -1,64 +1,39 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { containerApi } from './container/socket';
+import { promises as fs } from 'fs';
+import * as path from 'path';
 
-const execAsync = promisify(exec);
-
-const getDockerImages = async () => {
-  const { stdout: dockerImagesStr } = await execAsync(
-    'docker images --no-trunc --format json | jq -s .'
-  );
-  return JSON.parse(dockerImagesStr);
-};
-
-const getUnusedDockerImages = async () => {
-  const { stdout: unusedDockerImagesStr } = await execAsync(
-    `docker images --format "{{.Repository}}:{{.Tag}} {{.ID}}" | grep -v -Ff <(docker ps --format "{{.Image}}")`
-  );
-  return unusedDockerImagesStr
-    .split('\n')
-    .filter(Boolean)
-    .map((line) => {
-      const [image, id] = line.split(' ') || [];
-      return { Image: image, ID: id };
-    });
-};
-
-const getDockerPs = async () => {
-  const { stdout: dockerPsStr } = await execAsync(
-    'docker ps -a --no-trunc --format json | jq -s .'
-  );
-  const containers = JSON.parse(dockerPsStr);
-  return containers.map((container: any) => ({
-    ...container,
-    Labels:
-      typeof container.Labels === 'string'
-        ? container.Labels.split(',')
-            .map((label: string) => label.trim())
-            .filter(Boolean)
-            .reduce((acc: Record<string, string>, label: string) => {
-              const [key, value] = label.split('=');
-              if (key && value !== undefined) {
-                acc[key] = value;
-              }
-              return acc;
-            }, {})
-        : {},
-  }));
+const getUnusedDockerImages = async (containers, images) => {
+  const usedImageIds = new Set(containers.map((c: any) => c.ImageID));
+  return images
+    .filter((img: any) => !usedImageIds.has(img.Id))
+    .map((img) => ({ Image: `${img.RepoTags ? img.RepoTags[0] : '<none>'}`, Id: img.Id }));
 };
 
 const getComposeFiles = async () => {
-  const { stdout: composeFilesStr } = await execAsync(
-    "find /data -type f \\( -name '*compose.yml' -o -name '*compose.yaml' \\)"
-  );
-  return composeFilesStr
-    .split('\n')
-    .filter(Boolean)
-    .map((path) => path.replace(/^\/data\//, ''));
+  async function findComposeFiles(dir: string): Promise<string[]> {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+
+    // Run directory/file checks in parallel for better performance
+    const promises = entries.map(async (entry) => {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        return findComposeFiles(fullPath);
+      } else if (entry.isFile() && /^.*compose\.ya?ml$/i.test(entry.name)) {
+        return [fullPath.replace(/^\/data\//, '')];
+      }
+      return [];
+    });
+
+    const nestedResults = await Promise.all(promises);
+    return nestedResults.flat();
+  }
+
+  return await findComposeFiles('/data');
 };
 
 const getContainersRunningViaCompose = async () => {
-  const dockerPsResult = await getDockerPs();
-  const composedContainers = dockerPsResult.filter(
+  const containers = await containerApi.listContainers({ all: true });
+  const composedContainers = containers.filter(
     (container: any) =>
       container.Labels &&
       Object.prototype.hasOwnProperty.call(
@@ -67,27 +42,24 @@ const getContainersRunningViaCompose = async () => {
       )
   );
 
-  const composedIds = new Set(composedContainers.map((c: any) => c.ID));
-  const dockerPsResultFiltered = dockerPsResult.filter(
-    (container: any) => !composedIds.has(container.ID)
+  const composedIds = new Set(composedContainers.map((c: any) => c.Id));
+  const nonComposedContainers = containers.filter(
+    (container: any) => !composedIds.has(container.Id)
   );
 
-  return { composedContainers, dockerPs: dockerPsResultFiltered };
+  return { containers, composedContainers, nonComposedContainers };
 };
 
 export const getContainers = async () => {
-  const [dockerImages, unusedDockerImages, { composedContainers, dockerPs }, composeFiles] =
-    await Promise.all([
-      getDockerImages(),
-      getUnusedDockerImages(),
-      getContainersRunningViaCompose(),
-      getComposeFiles(),
-    ]);
+  const [images, { containers, composedContainers, nonComposedContainers }, composeFiles] =
+    await Promise.all([containerApi.listImages(), getContainersRunningViaCompose(), getComposeFiles()]);
+
+  const unusedDockerImages = await getUnusedDockerImages(containers, images);
 
   const composedContainersSortedByImage: any = [];
-  dockerImages.forEach(({ Repository }: any) => {
+  images.forEach(({ Id }: any) => {
     composedContainers
-      .filter((container: any) => container.Image.includes(Repository))
+      .filter((container: any) => container.ImageID === Id)
       .forEach((container: any) => {
         composedContainersSortedByImage.push(container);
       });
@@ -132,11 +104,11 @@ export const getContainers = async () => {
 
   return {
     composedContainers: composedContainersByComposeFile,
-    separateContainers: dockerPs,
+    separateContainers: nonComposedContainers,
     separateComposeFiles: composeFiles.filter(
       (composeFile) => !composedContainersByComposeFileKeys.includes(composeFile)
     ),
-    dockerImages,
+    images,
     unusedDockerImages,
   };
 };
