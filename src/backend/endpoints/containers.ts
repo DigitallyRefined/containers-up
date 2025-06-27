@@ -9,28 +9,6 @@ const getUnusedDockerImages = async (containers, images) => {
     .map((img) => ({ Image: `${img.RepoTags ? img.RepoTags[0] : '<none>'}`, Id: img.Id }));
 };
 
-const getComposeFiles = async () => {
-  async function findComposeFiles(dir: string): Promise<string[]> {
-    const entries = await fs.readdir(dir, { withFileTypes: true });
-
-    // Run directory/file checks in parallel for better performance
-    const promises = entries.map(async (entry) => {
-      const fullPath = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        return findComposeFiles(fullPath);
-      } else if (entry.isFile() && /^.*compose\.ya?ml$/i.test(entry.name)) {
-        return [fullPath.replace(/^\/data\//, '')];
-      }
-      return [];
-    });
-
-    const nestedResults = await Promise.all(promises);
-    return nestedResults.flat();
-  }
-
-  return await findComposeFiles('/data');
-};
-
 const getContainersRunningViaCompose = async () => {
   const containers = await containerApi.listContainers({ all: true });
   const composedContainers = containers.filter(
@@ -51,8 +29,10 @@ const getContainersRunningViaCompose = async () => {
 };
 
 export const getContainers = async () => {
-  const [images, { containers, composedContainers, nonComposedContainers }, composeFiles] =
-    await Promise.all([containerApi.listImages(), getContainersRunningViaCompose(), getComposeFiles()]);
+  const [images, { containers, composedContainers, nonComposedContainers }] = await Promise.all([
+    containerApi.listImages(),
+    getContainersRunningViaCompose(),
+  ]);
 
   const unusedDockerImages = await getUnusedDockerImages(containers, images);
 
@@ -65,13 +45,24 @@ export const getContainers = async () => {
       });
   });
 
+  const composeFiles = new Set();
   const composedContainersByComposeFileMap = new Map<string, any[]>();
-  composedContainersSortedByImage.forEach((container: any) => {
+  for (const container of composedContainersSortedByImage) {
     const configFilesLabel = container.Labels['com.docker.compose.project.config_files'];
     let composeFile = '[unmanaged]';
     if (configFilesLabel) {
-      composeFile =
-        composeFiles.find((file: string) => configFilesLabel.endsWith(file)) || composeFile;
+      const internalComposeFile = `/containers${configFilesLabel.replace(
+        process.env.SHARE_HOME || '',
+        ''
+      )}`;
+      const composeFileExists = await fs
+        .access(internalComposeFile)
+        .then(() => true)
+        .catch(() => false);
+      if (composeFileExists) {
+        composeFiles.add(internalComposeFile);
+        composeFile = internalComposeFile;
+      }
     }
     container.composeFile = composeFile;
 
@@ -97,17 +88,13 @@ export const getContainers = async () => {
       composedContainersByComposeFileMap.set(composeFile, []);
     }
     composedContainersByComposeFileMap.get(composeFile)!.push(container);
-  });
+  }
 
   const composedContainersByComposeFile = Object.fromEntries(composedContainersByComposeFileMap);
-  const composedContainersByComposeFileKeys = Array.from(composedContainersByComposeFileMap.keys());
 
   return {
     composedContainers: composedContainersByComposeFile,
     separateContainers: nonComposedContainers,
-    separateComposeFiles: composeFiles.filter(
-      (composeFile) => !composedContainersByComposeFileKeys.includes(composeFile)
-    ),
     images,
     unusedDockerImages,
   };

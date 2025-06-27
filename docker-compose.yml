@@ -11,11 +11,13 @@ services:
       # - /var/run/docker.sock:/var/run/docker.sock # Docker running as root
       - /run/user/1000/docker.sock:/var/run/docker.sock # Rootless Docker
       # - .:/home/bun/app
-      - /home/your-user/data/stacks:/data/stacks
-      - /home/your-user/data/manual:/data/manual # Optionally add other directories
-      - /home/your-user/data/test:/data/test # Optionally add other directories
+      - ${HOME}/stacks:/containers/stacks
+      - ${HOME}/manual:/containers/manual # Optionally add other directories
+      - ${HOME}/test:/containers/test # Optionally add other directories
     env_file:
       - .env
+    environment:
+      - SHARE_HOME=${HOME}
     networks:
         - "traefik"
     labels:
