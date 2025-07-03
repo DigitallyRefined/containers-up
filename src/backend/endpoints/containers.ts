@@ -1,93 +1,84 @@
-import { containerApi } from './container/socket';
-import { promises as fs } from 'fs';
-import * as path from 'path';
+import { getIcon } from '../utils/icon';
+import { listContainers, listImages } from '../utils/docker';
+import type { Repo } from '../db/repo';
 
 const getUnusedDockerImages = async (containers, images) => {
-  const usedImageIds = new Set(containers.map((c: any) => c.ImageID));
-  return images
-    .filter((img: any) => !usedImageIds.has(img.Id))
-    .map((img) => ({ Image: `${img.RepoTags ? img.RepoTags[0] : '<none>'}`, Id: img.Id }));
+  const usedImageIds = new Set(containers.map((container) => container.Image));
+  return images.filter((img) => !usedImageIds.has(img.ID));
 };
 
 const getContainersRunningViaCompose = async () => {
-  const containers = await containerApi.listContainers({ all: true });
+  const containers = await listContainers();
   const composedContainers = containers.filter(
-    (container: any) =>
-      container.Labels &&
+    (container) =>
+      container.Config.Labels &&
       Object.prototype.hasOwnProperty.call(
-        container.Labels,
+        container.Config.Labels,
         'com.docker.compose.project.config_files'
       )
   );
 
-  const composedIds = new Set(composedContainers.map((c: any) => c.Id));
-  const nonComposedContainers = containers.filter(
-    (container: any) => !composedIds.has(container.Id)
-  );
+  const composedIds = new Set(composedContainers.map((container) => container.Id));
+  const nonComposedContainers = containers.filter((container) => !composedIds.has(container.Id));
 
   return { containers, composedContainers, nonComposedContainers };
 };
 
-export const getContainers = async () => {
+export const getContainers = async (selectedRepo: Repo) => {
   const [images, { containers, composedContainers, nonComposedContainers }] = await Promise.all([
-    containerApi.listImages(),
+    listImages(),
     getContainersRunningViaCompose(),
   ]);
 
-  const unusedDockerImages = await getUnusedDockerImages(containers, images);
-
-  const composedContainersSortedByImage: any = [];
-  images.forEach(({ Id }: any) => {
+  const composedContainersSortedByImage = [];
+  images.forEach((image) => {
     composedContainers
-      .filter((container: any) => container.ImageID === Id)
-      .forEach((container: any) => {
+      .filter((container) => container.Image === image.ID)
+      .forEach((container) => {
+        getIcon(container.Config.Labels['com.docker.compose.service']);
         composedContainersSortedByImage.push(container);
       });
   });
 
   const composeFiles = new Set();
-  const composedContainersByComposeFileMap = new Map<string, any[]>();
+  const composedContainersByComposeFileMap = new Map();
   for (const container of composedContainersSortedByImage) {
-    const configFilesLabel = container.Labels['com.docker.compose.project.config_files'];
+    const configFilesLabel = container.Config.Labels['com.docker.compose.project.config_files'];
     let composeFile = '[unmanaged]';
     if (configFilesLabel) {
-      const internalComposeFile = `/containers${configFilesLabel.replace(
-        process.env.SHARE_HOME || '',
-        ''
-      )}`;
-      const composeFileExists = await fs
-        .access(internalComposeFile)
-        .then(() => true)
-        .catch(() => false);
-      if (composeFileExists) {
-        composeFiles.add(internalComposeFile);
-        composeFile = internalComposeFile;
-      }
-    }
-    container.composeFile = composeFile;
-
-    const ruleLabelKey = Object.keys(container.Labels).find(
-      (key) => key.startsWith('traefik.http.routers.') && key.endsWith('.rule')
-    );
-    const ruleLabel = ruleLabelKey ? container.Labels[ruleLabelKey] : undefined;
-    if (ruleLabel) {
-      const host = ruleLabel
-        .replaceAll('Host(`', '')
-        .replaceAll('`)', '')
-        .replaceAll('&&', '')
-        .replaceAll('Path(`', '')
-        .replaceAll(' ', '');
-      const tlsLabelKey = Object.keys(container.Labels).find(
-        (key) => key.startsWith('traefik.http.routers.') && key.endsWith('.tls')
-      );
-      const isTls = tlsLabelKey ? container.Labels[tlsLabelKey] === 'true' : undefined;
-      container.url = `http${isTls ? 's' : ''}://${host}`;
+      // if (await pathExists(configFilesLabel)) {
+      composeFiles.add(configFilesLabel);
+      composeFile = configFilesLabel;
+      // }
     }
 
-    if (!composedContainersByComposeFileMap.has(composeFile)) {
-      composedContainersByComposeFileMap.set(composeFile, []);
+    Object.keys(container.Config.Labels)
+      .filter((key) => key.startsWith('traefik.http.routers.') && key.endsWith('.rule'))
+      .forEach((ruleLabelKey) => {
+        const ruleLabel = container.Config.Labels[ruleLabelKey];
+        if (!ruleLabel) {
+          return;
+        }
+        const host = ruleLabel
+          .replaceAll('Host(`', '')
+          .replaceAll('`)', '')
+          .replaceAll('&&', '')
+          .replaceAll('PathPrefix(`', '')
+          .replaceAll('Path(`', '')
+          .replaceAll(' ', '');
+        const tlsLabelKey = Object.keys(container.Config.Labels).find(
+          (key) => key.startsWith('traefik.http.routers.') && key.endsWith('.tls')
+        );
+        const isTls = tlsLabelKey ? container.Config.Labels[tlsLabelKey] === 'true' : undefined;
+        if (!container.urls) container.urls = [];
+        container.urls.push(`http${isTls ? 's' : ''}://${host}`);
+      });
+
+    const relativeComposeFile = composeFile.replace(`${selectedRepo.workingFolder}/`, '');
+    if (!composedContainersByComposeFileMap.has(relativeComposeFile)) {
+      composedContainersByComposeFileMap.set(relativeComposeFile, []);
     }
-    composedContainersByComposeFileMap.get(composeFile)!.push(container);
+    composedContainersByComposeFileMap.get(relativeComposeFile).push(container);
   }
 
   const composedContainersByComposeFile = Object.fromEntries(composedContainersByComposeFileMap);
@@ -96,6 +87,6 @@ export const getContainers = async () => {
     composedContainers: composedContainersByComposeFile,
     separateContainers: nonComposedContainers,
     images,
-    unusedDockerImages,
+    unusedDockerImages: await getUnusedDockerImages(containers, images),
   };
 };

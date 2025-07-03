@@ -10,8 +10,9 @@ RUN bun build src/index.* --minify --target=bun --outdir=dist
 FROM oven/bun:alpine
 
 RUN apk add --no-cache \
+    openssh \
     docker \
-    jq
+    docker-compose
 
 COPY --from=builder /home/bun/app/dist .
 

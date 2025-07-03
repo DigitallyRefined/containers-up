@@ -8,16 +8,11 @@ services:
         soft: 0
         hard: 0
     volumes:
-      # - /var/run/docker.sock:/var/run/docker.sock # Docker running as root
-      - /run/user/1000/docker.sock:/var/run/docker.sock # Rootless Docker
+      - ./storage:/storage
+      # Development mode
       # - .:/home/bun/app
-      - ${HOME}/stacks:/containers/stacks
-      - ${HOME}/manual:/containers/manual # Optionally add other directories
-      - ${HOME}/test:/containers/test # Optionally add other directories
     env_file:
-      - .env
-    environment:
-      - SHARE_HOME=${HOME}
+      - ./.env
     networks:
         - "traefik"
     labels:
