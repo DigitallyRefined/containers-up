@@ -9,12 +9,14 @@ services:
         hard: 0
     volumes:
       - ./storage:/storage
+      - ./storage/.ssh:/root/.ssh
+      - ./storage/.docker:/root/.docker
       # Development mode
       # - .:/home/bun/app
     env_file:
       - ./.env
     networks:
-        - "traefik"
+      - traefik
     labels:
       traefik.enable: true
 

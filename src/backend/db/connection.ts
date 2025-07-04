@@ -18,3 +18,26 @@ export const getDb = async () => {
 
   return db;
 };
+
+export const upsert = async ({
+  table,
+  data,
+  conflictKey,
+}: {
+  table: string;
+  data: Record<string, any>;
+  conflictKey: string;
+}) => {
+  const columns = Object.keys(data);
+  const placeholders = columns.map((col) => `$${col}`);
+  const updates = columns
+    .filter((col) => col !== conflictKey)
+    .map((col) => `${col}=excluded.${col}`)
+    .join(', ');
+
+  const sql = `INSERT INTO ${table} (${columns.join(', ')})
+    VALUES (${placeholders.join(', ')})
+    ON CONFLICT(${conflictKey}) DO UPDATE SET ${updates}`;
+
+  return (await getDb()).query(sql).run(data);
+};

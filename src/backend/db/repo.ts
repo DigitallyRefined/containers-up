@@ -1,4 +1,4 @@
-import { getDb } from './connection';
+import { getDb, upsert } from './connection';
 
 export class Repo {
   id: number;
@@ -52,10 +52,6 @@ export const repo = {
     };
     console.log(data);
 
-    return db
-      .query(
-        `INSERT INTO repo (name, sshCmd, repo, workingFolder, excludeFolders) VALUES ($name, $sshCmd, $repo, $workingFolder, $excludeFolders)`
-      )
-      .run(data);
+    return upsert({ table: 'repo', data, conflictKey: 'name' });
   },
 };
