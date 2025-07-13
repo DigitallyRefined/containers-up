@@ -1,6 +1,6 @@
 import { Database } from 'bun:sqlite';
 import { mkdir } from 'fs/promises';
-import { pathExists } from '../utils';
+import { pathExists } from '@/backend/utils';
 
 let db: Database | undefined;
 

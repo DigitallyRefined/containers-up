@@ -1,6 +1,8 @@
 import { promises as fs } from 'fs';
+
 import { pathExists } from '@/backend/utils';
 
+// Get icons from https://dashboardicons.com
 const imgServiceUrl = 'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/webp';
 const dir = '/storage/icons';
 

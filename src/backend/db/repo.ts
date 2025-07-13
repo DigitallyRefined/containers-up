@@ -1,4 +1,4 @@
-import { getDb, upsert } from './connection';
+import { getDb, upsert } from '@/backend/db/connection';
 
 export class Repo {
   id: number;
@@ -50,7 +50,6 @@ export const repo = {
       workingFolder,
       excludeFolders: excludeFolders || '',
     };
-    console.log(data);
 
     return upsert({ table: 'repo', data, conflictKey: 'name' });
   },

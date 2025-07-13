@@ -47,6 +47,12 @@ const server = serve({
         const auth = requireApiKey(req, 'proxy', PROXY_KEY);
         if (auth) return auth;
 
+        if (!/^[a-z0-9-]+$/.test(req.params.name)) {
+          return Response.json({
+            error: 'Name must contain only lowercase letters, numbers, or hyphens',
+          });
+        }
+
         return Response.json(await postRepo({ name: req.params.name, ...(await req.json()) }));
       },
     },
@@ -63,13 +69,17 @@ const server = serve({
 
         return Response.json(await getContainers(selectedRepo));
       },
-    },
 
-    '/api/containers': {
       async DELETE(req) {
         const auth = requireApiKey(req, 'proxy', PROXY_KEY);
         if (auth) return auth;
-        return Response.json(await containersCleanup());
+
+        const selectedRepo = await repo.getByName(req.params.repo);
+        if (!selectedRepo) {
+          return new Response('Repository not found', { status: 404 });
+        }
+
+        return Response.json(await containersCleanup(selectedRepo.name));
       },
     },
   },

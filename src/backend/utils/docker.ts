@@ -1,4 +1,4 @@
-import { execAsync } from '.';
+import { execAsync } from '@/backend/utils';
 
 const parseStdout = (stdout: string) =>
   stdout
@@ -6,18 +6,17 @@ const parseStdout = (stdout: string) =>
     .filter(Boolean)
     .map((line) => JSON.parse(line));
 
-export async function listContainers() {
-  const { stdout } = await execAsync('docker inspect --format "{{json .}}" $(docker ps -aq)');
+export async function listContainers(context: string) {
+  const { stdout } = await execAsync(
+    `docker --context ${context} inspect --format "{{json .}}" $(docker --context ${context} ps -aq)`
+  );
 
   return parseStdout(stdout);
 }
 
-export const inspectImage = async (imageId: string) => {
-  const { stdout } = await execAsync(`docker inspect ${imageId}`);
-  return JSON.parse(stdout)[0];
-};
-
-export const listImages = async () => {
-  const { stdout } = await execAsync(`docker images --no-trunc --format "{{json .}}"`);
+export const listImages = async (context: string) => {
+  const { stdout } = await execAsync(
+    `docker --context ${context} images --no-trunc --format "{{json .}}"`
+  );
   return parseStdout(stdout);
 };

@@ -1,14 +1,14 @@
-import { getIcon } from '../utils/icon';
-import { listContainers, listImages } from '../utils/docker';
-import type { Repo } from '../db/repo';
+import { getIcon } from '@/backend/utils/icon';
+import { listContainers, listImages } from '@/backend/utils/docker';
+import type { Repo } from '@/backend/db/repo';
 
 const getUnusedDockerImages = async (containers, images) => {
   const usedImageIds = new Set(containers.map((container) => container.Image));
   return images.filter((img) => !usedImageIds.has(img.ID));
 };
 
-const getContainersRunningViaCompose = async () => {
-  const containers = await listContainers();
+const getContainersRunningViaCompose = async (context: string) => {
+  const containers = await listContainers(context);
   const composedContainers = containers.filter(
     (container) =>
       container.Config.Labels &&
@@ -26,8 +26,8 @@ const getContainersRunningViaCompose = async () => {
 
 export const getContainers = async (selectedRepo: Repo) => {
   const [images, { containers, composedContainers, nonComposedContainers }] = await Promise.all([
-    listImages(),
-    getContainersRunningViaCompose(),
+    listImages(selectedRepo.name),
+    getContainersRunningViaCompose(selectedRepo.name),
   ]);
 
   const composedContainersSortedByImage = [];
