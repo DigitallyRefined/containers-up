@@ -1,6 +1,6 @@
 import { getDb, upsert } from '@/backend/db/connection';
 import { getDatetime } from '@/backend/utils';
-import { Log } from '@/backend/db/log';
+import { log as logDb, type Log } from '@/backend/db/log';
 
 export class Job {
   id?: number;
@@ -45,21 +45,21 @@ export const job = {
     const db = await getDb();
     return db.query('SELECT * FROM job WHERE id = $id').as(Job).get({ id });
   },
-  getJobsWithLogs: async (repoId: number, folder: string) => {
+  getJobsWithLogs: async (repoId: number, folder?: string) => {
     const db = await getDb();
 
-    // Get up to 10 jobs
     const jobs = db
-      .query('SELECT * FROM job WHERE repoId = $repoId AND folder = $folder ORDER BY created DESC LIMIT 10')
+      .query(
+        `SELECT * FROM job WHERE repoId = $repoId ${
+          folder ? `AND folder = $folder` : ''
+        } ORDER BY created DESC LIMIT 10`
+      )
       .as(JobWithLogs)
-      .all({ repoId, folder });
+      .all({ repoId, ...(folder ? { folder } : {}) });
 
-    // For each job, get up to 20 logs
+    // For each job, get logs
     for (const job of jobs) {
-      job.logs = db
-        .query('SELECT * FROM log WHERE jobId = $jobId ORDER BY time DESC LIMIT 20')
-        .as(Log)
-        .all({ jobId: job.id });
+      job.logs = await logDb.get(job.id);
     }
     return jobs;
   },

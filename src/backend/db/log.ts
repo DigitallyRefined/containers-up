@@ -32,15 +32,11 @@ export const log = {
       `INSERT INTO log (jobId, repo, level, time, event, msg) VALUES ($jobId, $repo, $level, $time, $event, $msg)`
     ).run({ jobId, repo, level, time: getDatetime(time), event, msg });
   },
-  get: async (repo: string, jobId?: string) => {
+  get: async (jobId?: number) => {
     const db = await getDb();
     return db
-      .query(
-        `SELECT * FROM log WHERE repo = $repo ${
-          jobId ? `AND jobId = $jobId` : ''
-        } ORDER BY time DESC LIMIT 10`
-      )
+      .query(`SELECT * FROM log ${jobId ? `WHERE jobId = $jobId` : ''} ORDER BY time DESC LIMIT 20`)
       .as(Log)
-      .all({ repo, ...(jobId ? { jobId } : {}) });
+      .all(jobId ? { jobId } : undefined);
   },
 };

@@ -8,6 +8,7 @@ import { getRepos, postRepo } from '@/backend/endpoints/repo';
 import { repo } from '@/backend/db/repo';
 import { log as logDb } from '@/backend/db/log';
 import { restartJob } from '@/backend/endpoints/jobs';
+import { job as jobDb } from '@/backend/db/job';
 
 const API_PROXY_KEY = process.env.API_PROXY_KEY;
 const API_WEBHOOK_KEY = process.env.API_WEBHOOK_KEY;
@@ -59,6 +60,20 @@ const server = serve({
       },
     },
 
+    '/api/repo/:name/jobs': {
+      async GET(req) {
+        const auth = requireAuthKey(req, 'proxy', API_PROXY_KEY);
+        if (auth) return auth;
+
+        const selectedRepo = await repo.getByName(req.params.name);
+        if (!selectedRepo) {
+          return new Response('Repository not found', { status: 404 });
+        }
+
+        return Response.json(await jobDb.getJobsWithLogs(selectedRepo.id));
+      },
+    },
+
     '/api/containers/:repo': {
       async GET(req) {
         const auth = requireAuthKey(req, 'proxy', API_PROXY_KEY);
@@ -96,7 +111,9 @@ const server = serve({
         const auth = requireAuthKey(req, 'proxy', API_PROXY_KEY);
         if (auth) return auth;
 
-        return Response.json(await restartJob(req.params.id));
+        restartJob(req.params.id);
+
+        return Response.json({ message: 'job restarted' });
       },
     },
   },
@@ -153,9 +170,7 @@ const webhookServer = serve({
           githubWebhookHandler(webhookEvent, selectedRepo);
         }
 
-        return Response.json({
-          message: 'webhook received',
-        });
+        return Response.json({ message: 'webhook received' });
       },
     },
   },
