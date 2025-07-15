@@ -17,7 +17,8 @@ export const createExec = (logger: Logger) => {
     try {
       const { stdout, stderr } = await execAsync(command);
       if (stderr) {
-        logger.error(stderr);
+        // stderr is used as info if the command doesn't exit with code > 0
+        logger.info(stderr);
       }
       return { stdout: stdout.trim(), stderr, code: 0 };
     } catch (error: any) {
