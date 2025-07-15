@@ -9,11 +9,11 @@ import { repo } from '@/backend/db/repo';
 import { log as logDb } from '@/backend/db/log';
 import { restartJob } from '@/backend/endpoints/jobs';
 
-const PROXY_KEY = process.env.PROXY_KEY;
-const API_KEY = process.env.API_KEY;
+const API_PROXY_KEY = process.env.API_PROXY_KEY;
+const API_WEBHOOK_KEY = process.env.API_WEBHOOK_KEY;
 
-const requireApiKey = (req: Request, headerKey: string, expectedKey?: string) => {
-  const key = req.headers.get(`x-${headerKey}-key`);
+const requireAuthKey = (req: Request, keyFieldName: string, expectedKey?: string) => {
+  const key = req.headers.get(`x-${keyFieldName}-key`);
   if (!expectedKey || key !== expectedKey) {
     return new Response('Unauthorized', { status: 401 });
   }
@@ -37,7 +37,7 @@ const server = serve({
 
     '/api/repo': {
       async GET(req) {
-        const auth = requireApiKey(req, 'proxy', PROXY_KEY);
+        const auth = requireAuthKey(req, 'proxy', API_PROXY_KEY);
         if (auth) return auth;
 
         return Response.json(await getRepos());
@@ -46,7 +46,7 @@ const server = serve({
 
     '/api/repo/:name': {
       async POST(req) {
-        const auth = requireApiKey(req, 'proxy', PROXY_KEY);
+        const auth = requireAuthKey(req, 'proxy', API_PROXY_KEY);
         if (auth) return auth;
 
         if (!/^[a-z0-9-]+$/.test(req.params.name)) {
@@ -61,7 +61,7 @@ const server = serve({
 
     '/api/containers/:repo': {
       async GET(req) {
-        const auth = requireApiKey(req, 'proxy', PROXY_KEY);
+        const auth = requireAuthKey(req, 'proxy', API_PROXY_KEY);
         if (auth) return auth;
 
         const selectedRepo = await repo.getByName(req.params.repo);
@@ -73,7 +73,7 @@ const server = serve({
       },
 
       async DELETE(req) {
-        const auth = requireApiKey(req, 'proxy', PROXY_KEY);
+        const auth = requireAuthKey(req, 'proxy', API_PROXY_KEY);
         if (auth) return auth;
 
         const selectedRepo = await repo.getByName(req.params.repo);
@@ -93,7 +93,7 @@ const server = serve({
 
     '/api/job/:id': {
       async POST(req) {
-        const auth = requireApiKey(req, 'proxy', PROXY_KEY);
+        const auth = requireAuthKey(req, 'proxy', API_PROXY_KEY);
         if (auth) return auth;
 
         return Response.json(await restartJob(req.params.id));
@@ -111,10 +111,30 @@ const webhookServer = serve({
   routes: {
     '/api/webhook/github': {
       async POST(req) {
-        const auth = requireApiKey(req, 'api', API_KEY);
-        if (auth) return auth;
+        const signature = req.headers.get('x-hub-signature-256');
+        if (!signature) {
+          return new Response('Unauthorized (no signature)', { status: 401 });
+        }
 
-        const webhookData = await req.json();
+        const bodyBuffer = new Uint8Array(await req.arrayBuffer());
+        const key = await crypto.subtle.importKey(
+          'raw',
+          new TextEncoder().encode(API_WEBHOOK_KEY),
+          { name: 'HMAC', hash: 'SHA-256' },
+          false,
+          ['sign']
+        );
+        const signatureBuffer = await crypto.subtle.sign('HMAC', key, bodyBuffer);
+        const hash = Array.from(new Uint8Array(signatureBuffer))
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join('');
+        const expectedSignature = `sha256=${hash}`;
+
+        if (signature !== expectedSignature) {
+          return new Response('Unauthorized (bad signature)', { status: 401 });
+        }
+
+        const webhookData = JSON.parse(new TextDecoder().decode(bodyBuffer));
         const webhookEvent: GitHubWebhookEvent = {
           sender: webhookData.sender?.login,
           repo: webhookData.repository.full_name,
