@@ -1,6 +1,13 @@
 import { getIcon } from '@/backend/utils/icon';
-import { listContainers, listImages } from '@/backend/utils/docker';
+import { createExec } from '@/backend/utils/exec';
 import type { Repo } from '@/backend/db/repo';
+import { mainLogger } from '@/backend/utils/logger';
+import { baseEvent as githubWebhookBaseEvent } from '@/backend/endpoints/webhook/github';
+import { job as jobDb } from '@/backend/db/job';
+
+const event = 'containers';
+const logger = mainLogger.child({ event });
+const exec = createExec(logger);
 
 const getUnusedDockerImages = async (containers, images) => {
   const usedImageIds = new Set(containers.map((container) => container.Image));
@@ -8,7 +15,7 @@ const getUnusedDockerImages = async (containers, images) => {
 };
 
 const getContainersRunningViaCompose = async (context: string) => {
-  const containers = await listContainers(context);
+  const containers = await exec.listContainers(context);
   const composedContainers = containers.filter(
     (container) =>
       container.Config.Labels &&
@@ -26,7 +33,7 @@ const getContainersRunningViaCompose = async (context: string) => {
 
 export const getContainers = async (selectedRepo: Repo) => {
   const [images, { containers, composedContainers, nonComposedContainers }] = await Promise.all([
-    listImages(selectedRepo.name),
+    exec.listImages(selectedRepo.name),
     getContainersRunningViaCompose(selectedRepo.name),
   ]);
 
@@ -46,10 +53,8 @@ export const getContainers = async (selectedRepo: Repo) => {
     const configFilesLabel = container.Config.Labels['com.docker.compose.project.config_files'];
     let composeFile = '[unmanaged]';
     if (configFilesLabel) {
-      // if (await pathExists(configFilesLabel)) {
       composeFiles.add(configFilesLabel);
       composeFile = configFilesLabel;
-      // }
     }
 
     Object.keys(container.Config.Labels)
@@ -81,7 +86,26 @@ export const getContainers = async (selectedRepo: Repo) => {
     composedContainersByComposeFileMap.get(relativeComposeFile).push(container);
   }
 
-  const composedContainersByComposeFile = Object.fromEntries(composedContainersByComposeFileMap);
+  const composedContainersByComposeFile = Object.fromEntries(
+    await Promise.all(
+      Array.from(composedContainersByComposeFileMap.entries()).map(
+        async ([composeFile, containers]) => {
+          const composeFileFolder = composeFile
+            .replace(`${selectedRepo.workingFolder}/`, '')
+            .split('/');
+          composeFileFolder.pop();
+
+          return [
+            composeFile,
+            {
+              services: containers,
+              jobs: await jobDb.getJobsWithLogs(selectedRepo.id, `/${composeFileFolder.join('/')}`),
+            },
+          ];
+        }
+      )
+    )
+  );
 
   return {
     composedContainers: composedContainersByComposeFile,

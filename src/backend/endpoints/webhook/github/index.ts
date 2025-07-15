@@ -1,95 +1,120 @@
 import * as path from 'path';
 
-import { execAsync } from '@/backend/utils';
 import { mainLogger, getLogs } from '@/backend/utils/logger';
 import type { Repo } from '@/backend/db/repo';
 import { containersCleanup } from '@/backend/endpoints/containers-cleanup';
+import { createExec } from '@/backend/utils/exec';
+import type { Logger } from 'pino';
+import { log as logDb } from '@/backend/db/log';
+import { job as jobDb } from '@/backend/db/job';
 
-const logger = mainLogger.child({ event: 'github-webhook' });
+export const baseEvent = 'github-webhook';
 
 export type GitHubWebhookEvent = {
-  repo: string;
+  repo?: string;
+  number: number;
   action: string;
   merged: string;
   title: string;
+  sender: string;
 };
 
-// Helper functions moved to top level
-function fileExcluded(file: string, excludeFolders: string | null): boolean {
+const fileExcluded = (file: string, excludeFolders: string | null): boolean => {
   if (!excludeFolders || excludeFolders === 'null') return false;
   const regex = new RegExp(excludeFolders);
   return regex.test(file);
-}
+};
 
-async function composePullDownUp(sshCmd: string, composeFile: string) {
-  logger.info(`Pulling images for compose file: ${composeFile}`);
-  await execAsync(`ssh ${sshCmd} 'docker compose -f ${composeFile} pull'`);
-  logger.info(`Stopping and removing containers for compose file: ${composeFile}`);
-  await execAsync(`ssh ${sshCmd} 'docker compose -f ${composeFile} down'`);
-  logger.info(`Starting containers for compose file: ${composeFile}`);
-  await execAsync(`ssh ${sshCmd} 'docker compose -f ${composeFile} up -d'`);
-}
+const pullRestartUpdatedContainers = async (folder: string, repoConfig: Repo, logger: Logger) => {
+  const { workingFolder, excludeFolders, name, sshCmd: host } = repoConfig;
 
-const pullRestartUpdatedContainers = async ({ title }: GitHubWebhookEvent, repoConfig: Repo) => {
-  try {
-    const { workingFolder, excludeFolders, name, sshCmd } = repoConfig;
-    await execAsync(`ssh ${sshCmd} 'cd ${workingFolder} && git pull --prune'`);
+  const exec = createExec(logger);
 
-    // Extract folder from title (like sed -E 's/.* in (.*)/\1/')
-    const folderMatch = title.match(/ in (.*)/);
-    const folder = folderMatch ? folderMatch[1] : '';
-    const file = path.join(workingFolder, folder, 'docker-compose.yml');
+  const composePullDownUp = async (host: string, composeFile: string) => {
+    logger.info(`Pulling images for compose file: ${composeFile}`);
+    await exec.sshRun(host, `docker compose -f ${composeFile} pull`);
+    logger.info(`Stopping and removing containers for compose file: ${composeFile}`);
+    await exec.sshRun(host, `docker compose -f ${composeFile} down`);
+    logger.info(`Starting containers for compose file: ${composeFile}`);
+    await exec.sshRun(host, `docker compose -f ${composeFile} up -d`);
+  };
 
-    const { stdout: fileExists } = await execAsync(
-      `ssh ${sshCmd} 'test -f "${file}" && echo exists || echo missing'`
+  await exec.sshRun(host, `cd ${workingFolder} && git pull --prune`);
+
+  const file = path.join(workingFolder, folder, 'docker-compose.yml');
+  const { stdout: fileExists } = await exec.sshRun(
+    host,
+    `test -f "${file}" && echo exists || echo missing`
+  );
+  if (fileExists === 'exists') {
+    if (!fileExcluded(file, excludeFolders)) {
+      await composePullDownUp(name, file);
+    } else {
+      logger.info(`docker-compose.yml file excluded: ${file}`);
+    }
+  } else {
+    // Single Dependabot watch (via git diff)
+    const { stdout: changedFilesStdout } = await exec.sshRun(
+      host,
+      `cd ${workingFolder} && git diff --name-only HEAD~1 HEAD`
     );
-    if (fileExists.trim() === 'exists') {
-      if (!fileExcluded(file, excludeFolders)) {
-        await composePullDownUp(name, file);
-      } else {
-        logger.info(`docker-compose.yml file excluded: ${file}`);
+    const changedFiles = changedFilesStdout.split('\n').filter(Boolean);
+    if (changedFiles.some((f) => f.endsWith('docker-compose.yml'))) {
+      for (const changedFile of changedFiles) {
+        if (
+          changedFile.endsWith('docker-compose.yml') &&
+          !fileExcluded(changedFile, excludeFolders)
+        ) {
+          await composePullDownUp(name, changedFile);
+        }
       }
     } else {
-      // Single Dependabot watch (via git diff)
-      const { stdout } = await execAsync(
-        `ssh ${sshCmd} 'cd ${workingFolder} && git diff --name-only HEAD~1 HEAD'`
-      );
-      const changedFiles = stdout.split('\n').filter(Boolean);
-      if (changedFiles.some((f) => f.endsWith('docker-compose.yml'))) {
-        for (const changedFile of changedFiles) {
-          if (
-            changedFile.endsWith('docker-compose.yml') &&
-            !fileExcluded(changedFile, excludeFolders)
-          ) {
-            await composePullDownUp(name, changedFile);
-          }
-        }
-      } else {
-        logger.info('No docker-compose.yml files have been changed');
-      }
+      logger.info('No docker-compose.yml files have been changed');
     }
-  } catch (err: any) {
-    logger.error(err);
   }
-
-  return getLogs('github-webhook');
 };
 
 export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, repoConfig: Repo) => {
-  const { action, merged, title } = webhookEvent;
+  const { action, merged, title, number, sender } = webhookEvent;
 
-  let logs = [];
+  // Extract folder from title (like sed -E 's/.* in (.*)/\1/')
+  const folderMatch = title.match(/ in (.*)/);
+  const folder = folderMatch ? folderMatch[1] : '';
+
+  const event = `${baseEvent} ${repoConfig.name} ${folder}`;
+  const logger = mainLogger.child({ event });
+
+  let containersCleanupLogs;
+  const jobData = {
+    repoId: repoConfig.id,
+    repoPr: `${repoConfig.repo}#${number}`,
+    folder,
+    title,
+  };
+  let jobId;
   if (!repoConfig.workingFolder || action !== 'closed' || !merged || !title) {
-    console.log(
+    if (sender === 'dependabot[bot]') {
+      jobId = await jobDb.upsert({ ...jobData, status: 'opened' });
+    }
+    logger.info(
       `No action required for workingFolder: '${repoConfig.workingFolder}' action: '${action}' merged: '${merged}' title: '${title}'`
     );
   } else {
-    logs = [
-      await pullRestartUpdatedContainers(webhookEvent, repoConfig),
-      await containersCleanup(repoConfig.name),
-    ].flat();
+    jobId = await jobDb.upsert({ ...jobData, status: 'running' });
+    try {
+      await pullRestartUpdatedContainers(folder, repoConfig, logger);
+      containersCleanupLogs = await containersCleanup(repoConfig.name);
+      jobId = await jobDb.upsert({ ...jobData, status: 'completed' });
+    } catch (err: any) {
+      jobId = await jobDb.upsert({ ...jobData, status: 'failed' });
+    }
   }
 
   // save logs
-  console.log(logs);
+  [getLogs(event), containersCleanupLogs]
+    .filter(Boolean)
+    .flat()
+    .forEach((log) => {
+      logDb.create({ jobId, repo: repoConfig.repo, ...log });
+    });
 };

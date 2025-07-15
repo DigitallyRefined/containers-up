@@ -1,16 +1,21 @@
 import { getDb, upsert } from '@/backend/db/connection';
 
 export class Repo {
-  id: number;
+  id?: number;
   name: string;
   sshCmd: string;
   repo: string;
   workingFolder: string;
   excludeFolders?: string;
-  created: string;
+  created?: string;
 }
 
 export const repo = {
+  get: async (id: number) => {
+    const db = await getDb();
+
+    return db.query(`SELECT * FROM repo WHERE id=$id`).as(Repo).get({ id });
+  },
   getAll: async () => {
     const db = await getDb();
 

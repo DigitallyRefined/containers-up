@@ -1,8 +1,4 @@
 import { promises as fs } from 'fs';
-import { promisify } from 'util';
-import { exec } from 'child_process';
-
-export const execAsync = promisify(exec);
 
 export const pathExists = async (path: string): Promise<boolean> => {
   try {
@@ -11,4 +7,9 @@ export const pathExists = async (path: string): Promise<boolean> => {
   } catch {
     return false;
   }
+};
+
+export const getDatetime = (unixTime?: number | string) => {
+  const date = unixTime ? new Date(Number(unixTime)) : new Date();
+  return date.toISOString().replace('T', ' ').substring(0, 19);
 };

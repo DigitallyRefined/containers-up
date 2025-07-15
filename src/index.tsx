@@ -4,8 +4,10 @@ import index from '@/index.html';
 import { getContainers } from '@/backend/endpoints/containers';
 import { githubWebhookHandler, type GitHubWebhookEvent } from '@/backend/endpoints/webhook/github';
 import { containersCleanup } from '@/backend/endpoints/containers-cleanup';
-import { getRepos, postRepo } from './backend/endpoints/repo';
-import { repo } from './backend/db/repo';
+import { getRepos, postRepo } from '@/backend/endpoints/repo';
+import { repo } from '@/backend/db/repo';
+import { log as logDb } from '@/backend/db/log';
+import { restartJob } from '@/backend/endpoints/jobs';
 
 const PROXY_KEY = process.env.PROXY_KEY;
 const API_KEY = process.env.API_KEY;
@@ -79,7 +81,22 @@ const server = serve({
           return new Response('Repository not found', { status: 404 });
         }
 
-        return Response.json(await containersCleanup(selectedRepo.name));
+        const cleanupLogs = await containersCleanup(selectedRepo.name);
+
+        if (cleanupLogs.length) {
+          cleanupLogs.forEach((log) => logDb.create({ repo: selectedRepo.repo, ...log }));
+        }
+
+        return Response.json(cleanupLogs);
+      },
+    },
+
+    '/api/job/:id': {
+      async POST(req) {
+        const auth = requireApiKey(req, 'proxy', PROXY_KEY);
+        if (auth) return auth;
+
+        return Response.json(await restartJob(req.params.id));
       },
     },
   },
@@ -99,7 +116,9 @@ const webhookServer = serve({
 
         const webhookData = await req.json();
         const webhookEvent: GitHubWebhookEvent = {
+          sender: webhookData.sender?.login,
           repo: webhookData.repository.full_name,
+          number: webhookData.pull_request?.number,
           action: webhookData.action,
           merged: webhookData.pull_request?.merged,
           title: webhookData.pull_request?.title,
