@@ -35,7 +35,7 @@ export const log = {
   get: async (jobId?: number) => {
     const db = await getDb();
     return db
-      .query(`SELECT * FROM log ${jobId ? `WHERE jobId = $jobId` : ''} ORDER BY time DESC LIMIT 20`)
+      .query(`SELECT * FROM log ${jobId ? `WHERE jobId = $jobId` : ''} ORDER BY time DESC LIMIT 50`)
       .as(Log)
       .all(jobId ? { jobId } : undefined);
   },

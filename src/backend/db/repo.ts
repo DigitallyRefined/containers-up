@@ -5,6 +5,7 @@ export class Repo {
   name: string;
   sshCmd: string;
   repo: string;
+  webhookSecret: string;
   workingFolder: string;
   excludeFolders?: string;
   created?: string;
@@ -31,7 +32,7 @@ export const repo = {
 
     return db.query(`SELECT * FROM repo WHERE repo=$repo`).as(Repo).all({ repo });
   },
-  create: async ({ name, sshCmd, repo, workingFolder, excludeFolders }: Repo) => {
+  create: async ({ name, sshCmd, repo, webhookSecret, workingFolder, excludeFolders }: Repo) => {
     const db = await getDb();
 
     db.query(
@@ -41,6 +42,7 @@ export const repo = {
         name TEXT NOT NULL UNIQUE,
         sshCmd TEXT NOT NULL,
         repo TEXT NOT NULL UNIQUE,
+        webhookSecret TEXT NOT NULL,
         workingFolder TEXT NOT NULL,
         excludeFolders TEXT,
         created DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -52,6 +54,7 @@ export const repo = {
       name,
       sshCmd,
       repo,
+      webhookSecret,
       workingFolder,
       excludeFolders: excludeFolders || '',
     };

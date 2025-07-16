@@ -52,7 +52,7 @@ export const job = {
       .query(
         `SELECT * FROM job WHERE repoId = $repoId ${
           folder ? `AND folder = $folder` : ''
-        } ORDER BY created DESC LIMIT 10`
+        } ORDER BY created DESC LIMIT 50`
       )
       .as(JobWithLogs)
       .all({ repoId, ...(folder ? { folder } : {}) });
@@ -62,5 +62,12 @@ export const job = {
       job.logs = await logDb.get(job.id);
     }
     return jobs;
+  },
+  getRunningJobs: async (repoId: number) => {
+    const db = await getDb();
+    return db
+      .query('SELECT * FROM job WHERE repoId = $repoId AND status = "running"')
+      .as(Job)
+      .all({ repoId });
   },
 };

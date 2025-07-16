@@ -18,26 +18,37 @@ export const getRepos = async () => {
 export const postRepo = async (repo: Repo & { sshKey: string }) => {
   const sshPath = `${os.homedir()}/.ssh`;
   const sshConfigPath = `${sshPath}/config`;
-  if (!(await pathExists(sshConfigPath))) {
-    await fs.mkdir(path.dirname(sshConfigPath), { recursive: true });
-    await fs.writeFile(
-      sshConfigPath,
-      `Host *
+  await fs.mkdir(path.dirname(sshConfigPath), { recursive: true });
+
+  const repoSshConfig = (await getRepos())
+    .map(
+      (r) => `Host ${r.name}
+    HostName ${r.sshCmd.split('@')[1]}
+    User ${r.sshCmd.split('@')[0]}
+    IdentityFile ~/.ssh/id_ed25519-${r.name}
+    ControlPath ~/.ssh/control-${r.name}`
+    )
+    .join('\n\n');
+
+  await fs.writeFile(
+    sshConfigPath,
+    `Host *
     StrictHostKeyChecking no
     ControlMaster auto
-    ControlPath ~/.ssh/control-${repo.name}
-    ControlPersist 20m`,
-      { mode: 0o600 }
-    );
-  }
+    ControlPersist 20m
+    ForwardAgent yes
+    
+${repoSshConfig}`,
+    { mode: 0o600 }
+  );
 
   const sshKeyBuffer = Buffer.from(repo.sshKey, 'base64');
-  await fs.writeFile(`${sshPath}/id_ed25519`, sshKeyBuffer, { mode: 0o600 });
+  await fs.writeFile(`${sshPath}/id_ed25519-${repo.name}`, sshKeyBuffer, { mode: 0o600 });
 
   const { stdout: dockerContext } = await exec.run('docker context ls --format "{{.Name}}"');
   const contextExists = dockerContext.split('\n').includes(repo.name);
   if (!contextExists) {
-    await exec.run(`docker context create ${repo.name} --docker "host=ssh://${repo.sshCmd}"`);
+    await exec.run(`docker context create ${repo.name} --docker "host=ssh://${repo.name}"`);
   }
 
   await repoDb.create(repo);

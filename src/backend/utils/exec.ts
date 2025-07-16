@@ -35,7 +35,16 @@ export const createExec = (logger: Logger) => {
 
   return {
     run,
-    sshRun: async (host: string, command: string) => run(`ssh ${host} '${command}'`),
+    sshRun: async (repoName: string, host: string, command: string) =>
+      run(`if ! pgrep -u "$(whoami)" ssh-agent > /dev/null; then
+        ssh-agent -s
+      fi
+      export SSH_AUTH_SOCK=$(find /tmp -type s -name 'agent.*' 2>/dev/null | head -n1)
+      if [ -n "$SSH_AUTH_SOCK" ]; then
+        export SSH_AGENT_PID=$(echo "$SSH_AUTH_SOCK" | grep -oE 'agent\.[0-9]+' | grep -oE '[0-9]+')
+      fi
+      ssh-add ~/.ssh/id_ed25519-${repoName} > /dev/null 2>&1
+      ssh ${host} '${command}'`),
     listContainers: async (context: string) => {
       const { stdout } = await run(
         `${getDockerCmd(context)} inspect --format "{{json .}}" $(${getDockerCmd(context)} ps -aq)`

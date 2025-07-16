@@ -7,6 +7,7 @@ import { createExec } from '@/backend/utils/exec';
 import type { Logger } from 'pino';
 import { log as logDb } from '@/backend/db/log';
 import { job as jobDb } from '@/backend/db/job';
+import { waitASecond } from '@/backend/utils';
 
 export const baseEvent = 'github-webhook';
 
@@ -30,31 +31,33 @@ const pullRestartUpdatedContainers = async (folder: string, repoConfig: Repo, lo
 
   const exec = createExec(logger);
 
-  const composePullDownUp = async (host: string, composeFile: string) => {
+  const composePullDownUp = async (composeFile: string) => {
     logger.info(`Pulling images for compose file: ${composeFile}`);
-    await exec.sshRun(host, `docker compose -f ${composeFile} pull`);
+    await exec.sshRun(name, host, `docker compose -f ${composeFile} pull`);
     logger.info(`Stopping and removing containers for compose file: ${composeFile}`);
-    await exec.sshRun(host, `docker compose -f ${composeFile} down`);
+    await exec.sshRun(name, host, `docker compose -f ${composeFile} down`);
     logger.info(`Starting containers for compose file: ${composeFile}`);
-    await exec.sshRun(host, `docker compose -f ${composeFile} up -d`);
+    await exec.sshRun(name, host, `docker compose -f ${composeFile} up -d`);
   };
 
-  await exec.sshRun(host, `cd ${workingFolder} && git pull --prune`);
+  await exec.sshRun(name, host, `cd ${workingFolder} && git pull --prune`);
 
   const file = path.join(workingFolder, folder, 'docker-compose.yml');
   const { stdout: fileExists } = await exec.sshRun(
+    name,
     host,
     `test -f "${file}" && echo exists || echo missing`
   );
   if (fileExists === 'exists') {
     if (!fileExcluded(file, excludeFolders)) {
-      await composePullDownUp(name, file);
+      await composePullDownUp(file);
     } else {
       logger.info(`docker-compose.yml file excluded: ${file}`);
     }
   } else {
     // Single Dependabot watch (via git diff)
     const { stdout: changedFilesStdout } = await exec.sshRun(
+      name,
       host,
       `cd ${workingFolder} && git diff --name-only HEAD~1 HEAD`
     );
@@ -65,7 +68,7 @@ const pullRestartUpdatedContainers = async (folder: string, repoConfig: Repo, lo
           changedFile.endsWith('docker-compose.yml') &&
           !fileExcluded(changedFile, excludeFolders)
         ) {
-          await composePullDownUp(name, changedFile);
+          await composePullDownUp(changedFile);
         }
       }
     } else {
@@ -84,14 +87,37 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, rep
   const event = `${baseEvent} ${repoConfig.name} ${folder}`;
   const logger = mainLogger.child({ event });
 
-  let containersCleanupLogs;
   const jobData = {
     repoId: repoConfig.id,
     repoPr: `${repoConfig.repo}#${number}`,
     folder,
     title,
   };
-  let jobId;
+
+  let runningJobs = await jobDb.getRunningJobs(repoConfig.id);
+  if (runningJobs.length > 0) {
+    logger.info(`Waiting up to 5 minutes for running jobs to complete`);
+    const maxWaits = 60 * 5;
+    let waitCount = 0;
+    while (waitCount < maxWaits) {
+      await waitASecond();
+      runningJobs = await jobDb.getRunningJobs(repoConfig.id);
+      if (runningJobs.length === 0) {
+        logger.info(`Running jobs completed after ${waitCount} seconds, continuing...`);
+        break;
+      }
+      waitCount++;
+    }
+
+    if (runningJobs.length !== 0) {
+      logger.error(`Job cancelled: Waited 5 minutes for running jobs to complete`);
+      await jobDb.upsert({ ...jobData, status: 'failed' });
+      return;
+    }
+  }
+
+  let containersCleanupLogs;
+  let jobId: number;
   if (!repoConfig.workingFolder || action !== 'closed' || !merged || !title) {
     if (sender === 'dependabot[bot]') {
       jobId = await jobDb.upsert({ ...jobData, status: 'opened' });
