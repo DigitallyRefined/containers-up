@@ -3,7 +3,7 @@
 @plugin "tailwindcss-animate";
 
 :root {
-  --background: hsl(0 0% 100%);
+  --background: hsl(0, 0%, 95%);
   --foreground: hsl(240 10% 3.9%);
   --card: hsl(0 0% 100%);
   --card-foreground: hsl(240 10% 3.9%);
@@ -40,7 +40,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: hsl(240 10% 3.9%);
+    --background: hsl(250, 6%, 15%);
     --foreground: hsl(0 0% 98%);
     --card: hsl(240 10% 3.9%);
     --card-foreground: hsl(0 0% 98%);
@@ -119,6 +119,7 @@
     from {
       height: 0;
     }
+
     to {
       height: var(--radix-accordion-content-height);
     }
@@ -128,6 +129,7 @@
     from {
       height: var(--radix-accordion-content-height);
     }
+
     to {
       height: 0;
     }
@@ -138,6 +140,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }

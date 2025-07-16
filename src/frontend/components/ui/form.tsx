@@ -1,24 +1,24 @@
-import * as LabelPrimitive from "@radix-ui/react-label";
-import { Slot } from "@radix-ui/react-slot";
-import * as React from "react";
+import * as LabelPrimitive from '@radix-ui/react-label';
+import { Slot } from '@radix-ui/react-slot';
+import * as React from 'react';
 import {
   Controller,
-  ControllerProps,
-  FieldPath,
-  FieldValues,
+  type ControllerProps,
+  type FieldPath,
+  type FieldValues,
   FormProvider,
   useFormContext,
   useFormState,
-} from "react-hook-form";
+} from 'react-hook-form';
 
-import { Label } from "@/frontend/components/ui/label";
-import { cn } from "@/frontend/lib/utils";
+import { Label } from '@/frontend/components/ui/label';
+import { cn } from '@/frontend/lib/utils';
 
 const Form = FormProvider;
 
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
 > = {
   name: TName;
 };
@@ -27,7 +27,7 @@ const FormFieldContext = React.createContext<FormFieldContextValue>({} as FormFi
 
 const FormField = <
   TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
 >({
   ...props
 }: ControllerProps<TFieldValues, TName>) => {
@@ -46,7 +46,7 @@ const useFormField = () => {
   const fieldState = getFieldState(fieldContext.name, formState);
 
   if (!fieldContext) {
-    throw new Error("useFormField should be used within <FormField>");
+    throw new Error('useFormField should be used within <FormField>');
   }
 
   const { id } = itemContext;
@@ -67,12 +67,12 @@ type FormItemContextValue = {
 
 const FormItemContext = React.createContext<FormItemContextValue>({} as FormItemContextValue);
 
-function FormItem({ className, ...props }: React.ComponentProps<"div">) {
+function FormItem({ className, ...props }: React.ComponentProps<'div'>) {
   const id = React.useId();
 
   return (
     <FormItemContext.Provider value={{ id }}>
-      <div data-slot="form-item" className={cn("grid gap-2", className)} {...props} />
+      <div data-slot='form-item' className={cn('grid gap-2', className)} {...props} />
     </FormItemContext.Provider>
   );
 }
@@ -82,9 +82,9 @@ function FormLabel({ className, ...props }: React.ComponentProps<typeof LabelPri
 
   return (
     <Label
-      data-slot="form-label"
+      data-slot='form-label'
       data-error={!!error}
-      className={cn("data-[error=true]:text-destructive", className)}
+      className={cn('data-[error=true]:text-destructive', className)}
       htmlFor={formItemId}
       {...props}
     />
@@ -96,7 +96,7 @@ function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
 
   return (
     <Slot
-      data-slot="form-control"
+      data-slot='form-control'
       id={formItemId}
       aria-describedby={!error ? `${formDescriptionId}` : `${formDescriptionId} ${formMessageId}`}
       aria-invalid={!!error}
@@ -105,20 +105,20 @@ function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
   );
 }
 
-function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
+function FormDescription({ className, ...props }: React.ComponentProps<'p'>) {
   const { formDescriptionId } = useFormField();
 
   return (
     <p
-      data-slot="form-description"
+      data-slot='form-description'
       id={formDescriptionId}
-      className={cn("text-muted-foreground text-sm", className)}
+      className={cn('text-muted-foreground text-sm', className)}
       {...props}
     />
   );
 }
 
-function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
+function FormMessage({ className, ...props }: React.ComponentProps<'p'>) {
   const { error, formMessageId } = useFormField();
   const body = error ? String(error?.message) : props.children;
 
@@ -128,9 +128,9 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
 
   return (
     <p
-      data-slot="form-message"
+      data-slot='form-message'
       id={formMessageId}
-      className={cn("text-destructive text-sm font-medium", className)}
+      className={cn('text-destructive text-sm font-medium', className)}
       {...props}
     >
       {body}
@@ -138,4 +138,13 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
   );
 }
 
-export { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage, useFormField };
+export {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  useFormField,
+};
