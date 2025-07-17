@@ -24,7 +24,7 @@ const prettyStream = pretty({ colorize: true });
 
 // Create a pino multistream to log to both terminal and memory
 const streams = [
-  { stream: prettyStream }, // pretty terminal
+  ...(process.env.NODE_ENV !== 'production' ? [{ stream: prettyStream }] : []), // pretty terminal
   { stream: logStream }, // in-memory
 ];
 

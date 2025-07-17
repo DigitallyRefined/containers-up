@@ -52,7 +52,7 @@ export const job = {
       .query(
         `SELECT * FROM job WHERE repoId = $repoId ${
           folder ? `AND folder = $folder` : ''
-        } ORDER BY created DESC LIMIT 50`
+        } ORDER BY updated DESC LIMIT 50`
       )
       .as(JobWithLogs)
       .all({ repoId, ...(folder ? { folder } : {}) });
