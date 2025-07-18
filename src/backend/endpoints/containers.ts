@@ -2,8 +2,8 @@ import { getIcon } from '@/backend/utils/icon';
 import { createExec } from '@/backend/utils/exec';
 import type { Repo } from '@/backend/db/repo';
 import { mainLogger } from '@/backend/utils/logger';
-import { baseEvent as githubWebhookBaseEvent } from '@/backend/endpoints/webhook/github';
 import { job as jobDb } from '@/backend/db/job';
+import path from 'path';
 
 const event = 'containers';
 const logger = mainLogger.child({ event });
@@ -49,6 +49,7 @@ export const getContainers = async (selectedRepo: Repo) => {
 
   const composeFiles = new Set();
   const composedContainersByComposeFileMap = new Map();
+  const otherComposedContainersByComposeFileMap = new Map();
   for (const container of composedContainersSortedByImage) {
     const configFilesLabel = container.Config.Labels['com.docker.compose.project.config_files'];
     let composeFile = '[unmanaged]';
@@ -79,11 +80,15 @@ export const getContainers = async (selectedRepo: Repo) => {
         container.urls.push(`http${isTls ? 's' : ''}://${host}`);
       });
 
-    const relativeComposeFile = composeFile.replace(`${selectedRepo.workingFolder}/`, '');
-    if (!composedContainersByComposeFileMap.has(relativeComposeFile)) {
-      composedContainersByComposeFileMap.set(relativeComposeFile, []);
+    const workingFolder = path.join(selectedRepo.workingFolder, '/');
+    let mapToAddTo = composeFile.includes(workingFolder)
+      ? composedContainersByComposeFileMap
+      : otherComposedContainersByComposeFileMap;
+    const relativeComposeFile = composeFile.replace(workingFolder, '');
+    if (!mapToAddTo.has(relativeComposeFile)) {
+      mapToAddTo.set(relativeComposeFile, []);
     }
-    composedContainersByComposeFileMap.get(relativeComposeFile).push(container);
+    mapToAddTo.get(relativeComposeFile).push(container);
   }
 
   const composedContainersByComposeFile = Object.fromEntries(
@@ -95,11 +100,12 @@ export const getContainers = async (selectedRepo: Repo) => {
             .split('/');
           composeFileFolder.pop();
 
+          const folder = path.join('/', composeFileFolder.join('/'));
           return [
             composeFile,
             {
               services: containers,
-              jobs: await jobDb.getJobsWithLogs(selectedRepo.id, `/${composeFileFolder.join('/')}`),
+              jobs: await jobDb.getJobsWithLogs(selectedRepo.id, folder !== '/' ? folder : ''),
             },
           ];
         }
@@ -109,6 +115,7 @@ export const getContainers = async (selectedRepo: Repo) => {
 
   return {
     composedContainers: composedContainersByComposeFile,
+    otherComposedContainers: Object.fromEntries(otherComposedContainersByComposeFileMap),
     separateContainers: nonComposedContainers,
     images,
     unusedDockerImages: await getUnusedDockerImages(containers, images),

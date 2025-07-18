@@ -47,15 +47,16 @@ export const job = {
   },
   getJobsWithLogs: async (repoId: number, folder?: string) => {
     const db = await getDb();
+    const hasFolder = folder !== undefined;
 
     const jobs = db
       .query(
         `SELECT * FROM job WHERE repoId = $repoId ${
-          folder ? `AND folder = $folder` : ''
+          hasFolder ? `AND folder = $folder` : ''
         } ORDER BY updated DESC LIMIT 50`
       )
       .as(JobWithLogs)
-      .all({ repoId, ...(folder ? { folder } : {}) });
+      .all({ repoId, ...(hasFolder ? { folder } : {}) });
 
     // For each job, get logs
     for (const job of jobs) {
