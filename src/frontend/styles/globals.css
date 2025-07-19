@@ -75,6 +75,24 @@
   }
 }
 
+/* Custom card border and shadow for dark mode */
+@media (prefers-color-scheme: dark) {
+  .bg-card {
+    border-color: hsl(240, 6%, 30%) !important;
+    /* lighter border */
+    box-shadow: 0 2px 16px 0 hsl(240, 6%, 30%, 0.45) !important;
+    /* lighter shadow */
+  }
+
+  .shadow-sm {
+    box-shadow: 0 2px 16px 0 hsl(240, 6%, 30%, 0.45) !important;
+  }
+
+  .border {
+    border-color: hsl(240, 6%, 30%) !important;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -114,26 +132,6 @@
   --color-sidebar: var(--sidebar-background);
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
-
-  @keyframes accordion-down {
-    from {
-      height: 0;
-    }
-
-    to {
-      height: var(--radix-accordion-content-height);
-    }
-  }
-
-  @keyframes accordion-up {
-    from {
-      height: var(--radix-accordion-content-height);
-    }
-
-    to {
-      height: 0;
-    }
-  }
 }
 
 @layer base {

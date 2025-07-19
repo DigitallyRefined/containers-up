@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { BrushCleaning } from 'lucide-react';
 
-import { Card, CardContent } from '@/frontend/components/ui/card';
 import { Button } from '@/frontend/components/ui/button';
 import { RepoSelector } from '@/frontend/components/Repo/Selector';
 import { RepoDialog } from '@/frontend/components/Repo/Dialog';
+import { ContainerLayout } from '@/frontend/components/Container/Layout';
+import { ToastProvider } from '@/frontend/components/ui/toast';
 
 import './index.css';
 
@@ -61,49 +63,71 @@ export function App() {
   const selectedRepoObj = repos.find((r) => r.name === selectedRepo);
 
   return (
-    <div className='container mx-auto p-8 text-center relative'>
-      <Card className='bg-card/50 backdrop-blur-sm border-muted'>
-        <div className='flex items-center gap-2'>
-          <RepoSelector
-            selected={selectedRepo}
-            setSelected={(value) => {
-              if (value === 'add') {
-                openAddDialog();
-              } else {
-                setSelectedRepo(value);
-              }
-            }}
-            repos={repos}
-            refreshRepos={refreshRepos}
-          />
-          <Button
-            variant='outline'
-            size='sm'
-            className='ml-2'
-            disabled={!selectedRepo || selectedRepo === 'add'}
-            onClick={openEditDialog}
-          >
-            Edit
-          </Button>
+    <ToastProvider>
+      <div className='container mx-auto p-4 sm:p-6 md:p-8 text-center relative max-w-none'>
+        <div className='relative pb-7'>
+          <h2 className='text-2xl font-bold mb-0 text-center'>
+            {selectedRepo ? `Containers for ${selectedRepo}` : 'Containers Up!'}
+          </h2>
+        </div>
+        <div className='px-2 sm:px-4 md:px-8'>
+          <div className='flex items-center gap-2'>
+            <RepoSelector
+              selected={selectedRepo}
+              setSelected={(value) => {
+                if (value === 'add') {
+                  openAddDialog();
+                } else {
+                  setSelectedRepo(value);
+                }
+              }}
+              repos={repos}
+              refreshRepos={refreshRepos}
+            />
+            <Button
+              variant='outline'
+              size='sm'
+              disabled={!selectedRepo || selectedRepo === 'add'}
+              onClick={openEditDialog}
+            >
+              Edit
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={async () => {
+                try {
+                  const res = await fetch('/api/repo/hl/containers', { method: 'DELETE' });
+                  if (res.ok) {
+                    (window as any).showToast('Cleanup triggered!');
+                  } else {
+                    (window as any).showToast('Cleanup failed.');
+                  }
+                } catch (e) {
+                  (window as any).showToast('Cleanup failed.');
+                }
+              }}
+              aria-label='Cleanup'
+            >
+              <BrushCleaning className='size-4' />
+            </Button>
+          </div>
         </div>
 
-        <CardContent className='pt-6'>
-          <h1 className='text-5xl font-bold my-4 leading-tight'>Containers Up!</h1>
-          <p>Show containers for {selectedRepo}</p>
-        </CardContent>
-      </Card>
+        <ContainerLayout selectedRepo={selectedRepo} />
 
-      <RepoDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        title={`${dialogMode === 'add' ? 'Add New' : 'Edit'} Repository`}
-        initialValues={dialogMode === 'edit' ? selectedRepoObj : undefined}
-        onSuccess={() => {
-          handleCloseDialog();
-          refreshRepos();
-        }}
-      />
-    </div>
+        <RepoDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          title={`${dialogMode === 'add' ? 'Add New' : 'Edit'} Repository`}
+          initialValues={dialogMode === 'edit' ? selectedRepoObj : undefined}
+          onSuccess={() => {
+            handleCloseDialog();
+            refreshRepos();
+          }}
+        />
+      </div>
+    </ToastProvider>
   );
 }
 

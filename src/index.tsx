@@ -56,6 +56,43 @@ const server = serve({
     // Serve index.html for all unmatched routes.
     '/*': index,
 
+    '/icons/:name': async (req) => {
+      const iconName = req.params.name;
+
+      // Validate filename to prevent directory traversal
+      if (
+        !iconName ||
+        iconName.includes('..') ||
+        iconName.includes('/') ||
+        iconName.includes('\\')
+      ) {
+        return new Response('File not found', { status: 404 });
+      }
+
+      // Only allow specific file extensions
+      const allowedExtensions = ['.webp'];
+      const hasValidExtension = allowedExtensions.some((ext) =>
+        iconName.toLowerCase().endsWith(ext)
+      );
+      if (!hasValidExtension) {
+        return new Response('File not found', { status: 404 });
+      }
+
+      // Use absolute path and restrict to icons directory
+      const filePath = `/storage/icons/${iconName}`;
+
+      try {
+        const file = Bun.file(filePath);
+        const exists = await file.exists();
+        if (!exists) {
+          return new Response('File not found', { status: 404 });
+        }
+        return new Response(file);
+      } catch (error) {
+        return new Response('Error serving file', { status: 500 });
+      }
+    },
+
     '/api/repo': {
       async GET(req) {
         const auth = requireAuthKey(req);
