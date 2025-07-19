@@ -1,6 +1,6 @@
 import { getIcon } from '@/backend/utils/icon';
 import { createExec } from '@/backend/utils/exec';
-import type { Repo } from '@/backend/db/repo';
+import type { Repo } from '@/backend/db/schema/repo';
 import { mainLogger } from '@/backend/utils/logger';
 import { job as jobDb } from '@/backend/db/job';
 import path from 'path';
@@ -81,36 +81,59 @@ export const getContainers = async (selectedRepo: Repo) => {
       });
 
     const workingFolder = path.join(selectedRepo.workingFolder, '/');
-    let mapToAddTo = composeFile.includes(workingFolder)
-      ? composedContainersByComposeFileMap
-      : otherComposedContainersByComposeFileMap;
     const relativeComposeFile = composeFile.replace(workingFolder, '');
+
+    const mapToAddTo =
+      composeFile.includes(workingFolder) &&
+      (!selectedRepo.excludeFolders ||
+        !new RegExp(selectedRepo.excludeFolders).test(relativeComposeFile))
+        ? composedContainersByComposeFileMap
+        : otherComposedContainersByComposeFileMap;
+
     if (!mapToAddTo.has(relativeComposeFile)) {
       mapToAddTo.set(relativeComposeFile, []);
     }
     mapToAddTo.get(relativeComposeFile).push(container);
   }
 
-  const composedContainersByComposeFile = Object.fromEntries(
-    await Promise.all(
-      Array.from(composedContainersByComposeFileMap.entries()).map(
-        async ([composeFile, containers]) => {
-          const composeFileFolder = composeFile
-            .replace(`${selectedRepo.workingFolder}/`, '')
-            .split('/');
-          composeFileFolder.pop();
+  const composedContainersByComposeFileEntries = await Promise.all(
+    Array.from(composedContainersByComposeFileMap.entries()).map(
+      async ([composeFile, containers]) => {
+        const composeFileFolder = composeFile
+          .replace(`${selectedRepo.workingFolder}/`, '')
+          .split('/');
+        composeFileFolder.pop();
 
-          const folder = path.join('/', composeFileFolder.join('/'));
-          return [
-            composeFile,
-            {
-              services: containers,
-              jobs: await jobDb.getJobsWithLogs(selectedRepo.id, folder !== '/' ? folder : ''),
-            },
-          ];
-        }
-      )
+        const folder = path.join('/', composeFileFolder.join('/'));
+        const jobs = await jobDb.getJobsWithLogs(selectedRepo.id, folder !== '/' ? folder : '');
+        return [
+          composeFile,
+          {
+            services: containers,
+            jobs,
+          },
+        ];
+      }
     )
+  );
+
+  composedContainersByComposeFileEntries.sort((a, b) => {
+    const aHasJobs = a[1].jobs && a[1].jobs.length > 0;
+    const bHasJobs = b[1].jobs && b[1].jobs.length > 0;
+
+    if (aHasJobs && bHasJobs) {
+      return b[1].jobs[0].updated > a[1].jobs[0].updated ? 1 : -1; // Descending order (newest first)
+    } else if (aHasJobs) {
+      return -1; // a comes before b
+    } else if (bHasJobs) {
+      return 1; // b comes before a
+    } else {
+      return 0; // both have no jobs, keep order
+    }
+  });
+
+  const composedContainersByComposeFile = Object.fromEntries(
+    composedContainersByComposeFileEntries
   );
 
   return {
