@@ -26,7 +26,7 @@ export const upsert = async ({
 }: {
   table: string;
   data: Record<string, any>;
-  conflictKey: string;
+  conflictKey: string | string[];
 }) => {
   const db = await getDb();
   const insertData = { ...data };
@@ -46,14 +46,15 @@ export const upsert = async ({
 
   const columns = Object.keys(insertData);
   const placeholders = columns.map((col) => `$${col}`);
+  const conflictKeys = Array.isArray(conflictKey) ? conflictKey : [conflictKey];
   const updates = columns
-    .filter((col) => col !== conflictKey && col !== 'id')
+    .filter((col) => !conflictKeys.includes(col) && col !== 'id')
     .map((col) => `${col}=excluded.${col}`)
     .join(', ');
 
   const sql = `INSERT INTO ${table} (${columns.join(', ')})
       VALUES (${placeholders.join(', ')})
-      ON CONFLICT(${conflictKey}) DO UPDATE SET ${updates}`;
+      ON CONFLICT(${conflictKeys.join(', ')}) DO UPDATE SET ${updates}`;
 
   return db.query(sql).run(insertData);
 };

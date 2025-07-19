@@ -1,38 +1,13 @@
 import { getDb, upsert } from '@/backend/db/connection';
 import { getDatetime } from '@/backend/utils';
-import { log as logDb, type Log } from '@/backend/db/log';
-
-export class Job {
-  id?: number;
-  repoId: number;
-  repoPr: string;
-  folder: string;
-  title: string;
-  status: string;
-  created?: number;
-  updated?: number;
-}
-
-export class JobWithLogs extends Job {
-  logs: Log[];
-}
+import { log as logDb } from '@/backend/db/log';
+import { Job, JobWithLogs, jobCreateTableSql } from '@/backend/db/schema/job';
 
 export const job = {
   upsert: async ({ repoId, repoPr, folder, title, status }: Job) => {
     const db = await getDb();
 
-    db.query(
-      `CREATE TABLE IF NOT EXISTS job (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        repoId INTEGER NOT NULL,
-        repoPr TEXT NOT NULL UNIQUE,
-        folder TEXT NOT NULL,
-        title TEXT NOT NULL,
-        status TEXT NOT NULL,
-        created DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`
-    ).run();
+    db.query(jobCreateTableSql).run();
 
     const data = { repoId, repoPr, folder, title, status, updated: getDatetime() };
     await upsert({ table: 'job', data, conflictKey: 'repoPr' });

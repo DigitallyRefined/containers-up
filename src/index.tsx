@@ -1,14 +1,16 @@
-import { serve } from 'bun';
+import { serve, type ErrorLike } from 'bun';
 import index from '@/index.html';
 
 import { getContainers } from '@/backend/endpoints/containers';
 import { githubWebhookHandler, type GitHubWebhookEvent } from '@/backend/endpoints/webhook/github';
 import { containersCleanup } from '@/backend/endpoints/containers-cleanup';
-import { getRepos, postRepo } from '@/backend/endpoints/repo';
+import { deleteRepo, getRepos, postRepo, putRepo } from '@/backend/endpoints/repo';
 import { repo } from '@/backend/db/repo';
+import { repoSchema } from '@/backend/db/schema/repo';
 import { log as logDb } from '@/backend/db/log';
 import { restartJob } from '@/backend/endpoints/jobs';
 import { job as jobDb } from '@/backend/db/job';
+import { Repo } from '@/backend/db/schema/repo';
 
 const API_PROXY_KEY = process.env.API_PROXY_KEY;
 
@@ -20,7 +22,26 @@ const requireAuthKey = (req: Request) => {
   return null;
 };
 
-const devServerOptions = {
+const serverOptions = {
+  error(error: ErrorLike) {
+    console.error('Unhandled error in route handler:', error);
+    return Response.json(
+      {
+        error: error.message || 'Internal server error',
+        ...(process.env.NODE_ENV !== 'production' && {
+          stack: error.stack,
+          details: error.toString(),
+        }),
+      },
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+  },
+
   development: process.env.NODE_ENV !== 'production' && {
     // Enable browser hot reloading in development
     hmr: true,
@@ -51,13 +72,28 @@ const server = serve({
         const auth = requireAuthKey(req);
         if (auth) return auth;
 
-        if (!/^[a-z0-9-]+$/.test(req.params.name)) {
+        const nameValidation = repoSchema.pick({ name: true }).safeParse({ name: req.params.name });
+        if (!nameValidation.success) {
           return Response.json({
-            error: 'Name must contain only lowercase letters, numbers, or hyphens',
+            error: nameValidation.error.issues || 'Invalid name',
           });
         }
 
         return Response.json(await postRepo({ name: req.params.name, ...(await req.json()) }));
+      },
+
+      async PUT(req) {
+        const auth = requireAuthKey(req);
+        if (auth) return auth;
+
+        return Response.json(await putRepo({ name: req.params.name, ...(await req.json()) }));
+      },
+
+      async DELETE(req) {
+        const auth = requireAuthKey(req);
+        if (auth) return auth;
+
+        return Response.json(await deleteRepo({ name: req.params.name } as Repo));
       },
     },
 
@@ -119,7 +155,7 @@ const server = serve({
     },
   },
 
-  ...devServerOptions,
+  ...serverOptions,
 });
 
 console.log(`🚀 Server running at ${server.url}`);
@@ -181,7 +217,7 @@ const webhookServer = serve({
     },
   },
 
-  ...devServerOptions,
+  ...serverOptions,
 });
 
 console.log(`⤷ webhook server running at ${webhookServer.url}`);
