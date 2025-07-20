@@ -3,7 +3,7 @@ export class Log {
   jobId?: number;
   repo: string;
   level: number;
-  time: number;
+  time: string;
   event: string;
   msg: string;
 }
@@ -14,7 +14,7 @@ export const logCreateTableSql = `
     jobId INTEGER,
     repo TEXT NOT NULL,
     level INTEGER NOT NULL,
-    time INTEGER NOT NULL,
+    time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     event TEXT NOT NULL,
     msg TEXT NOT NULL
   )

@@ -118,7 +118,7 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
         <p className='text-xs  mb-2'>
           PR: <RepoPrLink repoPr={job.repoPr} url={prUrl} status={job.status} />
         </p>
-        <p className='text-xs '>{getRelativeTime(job.updated)}</p>
+        <p className='text-xs '>{getRelativeTime(`${job.updated}Z`)}</p>
         {job.logs.length > 0 && (
           <div className='mt-3 w-full flex items-center justify-center gap-2'>
             <Dialog

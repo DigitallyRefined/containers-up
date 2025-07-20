@@ -21,7 +21,7 @@ export const repoCreateTableSql = `
     webhookSecret TEXT NOT NULL,
     workingFolder TEXT NOT NULL,
     excludeFolders TEXT,
-    created DATETIME DEFAULT CURRENT_TIMESTAMP
+    created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   )
 `;
 

@@ -1,7 +1,7 @@
 import * as path from 'path';
 
 import { mainLogger, getLogs } from '@/backend/utils/logger';
-import type { Repo } from '@/backend/db/repo';
+import { type Repo } from '@/backend/db/schema/repo';
 import { containersCleanup } from '@/backend/endpoints/containers-cleanup';
 import { createExec } from '@/backend/utils/exec';
 import type { Logger } from 'pino';
