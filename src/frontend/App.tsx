@@ -8,6 +8,8 @@ import { ContainerLayout } from '@/frontend/components/Container/Layout';
 import { ToastProvider } from '@/frontend/components/ui/toast';
 
 import './index.css';
+import './img/icon-containers-up.svg';
+import './img/icon-containers-up.webp';
 
 export function App() {
   const [selectedRepo, setSelectedRepo] = useState<string | undefined>(undefined);

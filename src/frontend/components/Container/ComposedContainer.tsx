@@ -29,6 +29,7 @@ export const ComposedContainer = ({ cardTitle, services, jobs }: ComposedContain
                     src={`/icons/${service.Config.Labels['com.docker.compose.service']}.webp`}
                     alt={service.Config.Labels['com.docker.compose.service']}
                     className='absolute top-4 left-4 w-8 opacity-80 z-0'
+                    onError={(e) => (e.currentTarget.style.display = 'none')}
                   />
                   <h5 className='font-semibold text-sm mb-2'>
                     {service.Config.Labels['com.docker.compose.service']}

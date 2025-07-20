@@ -17,6 +17,15 @@ export const getIcon = async (name: string | undefined): Promise<void> => {
 
   await fs.mkdir(dir, { recursive: true });
 
+  if (name === 'containers-up') {
+    const files = await fs.readdir('.');
+    const iconFile = files.find((f) => /^icon-containers-up-.*\.webp$/.test(f));
+    if (iconFile) {
+      await fs.writeFile(filePath, await fs.readFile(iconFile));
+      return;
+    }
+  }
+
   let response = await fetch(`${imgServiceUrl}/${encodeURIComponent(name)}.webp`);
   if (!response.ok) {
     response = await fetch(`${imgServiceUrl}/docker.webp`);
