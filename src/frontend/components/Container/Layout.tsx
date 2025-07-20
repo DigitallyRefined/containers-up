@@ -6,6 +6,10 @@ import { JobWithLogs } from '@/backend/db/schema/job';
 interface Service {
   State: {
     Status: string;
+    StartedAt: string;
+    Health?: {
+      Status: string;
+    };
   };
   Config: {
     Labels: {

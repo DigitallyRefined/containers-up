@@ -12,29 +12,32 @@ import {
 } from '@/frontend/components/ui/dialog';
 import { Button } from '@/frontend/components/ui/button';
 import { type JobWithLogs } from '@/backend/db/schema/job';
+import { getRelativeTime } from '@/frontend/lib/utils';
+import { Link } from '../ui/link';
 
-export const RepoPrLink = ({ repoPr, status }: { repoPr: string; status: string }) => {
-  const match = repoPr.match(/^([^\/]+\/[^#]+)#(\d+)$/);
+export const RepoPrLink = ({
+  repoPr,
+  url,
+  status,
+}: {
+  repoPr: string;
+  url: string;
+  status: string;
+}) => {
   const isClosed = status === 'completed';
   const Icon = isClosed ? GitPullRequest : GitPullRequestArrow;
   const iconColor = isClosed ? '#8250df' : '#1a7f37';
-  if (match) {
-    const [, repo, prId] = match;
+  if (url) {
     return (
-      <a
-        href={`https://github.com/${repo}/pull/${prId}`}
-        target='_blank'
-        rel='noopener noreferrer'
-        className='text-blue-400 hover:text-blue-600 underline inline-flex items-center gap-1'
-      >
+      <Link href={url}>
         <Icon className='' color={iconColor} size={16} />
         {repoPr}
-      </a>
+      </Link>
     );
   }
   return (
     <span className='inline-flex items-center gap-1'>
-      <Icon className='' color={iconColor} size={16} />
+      <Icon color={iconColor} size={16} />
       {repoPr}
     </span>
   );
@@ -47,7 +50,7 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'opened':
-        return 'bg-blue-50 text-blue-600';
+        return 'bg-blue-100 text-blue-700 border-2 border-orange-300 font-bold';
       case 'running':
         return 'bg-yellow-100 text-yellow-800';
       case 'completed':
@@ -88,20 +91,34 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
     }
   };
 
+  let prUrl = '';
+  const prUrlMatch = job.repoPr.match(/^([^\/]+\/[^#]+)#(\d+)$/);
+  if (prUrlMatch) {
+    const [, repo, prId] = prUrlMatch;
+    prUrl = `https://github.com/${repo}/pull/${prId}`;
+  }
+
   return (
     <Card key={job.id}>
-      <CardContent className='p-2 sm:p-3 md:p-4'>
-        <div className='flex justify-between items-start mb-2'>
-          <h5 className='font-medium text-sm'>{job.title}</h5>
-          <span className={`text-xs px-2 py-1 rounded ${getStatusColor(job.status)}`}>
-            {job.status}
-          </span>
+      <CardContent className='p-2 sm:p-3 md:p-4 relative'>
+        {/* Status badge in top right, blended into border */}
+        <span
+          className={`absolute -top-2 -right-1 text-xs px-2 py-1 rounded-xl z-10 border border-gray-200 shadow-sm ${getStatusColor(
+            job.status
+          )}`}
+          style={{ boxShadow: '0 1px 2px rgba(16,30,54,0.04)' }}
+        >
+          {job.status}
+        </span>
+        <div className='my-2'>
+          <h5 className='font-medium text-sm text-center w-full'>
+            <Link href={prUrl}>{job.title}</Link>
+          </h5>
         </div>
         <p className='text-xs  mb-2'>
-          PR: <RepoPrLink repoPr={job.repoPr} status={job.status} />
+          PR: <RepoPrLink repoPr={job.repoPr} url={prUrl} status={job.status} />
         </p>
-        <p className='text-xs  mb-2'>Folder: {job.folder}</p>
-        <p className='text-xs '>Updated: {new Date(`${job.updated}Z`).toLocaleString()}</p>
+        <p className='text-xs '>{getRelativeTime(job.updated)}</p>
         {job.logs.length > 0 && (
           <div className='mt-3 w-full flex items-center justify-center gap-2'>
             <Dialog
@@ -110,7 +127,7 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
             >
               <DialogTrigger asChild>
                 <Button variant='outline' size='sm'>
-                  View Logs ({job.logs.length})
+                  View Logs
                 </Button>
               </DialogTrigger>
               <DialogContent className='w-full max-w-full md:w-[95vw] md:max-w-[95vw] xl:w-[80vw] xl:max-w-[80vw] 2xl:w-[70vw] 2xl:max-w-[70vw] 3xl:w-[60vw] 3xl:max-w-[60vw]'>

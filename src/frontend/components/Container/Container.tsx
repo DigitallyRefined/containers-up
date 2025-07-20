@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/card';
 import type { ComposedContainer } from '@/frontend/components/Container/Layout';
 import { Jobs } from '@/frontend/components/Container/Jobs';
+import { getRelativeTime } from '@/frontend/lib/utils';
+import { Link } from '../ui/link';
 
 export const Container = ({
   composeFile,
@@ -35,21 +37,16 @@ export const Container = ({
                       service.State.Status === 'running' ? 'text-green-600' : 'text-red-600'
                     }`}
                   >
-                    Status: {service.State.Status}
+                    Status: {service.State.Status}{' '}
+                    {service.State.Health?.Status && `(${service.State.Health.Status})`}
                   </p>
+                  <p className='text-xs'>{getRelativeTime(service.State.StartedAt)}</p>
                   {service.urls && service.urls.length > 0 && (
                     <div className='mt-2'>
-                      <p className='text-xs  mb-1'>URLs:</p>
                       {service.urls.map((url, urlIndex) => (
-                        <a
-                          key={urlIndex}
-                          href={url}
-                          target='_blank'
-                          rel='noopener noreferrer'
-                          className='text-xs text-blue-400 hover:text-blue-600 block'
-                        >
+                        <Link key={urlIndex} href={url} className='text-xs'>
                           {url}
-                        </a>
+                        </Link>
                       ))}
                     </div>
                   )}

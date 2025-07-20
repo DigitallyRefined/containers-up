@@ -1,9 +1,11 @@
+import path from 'path';
+
 import { getIcon } from '@/backend/utils/icon';
 import { createExec } from '@/backend/utils/exec';
 import type { Repo } from '@/backend/db/schema/repo';
 import { mainLogger } from '@/backend/utils/logger';
 import { job as jobDb } from '@/backend/db/job';
-import path from 'path';
+import { getTraefikUrl } from '@/backend/utils';
 
 const event = 'containers';
 const logger = mainLogger.child({ event });
@@ -65,19 +67,13 @@ export const getContainers = async (selectedRepo: Repo) => {
         if (!ruleLabel) {
           return;
         }
-        const host = ruleLabel
-          .replaceAll('Host(`', '')
-          .replaceAll('`)', '')
-          .replaceAll('&&', '')
-          .replaceAll('PathPrefix(`', '')
-          .replaceAll('Path(`', '')
-          .replaceAll(' ', '');
+
         const tlsLabelKey = Object.keys(container.Config.Labels).find(
           (key) => key.startsWith('traefik.http.routers.') && key.endsWith('.tls')
         );
         const isTls = tlsLabelKey ? container.Config.Labels[tlsLabelKey] === 'true' : undefined;
         if (!container.urls) container.urls = [];
-        container.urls.push(`http${isTls ? 's' : ''}://${host}`);
+        container.urls.push(`http${isTls ? 's' : ''}://${getTraefikUrl(ruleLabel)}`);
       });
 
     const workingFolder = path.join(selectedRepo.workingFolder, '/');

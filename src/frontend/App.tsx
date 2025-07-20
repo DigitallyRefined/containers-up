@@ -112,6 +112,9 @@ export function App() {
               <BrushCleaning className='size-4' />
             </Button>
           </div>
+          <div className='text-xs text-muted-foreground'>
+            GitHub Webhook: <code>/api/webhook/github/repo/{selectedRepo}</code>
+          </div>
         </div>
 
         <ContainerLayout selectedRepo={selectedRepo} />
