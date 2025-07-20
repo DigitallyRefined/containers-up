@@ -13,7 +13,7 @@ import {
 import { Button } from '@/frontend/components/ui/button';
 import { type JobWithLogs } from '@/backend/db/schema/job';
 import { getRelativeTime } from '@/frontend/lib/utils';
-import { Link } from '../ui/link';
+import { Link } from '@/frontend/components/ui/link';
 
 export const RepoPrLink = ({
   repoPr,

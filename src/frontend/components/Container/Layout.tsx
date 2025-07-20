@@ -1,9 +1,18 @@
 import { useEffect, useState } from 'react';
 
-import { Container } from '@/frontend/components/Container/Container';
+import { ComposedContainer } from '@/frontend/components/Container/ComposedContainer';
 import { JobWithLogs } from '@/backend/db/schema/job';
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from '@/frontend/components/ui/accordion';
+import { Container } from '@/frontend/components/Container/Container';
+import { ContainerImage } from '@/frontend/components/Container/Image';
 
-interface Service {
+export interface Service {
+  Name: string;
   State: {
     Status: string;
     StartedAt: string;
@@ -25,10 +34,23 @@ export interface ComposedContainer {
   jobs: JobWithLogs[];
 }
 
+export interface Images {
+  Repository: string;
+  Tag: string;
+  Size: number;
+  CreatedAt: string;
+}
+
 interface ContainersResponse {
   composedContainers: {
     [key: string]: ComposedContainer;
   };
+  otherComposedContainers: {
+    [key: string]: Service[];
+  };
+  separateContainers: Service[];
+  images: Images[];
+  unusedDockerImages: Images[];
 }
 
 export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
@@ -84,8 +106,59 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
     <div className='container mx-auto p-2 sm:p-4 md:p-8 text-center relative max-w-none'>
       <div className='grid gap-4 md:grid-cols-1 2xl:grid-cols-2 3xl:grid-cols-3'>
         {Object.entries(containersData.composedContainers).map(([composeFile, containerData]) => (
-          <Container key={composeFile} composeFile={composeFile} containerData={containerData} />
+          <ComposedContainer
+            key={composeFile}
+            cardTitle={composeFile}
+            services={containerData.services}
+            jobs={containerData.jobs}
+          />
         ))}
+      </div>
+      <div className='mt-8 text-left'>
+        <Accordion type='multiple' className='w-full'>
+          <AccordionItem value='otherComposedContainers'>
+            <AccordionTrigger>Other Composed Containers</AccordionTrigger>
+            <AccordionContent>
+              <div className='container mx-auto py-2 sm:py-4 md:py-8 text-center relative max-w-none'>
+                <div className='grid gap-4 md:grid-cols-1 2xl:grid-cols-2 3xl:grid-cols-3'>
+                  {Object.entries(containersData.otherComposedContainers).map(([key, services]) => (
+                    <ComposedContainer key={key} cardTitle={key} services={services} />
+                  ))}
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value='separateContainers'>
+            <AccordionTrigger>Separate Containers</AccordionTrigger>
+            <AccordionContent>
+              <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+                {containersData.separateContainers.map((service, idx) => (
+                  <Container key={idx} service={service} />
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value='images'>
+            <AccordionTrigger>Images</AccordionTrigger>
+            <AccordionContent>
+              <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+                {containersData.images.map((image, idx) => (
+                  <ContainerImage key={idx} image={image} />
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value='unusedDockerImages'>
+            <AccordionTrigger>Unused Docker Images</AccordionTrigger>
+            <AccordionContent>
+              <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+                {containersData.unusedDockerImages.map((image, idx) => (
+                  <ContainerImage key={idx} image={image} />
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
     </div>
   );

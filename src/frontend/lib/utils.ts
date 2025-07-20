@@ -8,11 +8,11 @@ export function cn(...inputs: ClassValue[]) {
 
 export const getRelativeTime = (
   isoString: string | number,
-  largestUnit: Temporal.DateTimeUnit = 'month',
+  largestUnit: Temporal.DateTimeUnit = 'year',
   timeZone: Temporal.TimeZoneLike = 'UTC'
 ) => {
   const now = Temporal.Now.zonedDateTimeISO(timeZone);
-  const past = Temporal.ZonedDateTime.from(`${isoString}[${timeZone}]`);
+  const past = Temporal.ZonedDateTime.from(`${new Date(isoString).toISOString()}[${timeZone}]`);
   const diff = now.since(past, { largestUnit });
 
   const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
