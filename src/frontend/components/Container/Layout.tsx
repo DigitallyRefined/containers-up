@@ -21,6 +21,7 @@ export interface Service {
     };
   };
   Config: {
+    Image: string;
     Labels: {
       'com.docker.compose.project': string;
       'com.docker.compose.service': string;
@@ -42,19 +43,19 @@ export interface Images {
 }
 
 interface ContainersResponse {
-  composedContainers: {
+  composedContainers?: {
     [key: string]: ComposedContainer;
   };
-  otherComposedContainers: {
+  otherComposedContainers?: {
     [key: string]: Service[];
   };
-  separateContainers: Service[];
-  images: Images[];
-  unusedDockerImages: Images[];
+  separateContainers?: Service[];
+  images?: Images[];
+  unusedDockerImages?: Images[];
 }
 
 export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
-  const [containersData, setContainersData] = useState<ContainersResponse | null>(null);
+  const [containersData, setContainersData] = useState<ContainersResponse>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,7 +70,9 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
         const response = await fetch(`/api/repo/${selectedRepo}/containers`);
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch containers: ${response.statusText}`);
+          throw new Error(
+            `Failed to fetch containers${response.statusText ? `: ${response.statusText}` : ''}`
+          );
         }
 
         const data: ContainersResponse = await response.json();
@@ -84,7 +87,7 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
     fetchContainers();
   }, [selectedRepo]);
 
-  if (loading) {
+  if (loading || !Object.keys(containersData).length) {
     return <div className='container mx-auto p-8 text-center relative'>Loading containers...</div>;
   }
 
@@ -94,33 +97,36 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
     );
   }
 
-  if (!containersData || Object.keys(containersData.composedContainers).length === 0) {
-    return (
-      <div className='container mx-auto p-8 text-center relative'>
-        <p>No containers found for this repository.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className='container mx-auto p-2 sm:p-4 md:p-8 text-center relative max-w-none'>
-      <div className='grid gap-4 md:grid-cols-1 2xl:grid-cols-2 3xl:grid-cols-3'>
-        {Object.entries(containersData.composedContainers).map(([composeFile, containerData]) => (
-          <ComposedContainer
-            key={composeFile}
-            cardTitle={composeFile}
-            services={containerData.services}
-            jobs={containerData.jobs}
-          />
-        ))}
-      </div>
-      <div className='mt-8 text-left'>
-        <Accordion type='multiple' className='w-full'>
+    <div className='container mx-auto p-2 sm:p-4 md:p-6 relative max-w-none'>
+      {containersData.composedContainers &&
+      (Object.keys(containersData.composedContainers).length ?? 0) > 0 ? (
+        <div className='grid gap-4 md:grid-cols-1 2xl:grid-cols-2 3xl:grid-cols-3 mb-8'>
+          {Object.entries(containersData.composedContainers).map(([composeFile, containerData]) => (
+            <ComposedContainer
+              key={composeFile}
+              cardTitle={composeFile}
+              services={containerData.services}
+              jobs={containerData.jobs}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className='container mx-auto p-8 text-center relative text-red-600'>
+          No composed containers found matching the configuration for this repository.
+          <br />
+          Check working folder is correct.
+        </div>
+      )}
+      <Accordion type='multiple' className='w-full'>
+        {((containersData.otherComposedContainers &&
+          Object.keys(containersData.otherComposedContainers).length) ??
+          0) > 0 && (
           <AccordionItem value='otherComposedContainers'>
             <AccordionTrigger>Other Composed Containers</AccordionTrigger>
             <AccordionContent>
-              <div className='container mx-auto py-2 sm:py-4 md:py-8 text-center relative max-w-none'>
-                <div className='grid gap-4 md:grid-cols-1 2xl:grid-cols-2 3xl:grid-cols-3'>
+              <div className='container mx-auto py-1 sm:py-2 md:py-3 text-center relative max-w-none'>
+                <div className='grid gap-2 md:grid-cols-1 2xl:grid-cols-2 3xl:grid-cols-3'>
                   {Object.entries(containersData.otherComposedContainers).map(([key, services]) => (
                     <ComposedContainer key={key} cardTitle={key} services={services} />
                   ))}
@@ -128,38 +134,44 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
               </div>
             </AccordionContent>
           </AccordionItem>
+        )}
+        {(containersData.separateContainers?.length ?? 0) > 0 && (
           <AccordionItem value='separateContainers'>
             <AccordionTrigger>Separate Containers</AccordionTrigger>
             <AccordionContent>
-              <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+              <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-3 text-left'>
                 {containersData.separateContainers.map((service, idx) => (
                   <Container key={idx} service={service} />
                 ))}
               </div>
             </AccordionContent>
           </AccordionItem>
+        )}
+        {(containersData.images?.length ?? 0) > 0 && (
           <AccordionItem value='images'>
             <AccordionTrigger>Images</AccordionTrigger>
             <AccordionContent>
-              <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+              <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-3 text-left'>
                 {containersData.images.map((image, idx) => (
                   <ContainerImage key={idx} image={image} />
                 ))}
               </div>
             </AccordionContent>
           </AccordionItem>
+        )}
+        {(containersData.unusedDockerImages?.length ?? 0) > 0 && (
           <AccordionItem value='unusedDockerImages'>
             <AccordionTrigger>Unused Docker Images</AccordionTrigger>
             <AccordionContent>
-              <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+              <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-3 text-left'>
                 {containersData.unusedDockerImages.map((image, idx) => (
                   <ContainerImage key={idx} image={image} />
                 ))}
               </div>
             </AccordionContent>
           </AccordionItem>
-        </Accordion>
-      </div>
+        )}
+      </Accordion>
     </div>
   );
 };

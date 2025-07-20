@@ -33,6 +33,7 @@ export const ComposedContainer = ({ cardTitle, services, jobs }: ComposedContain
                   <h5 className='font-semibold text-sm mb-2'>
                     {service.Config.Labels['com.docker.compose.service']}
                   </h5>
+                  <p className='text-xs break-all'>{service.Config.Image.split('@')[0]}</p>
                   <p
                     className={`text-xs font-medium ${
                       service.State.Status === 'running' ? 'text-green-600' : 'text-red-600'
