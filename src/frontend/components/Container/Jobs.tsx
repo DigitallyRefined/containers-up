@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GitPullRequestArrow, GitPullRequest } from 'lucide-react';
+import { GitPullRequestArrow, GitPullRequest, RefreshCcwIcon, LogsIcon } from 'lucide-react';
 
 import { Card, CardContent } from '@/frontend/components/ui/card';
 import {
@@ -8,12 +8,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogClose,
 } from '@/frontend/components/ui/dialog';
 import { Button } from '@/frontend/components/ui/button';
 import { type JobWithLogs } from '@/backend/db/schema/job';
 import { getRelativeTime } from '@/frontend/lib/utils';
 import { Link } from '@/frontend/components/ui/link';
+import { Logs } from '@/frontend/components/Container/Logs';
+import { Tooltip } from '@/frontend/components/ui/tooltip';
 
 export const RepoPrLink = ({
   repoPr,
@@ -59,18 +60,6 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
         return 'bg-red-100 text-red-800';
       default:
         return 'text-gray-800';
-    }
-  };
-
-  const getLogLevelInfo = (level: number) => {
-    if (level >= 50) {
-      return { color: 'bg-red-100 text-red-800', label: 'ERROR' };
-    } else if (level >= 40) {
-      return { color: 'bg-orange-100 text-orange-800', label: 'WARN' };
-    } else if (level >= 30) {
-      return { color: 'bg-yellow-100 text-yellow-800', label: 'INFO' };
-    } else {
-      return { color: 'bg-blue-50 text-blue-600', label: 'DEBUG' };
     }
   };
 
@@ -125,45 +114,36 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
               open={openJobId === job.id}
               onOpenChange={(open) => setOpenJobId(open ? job.id : null)}
             >
-              <DialogTrigger asChild>
-                <Button variant='outline' size='sm'>
-                  View Logs
-                </Button>
-              </DialogTrigger>
-              <DialogContent className='w-full max-w-full md:w-[95vw] md:max-w-[95vw] xl:w-[80vw] xl:max-w-[80vw] 2xl:w-[70vw] 2xl:max-w-[70vw] 3xl:w-[60vw] 3xl:max-w-[60vw]'>
+              <Tooltip content='View Logs'>
+                <DialogTrigger asChild>
+                  <Button variant='outline' size='sm' aria-label='View Logs'>
+                    <LogsIcon className='size-4' />
+                  </Button>
+                </DialogTrigger>
+              </Tooltip>
+              <DialogContent className='w-full max-w-screen-lg max-h-[90vh]'>
                 <DialogHeader>
                   <DialogTitle>Logs for {job.title}</DialogTitle>
                 </DialogHeader>
-                <div className='space-y-2 max-h-96 overflow-y-auto'>
+                <div className='space-y-2 max-h-[80vh] overflow-y-auto'>
                   {job.logs.map((log, logIndex) => (
-                    <div key={logIndex} className='text-xs p-2 rounded bg-muted'>
-                      <div className='flex justify-between items-start mb-1'>
-                        <span className='text-muted-foreground'>
-                          {new Date(`${log.time}Z`).toLocaleString()}
-                        </span>
-                        <span
-                          className={`px-1 py-0.5 rounded text-xs ${
-                            getLogLevelInfo(log.level).color
-                          }`}
-                        >
-                          {getLogLevelInfo(log.level).label}
-                        </span>
-                      </div>
-                      <pre className='whitespace-pre-wrap text-left break-words'>{log.msg}</pre>
-                    </div>
+                    <Logs key={logIndex} log={log} />
                   ))}
                 </div>
-                <DialogClose asChild>
-                  <Button variant='secondary' className='mt-4 w-full'>
-                    Close
-                  </Button>
-                </DialogClose>
               </DialogContent>
             </Dialog>
             {job.status !== 'opened' && (
-              <Button variant='outline' size='sm' onClick={handleRestart} disabled={restarting}>
-                Restart
-              </Button>
+              <Tooltip content='Restart Job'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={handleRestart}
+                  disabled={restarting}
+                  aria-label='Restart Job'
+                >
+                  <RefreshCcwIcon className='size-4' />
+                </Button>
+              </Tooltip>
             )}
           </div>
         )}

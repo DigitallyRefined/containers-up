@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '../ui/select';
 import type { Repo } from '@/backend/db/schema/repo';
 
@@ -6,16 +5,9 @@ interface RepoSelectorProps {
   selected: string | undefined;
   setSelected: (value: string | undefined) => void;
   repos: Repo[];
-  refreshRepos: () => void;
 }
 
-export const RepoSelector = ({ selected, setSelected, repos, refreshRepos }: RepoSelectorProps) => {
-  useEffect(() => {
-    if (selected && selected !== 'add') {
-      localStorage.setItem('selectedRepo', selected);
-    }
-  }, [selected]);
-
+export const RepoSelector = ({ selected, setSelected, repos }: RepoSelectorProps) => {
   return (
     <Select value={selected || ''} onValueChange={setSelected}>
       <SelectTrigger>

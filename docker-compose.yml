@@ -2,6 +2,7 @@ services:
   containers-up:
     build: .
     container_name: containers-up
+    restart: always
     # Disable Core Dumps
     ulimits:
       core:

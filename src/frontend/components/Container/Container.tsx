@@ -14,7 +14,9 @@ export const Container = ({ service }: { service: Service }) => {
         <p className='text-xs break-all'>{service.Config.Image.split('@')[0]}</p>
         <p
           className={`text-xs font-medium ${
-            service.State.Status === 'running' ? 'text-green-600' : 'text-red-600'
+            service.State.Status === 'running' && service.State.Health?.Status === 'healthy'
+              ? 'text-green-600'
+              : 'text-red-600'
           }`}
         >
           Status: {service.State.Status}{' '}

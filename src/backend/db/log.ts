@@ -19,4 +19,11 @@ export const log = {
       .as(Log)
       .all(jobId ? { jobId } : undefined);
   },
+  getByRepo: async (repo: string) => {
+    const db = await getDb();
+    return db
+      .query(`SELECT * FROM log WHERE repo = $repo ORDER BY time DESC LIMIT 50`)
+      .as(Log)
+      .all({ repo });
+  },
 };

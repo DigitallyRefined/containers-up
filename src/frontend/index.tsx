@@ -7,12 +7,18 @@
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { App } from './App';
+import { TooltipProvider } from '@radix-ui/react-tooltip';
+import { App } from '@/frontend/App';
+import { ToastProvider } from '@/frontend/components/ui/toast';
 
 const elem = document.getElementById('root')!;
 const app = (
   <StrictMode>
-    <App />
+    <ToastProvider>
+      <TooltipProvider>
+        <App />
+      </TooltipProvider>
+    </ToastProvider>
   </StrictMode>
 );
 
