@@ -1,7 +1,7 @@
 import path from 'path';
 
 import { getIcon } from '@/backend/utils/icon';
-import { createExec } from '@/backend/utils/exec';
+import { createDockerExec } from '@/backend/utils/docker';
 import type { Repo } from '@/backend/db/schema/repo';
 import { mainLogger } from '@/backend/utils/logger';
 import { job as jobDb } from '@/backend/db/job';
@@ -9,7 +9,7 @@ import { getTraefikUrl } from '@/backend/utils';
 
 const event = 'containers';
 const logger = mainLogger.child({ event });
-const exec = createExec(logger);
+const dockerExec = createDockerExec(logger);
 
 const getUnusedDockerImages = async (containers, images) => {
   const usedImageIds = new Set(containers.map((container) => container.Image));
@@ -17,7 +17,7 @@ const getUnusedDockerImages = async (containers, images) => {
 };
 
 const getContainersRunningViaCompose = async (context: string) => {
-  const containers = await exec.listContainers(context);
+  const containers = await dockerExec.listContainers(context);
   const composedContainers = containers.filter(
     (container) =>
       container.Config.Labels &&
@@ -35,7 +35,7 @@ const getContainersRunningViaCompose = async (context: string) => {
 
 export const getContainers = async (selectedRepo: Repo) => {
   const [images, { containers, composedContainers, nonComposedContainers }] = await Promise.all([
-    exec.listImages(selectedRepo.name),
+    dockerExec.listImages(selectedRepo.name),
     getContainersRunningViaCompose(selectedRepo.name),
   ]);
 

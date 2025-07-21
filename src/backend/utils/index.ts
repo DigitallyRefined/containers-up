@@ -50,3 +50,6 @@ export const getTraefikUrl = (ruleLabel: string) => {
   }
   return firstUrl;
 };
+
+export const isValidContainerIdOrName = (id: string) =>
+  typeof id === 'string' && /^[a-zA-Z0-9_.-]+$/.test(id);

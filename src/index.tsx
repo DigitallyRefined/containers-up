@@ -1,4 +1,4 @@
-import { serve, type ErrorLike } from 'bun';
+import { serve, type ErrorLike, type Serve } from 'bun';
 import index from '@/index.html';
 
 import { getContainers } from '@/backend/endpoints/containers';
@@ -11,6 +11,11 @@ import { log as logDb } from '@/backend/db/log';
 import { restartJob } from '@/backend/endpoints/jobs';
 import { job as jobDb } from '@/backend/db/job';
 import { Repo } from '@/backend/db/schema/repo';
+import { isValidContainerIdOrName } from '@/backend/utils';
+import { createDockerExec } from '@/backend/utils/docker';
+import { mainLogger } from './backend/utils/logger';
+
+const dockerExec = createDockerExec(mainLogger);
 
 const API_PROXY_KEY = process.env.API_PROXY_KEY;
 
@@ -22,7 +27,9 @@ const requireAuthKey = (req: Request) => {
   return null;
 };
 
-const serverOptions = {
+const serverOptions: Partial<Serve> = {
+  idleTimeout: 30,
+
   error(error: ErrorLike) {
     console.error('Unhandled error in route handler:', error);
     return Response.json(
@@ -134,6 +141,20 @@ const server = serve({
       },
     },
 
+    '/api/repo/:name/logs': {
+      async GET(req) {
+        const auth = requireAuthKey(req);
+        if (auth) return auth;
+
+        const selectedRepo = await repo.getByName(req.params.name);
+        if (!selectedRepo) {
+          return new Response('Repository not found', { status: 404 });
+        }
+
+        return Response.json(await logDb.getByRepo(selectedRepo.repo));
+      },
+    },
+
     '/api/repo/:name/jobs': {
       async GET(req) {
         const auth = requireAuthKey(req);
@@ -177,6 +198,117 @@ const server = serve({
         }
 
         return Response.json(cleanupLogs);
+      },
+    },
+
+    '/api/repo/:repo/container/:containerId': {
+      async PUT(req) {
+        const auth = requireAuthKey(req);
+        if (auth) return auth;
+
+        const selectedRepo = await repo.getByName(req.params.repo);
+        if (!selectedRepo) {
+          return new Response('Repository not found', { status: 404 });
+        }
+
+        const containerId = req.params.containerId;
+        if (!isValidContainerIdOrName(containerId)) {
+          return new Response('Invalid container ID or name', { status: 400 });
+        }
+
+        return dockerExec.restartOrStopContainer(selectedRepo.name, containerId, 'restart');
+      },
+
+      async DELETE(req) {
+        const auth = requireAuthKey(req);
+        if (auth) return auth;
+
+        const selectedRepo = await repo.getByName(req.params.repo);
+        if (!selectedRepo) {
+          return new Response('Repository not found', { status: 404 });
+        }
+
+        const containerId = req.params.containerId;
+        if (!isValidContainerIdOrName(containerId)) {
+          return new Response('Invalid container ID or name', { status: 400 });
+        }
+
+        return dockerExec.restartOrStopContainer(selectedRepo.name, containerId, 'stop');
+      },
+    },
+
+    '/api/repo/:repo/image/:imageId': {
+      async DELETE(req) {
+        const auth = requireAuthKey(req);
+        if (auth) return auth;
+
+        const selectedRepo = await repo.getByName(req.params.repo);
+        if (!selectedRepo) {
+          return new Response('Repository not found', { status: 404 });
+        }
+
+        const imageId = req.params.imageId;
+        if (!isValidContainerIdOrName(imageId)) {
+          return new Response('Invalid image ID or name', { status: 400 });
+        }
+
+        return dockerExec.removeImage(selectedRepo.name, imageId);
+      },
+    },
+
+    '/api/repo/:repo/compose': {
+      async POST(req) {
+        const auth = requireAuthKey(req);
+        if (auth) return auth;
+
+        const selectedRepo = await repo.getByName(req.params.repo);
+        if (!selectedRepo) {
+          return new Response('Repository not found', { status: 404 });
+        }
+
+        const data = await req.json();
+
+        if (await dockerExec.isInvalidComposeFile(selectedRepo, data.composeFile)) {
+          return Response.json({ error: 'Invalid or missing compose file' }, { status: 400 });
+        }
+
+        return dockerExec.startCompose(selectedRepo.name, selectedRepo.sshCmd, data.composeFile);
+      },
+
+      async PUT(req) {
+        const auth = requireAuthKey(req);
+        if (auth) return auth;
+
+        const selectedRepo = await repo.getByName(req.params.repo);
+        if (!selectedRepo) {
+          return new Response('Repository not found', { status: 404 });
+        }
+
+        const data = await req.json();
+
+        if (await dockerExec.isInvalidComposeFile(selectedRepo, data.composeFile)) {
+          return Response.json({ error: 'Invalid or missing compose file' }, { status: 400 });
+        }
+
+        return dockerExec.restartCompose(selectedRepo.name, selectedRepo.sshCmd, data.composeFile);
+      },
+
+      async DELETE(req) {
+        const auth = requireAuthKey(req);
+        if (auth) return auth;
+
+        const selectedRepo = await repo.getByName(req.params.repo);
+        if (!selectedRepo) {
+          return new Response('Repository not found', { status: 404 });
+        }
+
+        const data = await req.json();
+
+        if (await dockerExec.isInvalidComposeFile(selectedRepo, data.composeFile)) {
+          return Response.json({ error: 'Invalid or missing compose file' }, { status: 400 });
+        }
+
+        return dockerExec.stopCompose(selectedRepo.name, selectedRepo.sshCmd, data.composeFile);
       },
     },
 
