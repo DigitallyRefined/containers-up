@@ -4,7 +4,7 @@ import { BrushCleaning, PencilIcon } from 'lucide-react';
 import { Button } from '@/frontend/components/ui/button';
 import { RepoSelector } from '@/frontend/components/Repo/Selector';
 import { RepoDialog } from '@/frontend/components/Repo/Dialog';
-import { ContainerLayout } from '@/frontend/components/Container/Layout';
+import { ContainerLayout } from '@/frontend/components/Layout';
 import { useLocalStorage } from './lib/useLocalStorage';
 import { Tooltip } from '@/frontend/components/ui/tooltip';
 import { LogsDialog } from '@/frontend/components/Container/LogsDialog';

@@ -39,20 +39,12 @@ export const getContainers = async (selectedRepo: Repo) => {
     getContainersRunningViaCompose(selectedRepo.name),
   ]);
 
-  const composedContainersSortedByImage = [];
-  images.forEach((image) => {
-    composedContainers
-      .filter((container) => container.Image === image.ID)
-      .forEach((container) => {
-        getIcon(container.Config.Labels['com.docker.compose.service']);
-        composedContainersSortedByImage.push(container);
-      });
-  });
-
   const composeFiles = new Set();
   const composedContainersByComposeFileMap = new Map();
   const otherComposedContainersByComposeFileMap = new Map();
-  for (const container of composedContainersSortedByImage) {
+  for (const container of composedContainers) {
+    getIcon(container.Config.Labels['com.docker.compose.service']);
+
     const configFilesLabel = container.Config.Labels['com.docker.compose.project.config_files'];
     let composeFile = '[unmanaged]';
     if (configFilesLabel) {

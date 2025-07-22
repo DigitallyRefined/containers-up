@@ -3,7 +3,7 @@ import os from 'os';
 import path from 'path';
 
 import { repo as repoDb } from '@/backend/db/repo';
-import { Repo } from '@/backend/db/schema/repo';
+import { Repo, repoSchema } from '@/backend/db/schema/repo';
 import { createExec } from '@/backend/utils/exec';
 import { mainLogger } from '@/backend/utils/logger';
 
@@ -19,6 +19,15 @@ export const getRepos = async () => {
 };
 
 export const postRepo = async (repo: Repo) => {
+  const nameValidation = repoSchema.pick({ name: true }).safeParse({ name: repo.name });
+  if (!nameValidation.success) {
+    throw new Error('Invalid repo name', { cause: nameValidation.error.issues });
+  }
+
+  if (repo.workingFolder.endsWith('/')) {
+    repo.workingFolder = repo.workingFolder.slice(0, -1);
+  }
+
   await repoDb.upsert(repo);
 
   await fs.mkdir(path.dirname(sshConfigPath), { recursive: true });

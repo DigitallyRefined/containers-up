@@ -2,7 +2,7 @@ import { ContainerIcon } from 'lucide-react';
 
 import { Card, CardContent } from '@/frontend/components/ui/card';
 import { Link } from '@/frontend/components/ui/link';
-import type { Service } from '@/frontend/components/Container/Layout';
+import type { Service } from '@/frontend/components/Layout';
 import { getRelativeTime } from '@/frontend/lib/utils';
 
 export const Container = ({ service }: { service: Service }) => {

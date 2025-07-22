@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/card';
-import type { Service } from '@/frontend/components/Container/Layout';
+import type { Service } from '@/frontend/components/Layout';
 import { Jobs } from '@/frontend/components/Container/Jobs';
 import { getRelativeTime } from '@/frontend/lib/utils';
 import { Link } from '@/frontend/components/ui/link';

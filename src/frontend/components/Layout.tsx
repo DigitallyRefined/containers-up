@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Info } from 'lucide-react';
+import { Info, Plus } from 'lucide-react';
 
-import { ComposedContainer } from '@/frontend/components/Container/ComposedContainer';
+import { ComposedContainer } from '@/frontend/components/Compose/ComposedContainer';
 import { JobWithLogs } from '@/backend/db/schema/job';
 import {
   Accordion,
@@ -13,6 +13,7 @@ import { Container } from '@/frontend/components/Container/Container';
 import { ContainerImage } from '@/frontend/components/Container/Image';
 import { Jobs } from '@/frontend/components/Container/Jobs';
 import { Card, CardContent } from '@/frontend/components/ui/card';
+import { ComposeFiles } from '@/frontend/components/Compose/Files';
 
 export interface Service {
   Name: string;
@@ -38,7 +39,8 @@ export interface ComposedContainer {
   jobs: JobWithLogs[];
 }
 
-export interface Images {
+export interface Image {
+  ID: string;
   Repository: string;
   Tag: string;
   Size: number;
@@ -53,8 +55,8 @@ interface ContainersResponse {
     [key: string]: Service[];
   };
   separateContainers?: Service[];
-  images?: Images[];
-  unusedDockerImages?: Images[];
+  images?: Image[];
+  unusedDockerImages?: Image[];
   incompleteJobs?: JobWithLogs[];
 }
 
@@ -120,24 +122,21 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
       )}
 
       {containersData.composedContainers &&
-      (Object.keys(containersData.composedContainers).length ?? 0) > 0 ? (
-        <div className='grid gap-4 md:grid-cols-1 2xl:grid-cols-2 3xl:grid-cols-3 mb-8'>
-          {Object.entries(containersData.composedContainers).map(([composeFile, containerData]) => (
-            <ComposedContainer
-              key={composeFile}
-              cardTitle={composeFile}
-              services={containerData.services}
-              jobs={containerData.jobs}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className='container mx-auto p-8 text-center relative text-red-600'>
-          No composed containers found matching the configuration for this repository.
-          <br />
-          Check working folder is correct.
-        </div>
-      )}
+        (Object.keys(containersData.composedContainers).length ?? 0) > 0 && (
+          <div className='grid gap-4 md:grid-cols-1 2xl:grid-cols-2 3xl:grid-cols-3 mb-8'>
+            {Object.entries(containersData.composedContainers).map(
+              ([composeFile, containerData]) => (
+                <ComposedContainer
+                  key={composeFile}
+                  cardTitle={composeFile}
+                  services={containerData.services}
+                  jobs={containerData.jobs}
+                />
+              )
+            )}
+          </div>
+        )}
+      <ComposeFiles repoName={selectedRepo} />
       <Accordion type='multiple' className='w-full'>
         {((containersData.otherComposedContainers &&
           Object.keys(containersData.otherComposedContainers).length) ??

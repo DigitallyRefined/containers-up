@@ -5,7 +5,7 @@ import type { Logger } from 'pino';
 const execAsync = promisify(exec);
 
 export const createExec = (logger: Logger) => {
-  const run = async (command: string) => {
+  const run = async (command: string, throwOnError = true) => {
     try {
       const { stdout, stderr } = await execAsync(command);
       if (stderr) {
@@ -20,8 +20,11 @@ export const createExec = (logger: Logger) => {
         stderr: error.stderr || error.message || '',
         code: typeof error.code === 'number' ? error.code : 1,
       };
-      logger.error(`${command} ${errorData.stderr} ${errorData.stdout} ${errorData.code}`);
-      throw errorData;
+      if (throwOnError) {
+        logger.error(`${command} ${errorData.stderr} ${errorData.stdout} ${errorData.code}`);
+        throw errorData;
+      }
+      return errorData;
     }
   };
 
@@ -59,8 +62,8 @@ export const createExec = (logger: Logger) => {
       ssh-add ~/.ssh/id_ed25519-${repoName} > /dev/null 2>&1
       ssh ${host} '${command}'`;
 
-  const sshRun = async (repoName: string, host: string, command: string) =>
-    run(getSshCommand(repoName, host, command));
+  const sshRun = async (repoName: string, host: string, command: string, throwOnError = true) =>
+    run(getSshCommand(repoName, host, command), throwOnError);
 
   return {
     run,

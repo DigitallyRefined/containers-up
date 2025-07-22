@@ -14,6 +14,7 @@ import { Repo } from '@/backend/db/schema/repo';
 import { isValidContainerIdOrName } from '@/backend/utils';
 import { createDockerExec } from '@/backend/utils/docker';
 import { mainLogger } from './backend/utils/logger';
+import { findComposeFiles } from '@/backend/endpoints/compose';
 
 const dockerExec = createDockerExec(mainLogger);
 
@@ -25,6 +26,20 @@ const requireAuthKey = (req: Request) => {
     return new Response('Unauthorized', { status: 401 });
   }
   return null;
+};
+
+const getAuthorizedRepo = async (
+  req: Request,
+  repoParam: string
+): Promise<{ error?: Response; selectedRepo?: Repo }> => {
+  const auth = requireAuthKey(req);
+  if (auth) return { error: auth };
+
+  const selectedRepo = await repo.getByName(repoParam);
+  if (!selectedRepo) {
+    return { error: new Response('Repository not found', { status: 404 }) };
+  }
+  return { selectedRepo };
 };
 
 const serverOptions: Partial<Serve> = {
@@ -39,6 +54,7 @@ const serverOptions: Partial<Serve> = {
           stack: error.stack,
           details: error.toString(),
         }),
+        ...(error.cause && { cause: error.cause }),
       },
       {
         status: 500,
@@ -116,13 +132,6 @@ const server = serve({
         const auth = requireAuthKey(req);
         if (auth) return auth;
 
-        const nameValidation = repoSchema.pick({ name: true }).safeParse({ name: req.params.name });
-        if (!nameValidation.success) {
-          return Response.json({
-            error: nameValidation.error.issues || 'Invalid name',
-          });
-        }
-
         return Response.json(await postRepo({ name: req.params.name, ...(await req.json()) }));
       },
 
@@ -143,13 +152,8 @@ const server = serve({
 
     '/api/repo/:name/logs': {
       async GET(req) {
-        const auth = requireAuthKey(req);
-        if (auth) return auth;
-
-        const selectedRepo = await repo.getByName(req.params.name);
-        if (!selectedRepo) {
-          return new Response('Repository not found', { status: 404 });
-        }
+        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.name);
+        if (error) return error;
 
         return Response.json(await logDb.getByRepo(selectedRepo.repo));
       },
@@ -157,13 +161,8 @@ const server = serve({
 
     '/api/repo/:name/jobs': {
       async GET(req) {
-        const auth = requireAuthKey(req);
-        if (auth) return auth;
-
-        const selectedRepo = await repo.getByName(req.params.name);
-        if (!selectedRepo) {
-          return new Response('Repository not found', { status: 404 });
-        }
+        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.name);
+        if (error) return error;
 
         return Response.json(await jobDb.getJobsWithLogs(selectedRepo.id));
       },
@@ -171,25 +170,15 @@ const server = serve({
 
     '/api/repo/:repo/containers': {
       async GET(req) {
-        const auth = requireAuthKey(req);
-        if (auth) return auth;
-
-        const selectedRepo = await repo.getByName(req.params.repo);
-        if (!selectedRepo) {
-          return new Response('Repository not found', { status: 404 });
-        }
+        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        if (error) return error;
 
         return Response.json(await getContainers(selectedRepo));
       },
 
       async DELETE(req) {
-        const auth = requireAuthKey(req);
-        if (auth) return auth;
-
-        const selectedRepo = await repo.getByName(req.params.repo);
-        if (!selectedRepo) {
-          return new Response('Repository not found', { status: 404 });
-        }
+        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        if (error) return error;
 
         const cleanupLogs = await containersCleanup(selectedRepo.name);
 
@@ -203,13 +192,8 @@ const server = serve({
 
     '/api/repo/:repo/container/:containerId': {
       async PUT(req) {
-        const auth = requireAuthKey(req);
-        if (auth) return auth;
-
-        const selectedRepo = await repo.getByName(req.params.repo);
-        if (!selectedRepo) {
-          return new Response('Repository not found', { status: 404 });
-        }
+        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        if (error) return error;
 
         const containerId = req.params.containerId;
         if (!isValidContainerIdOrName(containerId)) {
@@ -220,13 +204,8 @@ const server = serve({
       },
 
       async DELETE(req) {
-        const auth = requireAuthKey(req);
-        if (auth) return auth;
-
-        const selectedRepo = await repo.getByName(req.params.repo);
-        if (!selectedRepo) {
-          return new Response('Repository not found', { status: 404 });
-        }
+        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        if (error) return error;
 
         const containerId = req.params.containerId;
         if (!isValidContainerIdOrName(containerId)) {
@@ -239,13 +218,8 @@ const server = serve({
 
     '/api/repo/:repo/image/:imageId': {
       async DELETE(req) {
-        const auth = requireAuthKey(req);
-        if (auth) return auth;
-
-        const selectedRepo = await repo.getByName(req.params.repo);
-        if (!selectedRepo) {
-          return new Response('Repository not found', { status: 404 });
-        }
+        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        if (error) return error;
 
         const imageId = req.params.imageId;
         if (!isValidContainerIdOrName(imageId)) {
@@ -257,58 +231,55 @@ const server = serve({
     },
 
     '/api/repo/:repo/compose': {
-      async POST(req) {
-        const auth = requireAuthKey(req);
-        if (auth) return auth;
+      async GET(req) {
+        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        if (error) return error;
 
-        const selectedRepo = await repo.getByName(req.params.repo);
-        if (!selectedRepo) {
-          return new Response('Repository not found', { status: 404 });
-        }
+        return Response.json(
+          await findComposeFiles(selectedRepo.name, selectedRepo.sshCmd, selectedRepo.workingFolder)
+        );
+      },
+
+      async POST(req) {
+        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        if (error) return error;
 
         const data = await req.json();
 
-        if (await dockerExec.isInvalidComposeFile(selectedRepo, data.composeFile)) {
+        const composeFile = `${selectedRepo.workingFolder}/${data.composeFile}`;
+        if (await dockerExec.isInvalidComposeFile(selectedRepo, composeFile)) {
           return Response.json({ error: 'Invalid or missing compose file' }, { status: 400 });
         }
 
-        return dockerExec.startCompose(selectedRepo.name, selectedRepo.sshCmd, data.composeFile);
+        return dockerExec.startCompose(selectedRepo.name, selectedRepo.sshCmd, composeFile);
       },
 
       async PUT(req) {
-        const auth = requireAuthKey(req);
-        if (auth) return auth;
-
-        const selectedRepo = await repo.getByName(req.params.repo);
-        if (!selectedRepo) {
-          return new Response('Repository not found', { status: 404 });
-        }
+        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        if (error) return error;
 
         const data = await req.json();
 
-        if (await dockerExec.isInvalidComposeFile(selectedRepo, data.composeFile)) {
+        const composeFile = `${selectedRepo.workingFolder}/${data.composeFile}`;
+        if (await dockerExec.isInvalidComposeFile(selectedRepo, composeFile)) {
           return Response.json({ error: 'Invalid or missing compose file' }, { status: 400 });
         }
 
-        return dockerExec.restartCompose(selectedRepo.name, selectedRepo.sshCmd, data.composeFile);
+        return dockerExec.restartCompose(selectedRepo.name, selectedRepo.sshCmd, composeFile);
       },
 
       async DELETE(req) {
-        const auth = requireAuthKey(req);
-        if (auth) return auth;
-
-        const selectedRepo = await repo.getByName(req.params.repo);
-        if (!selectedRepo) {
-          return new Response('Repository not found', { status: 404 });
-        }
+        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        if (error) return error;
 
         const data = await req.json();
 
-        if (await dockerExec.isInvalidComposeFile(selectedRepo, data.composeFile)) {
+        const composeFile = `${selectedRepo.workingFolder}/${data.composeFile}`;
+        if (await dockerExec.isInvalidComposeFile(selectedRepo, composeFile)) {
           return Response.json({ error: 'Invalid or missing compose file' }, { status: 400 });
         }
 
-        return dockerExec.stopCompose(selectedRepo.name, selectedRepo.sshCmd, data.composeFile);
+        return dockerExec.stopCompose(selectedRepo.name, selectedRepo.sshCmd, composeFile);
       },
     },
 
