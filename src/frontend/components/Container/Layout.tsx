@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Info } from 'lucide-react';
 
 import { ComposedContainer } from '@/frontend/components/Container/ComposedContainer';
 import { JobWithLogs } from '@/backend/db/schema/job';
@@ -10,6 +11,8 @@ import {
 } from '@/frontend/components/ui/accordion';
 import { Container } from '@/frontend/components/Container/Container';
 import { ContainerImage } from '@/frontend/components/Container/Image';
+import { Jobs } from '@/frontend/components/Container/Jobs';
+import { Card, CardContent } from '@/frontend/components/ui/card';
 
 export interface Service {
   Name: string;
@@ -52,6 +55,7 @@ interface ContainersResponse {
   separateContainers?: Service[];
   images?: Images[];
   unusedDockerImages?: Images[];
+  incompleteJobs?: JobWithLogs[];
 }
 
 export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
@@ -99,6 +103,22 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
 
   return (
     <div className='container mx-auto p-2 sm:p-4 md:p-6 relative max-w-none'>
+      {containersData.incompleteJobs?.length > 0 && (
+        <Card className='mb-4'>
+          <CardContent className='p-4 rounded-lg text-white font-semibold bg-blue-400 dark:bg-blue-900'>
+            <div className='flex items-center mb-2'>
+              <Info className='w-5 h-5 mr-2 flex-shrink-0' />
+              <span className='font-bold'>Pending Updates</span>
+            </div>
+            <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2'>
+              {containersData.incompleteJobs.map((job) => (
+                <Jobs key={job.id} job={job} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {containersData.composedContainers &&
       (Object.keys(containersData.composedContainers).length ?? 0) > 0 ? (
         <div className='grid gap-4 md:grid-cols-1 2xl:grid-cols-2 3xl:grid-cols-3 mb-8'>

@@ -138,5 +138,6 @@ export const getContainers = async (selectedRepo: Repo) => {
     separateContainers: nonComposedContainers,
     images,
     unusedDockerImages: await getUnusedDockerImages(containers, images),
+    incompleteJobs: await jobDb.getIncompleteJobs(selectedRepo.id),
   };
 };

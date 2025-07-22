@@ -1,12 +1,19 @@
 import { Log } from '@/backend/db/schema/log';
 
+export enum JobStatus {
+  running = 1,
+  failed = 2,
+  open = 3,
+  completed = 4,
+}
+
 export class Job {
   id?: number;
   repoId: number;
   repoPr: string;
   folder: string;
   title: string;
-  status: string;
+  status: JobStatus;
   created?: number;
   updated?: number;
 }
@@ -22,7 +29,7 @@ export const jobCreateTableSql = `
     repoPr TEXT NOT NULL UNIQUE,
     folder TEXT NOT NULL,
     title TEXT NOT NULL,
-    status TEXT NOT NULL,
+    status INTEGER NOT NULL,
     created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   )

@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from '@/frontend/components/ui/dialog';
 import { Button } from '@/frontend/components/ui/button';
-import { type JobWithLogs } from '@/backend/db/schema/job';
+import { JobStatus, type JobWithLogs } from '@/backend/db/schema/job';
 import { getRelativeTime } from '@/frontend/lib/utils';
 import { Link } from '@/frontend/components/ui/link';
 import { Logs } from '@/frontend/components/Container/Logs';
@@ -23,9 +23,9 @@ export const RepoPrLink = ({
 }: {
   repoPr: string;
   url: string;
-  status: string;
+  status: JobStatus;
 }) => {
-  const isClosed = status === 'completed';
+  const isClosed = status === JobStatus.completed;
   const Icon = isClosed ? GitPullRequest : GitPullRequestArrow;
   const iconColor = isClosed ? '#8250df' : '#1a7f37';
   if (url) {
@@ -48,15 +48,15 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
   const [openJobId, setOpenJobId] = useState<number | null>(null);
   const [restarting, setRestarting] = useState(false);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: JobStatus) => {
     switch (status) {
-      case 'opened':
+      case JobStatus.open:
         return 'bg-blue-100 text-blue-700 border-2 border-orange-300 font-bold';
-      case 'running':
+      case JobStatus.running:
         return 'bg-yellow-100 text-yellow-800';
-      case 'completed':
+      case JobStatus.completed:
         return 'bg-green-100 text-green-800';
-      case 'failed':
+      case JobStatus.failed:
         return 'bg-red-100 text-red-800';
       default:
         return 'text-gray-800';
@@ -97,7 +97,7 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
           )}`}
           style={{ boxShadow: '0 1px 2px rgba(16,30,54,0.04)' }}
         >
-          {job.status}
+          {JobStatus[job.status]}
         </span>
         <div className='my-2'>
           <h5 className='font-medium text-sm text-center w-full'>
@@ -132,19 +132,28 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
                 </div>
               </DialogContent>
             </Dialog>
-            {job.status !== 'opened' && (
-              <Tooltip content='Restart Job'>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={handleRestart}
-                  disabled={restarting}
-                  aria-label='Restart Job'
-                >
-                  <RefreshCcwIcon className='size-4' />
-                </Button>
-              </Tooltip>
-            )}
+            <Tooltip content='Restart Job'>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={
+                  job.status === JobStatus.open
+                    ? () => {
+                        window.open(
+                          `https://github.com/${job.repoPr.split('/')[0]}/${
+                            job.repoPr.split('/')[1].split('#')[0]
+                          }/settings/hooks`,
+                          '_blank'
+                        );
+                      }
+                    : handleRestart
+                }
+                disabled={restarting}
+                aria-label='Restart Job'
+              >
+                <RefreshCcwIcon className='size-4' />
+              </Button>
+            </Tooltip>
           </div>
         )}
       </CardContent>

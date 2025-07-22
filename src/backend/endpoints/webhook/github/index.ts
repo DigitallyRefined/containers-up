@@ -8,6 +8,7 @@ import type { Logger } from 'pino';
 import { log as logDb } from '@/backend/db/log';
 import { job as jobDb } from '@/backend/db/job';
 import { waitASecond } from '@/backend/utils';
+import { JobStatus } from '@/backend/db/schema/job';
 
 export const baseEvent = 'github-webhook';
 
@@ -111,7 +112,7 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, rep
 
     if (runningJobs.length !== 0) {
       logger.error(`Job cancelled: Waited 5 minutes for running jobs to complete`);
-      await jobDb.upsert({ ...jobData, status: 'failed' });
+      await jobDb.upsert({ ...jobData, status: JobStatus.failed });
       return;
     }
   }
@@ -120,19 +121,19 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, rep
   let jobId: number;
   if (!repoConfig.workingFolder || action !== 'closed' || !merged || !title) {
     if (sender === 'dependabot[bot]') {
-      jobId = await jobDb.upsert({ ...jobData, status: 'opened' });
+      jobId = await jobDb.upsert({ ...jobData, status: JobStatus.open });
     }
     logger.info(
       `No action required for workingFolder: '${repoConfig.workingFolder}' action: '${action}' merged: '${merged}' title: '${title}'`
     );
   } else {
-    jobId = await jobDb.upsert({ ...jobData, status: 'running' });
+    jobId = await jobDb.upsert({ ...jobData, status: JobStatus.running });
     try {
       await pullRestartUpdatedContainers(folder, repoConfig, logger);
       containersCleanupLogs = await containersCleanup(repoConfig.name);
-      jobId = await jobDb.upsert({ ...jobData, status: 'completed' });
+      jobId = await jobDb.upsert({ ...jobData, status: JobStatus.completed });
     } catch (err: any) {
-      jobId = await jobDb.upsert({ ...jobData, status: 'failed' });
+      jobId = await jobDb.upsert({ ...jobData, status: JobStatus.failed });
     }
   }
 
