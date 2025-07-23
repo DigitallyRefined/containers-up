@@ -8,6 +8,7 @@ import { ContainerLayout } from '@/frontend/components/Layout';
 import { useLocalStorage } from './lib/useLocalStorage';
 import { Tooltip } from '@/frontend/components/ui/tooltip';
 import { LogsDialog } from '@/frontend/components/Container/LogsDialog';
+import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 
 import './index.css';
 import './img/icon-containers-up.svg';
@@ -101,27 +102,18 @@ export function App() {
               <PencilIcon className='size-4' />
             </Button>
           </Tooltip>
-          <Tooltip content='Cleanup'>
-            <Button
-              variant='outline'
-              size='sm'
-              aria-label='Cleanup'
-              onClick={async () => {
-                try {
-                  const res = await fetch('/api/repo/hl/containers', { method: 'DELETE' });
-                  if (res.ok) {
-                    (window as any).showToast('Cleanup triggered!');
-                  } else {
-                    (window as any).showToast('Cleanup failed.');
-                  }
-                } catch (e) {
-                  (window as any).showToast('Cleanup failed.');
-                }
-              }}
+          {hasSelectedRepo && (
+            <StreamingDialog
+              url={`/api/repo/${selectedRepo}/containers`}
+              method='DELETE'
+              dialogTitle='Cleanup'
+              tooltipText='Cleanup'
             >
-              <BrushCleaning className='size-4' />
-            </Button>
-          </Tooltip>
+              <Button variant='outline' size='sm' aria-label='Cleanup'>
+                <BrushCleaning className='size-4' />
+              </Button>
+            </StreamingDialog>
+          )}
           <LogsDialog selectedRepo={selectedRepo} />
         </div>
         {hasSelectedRepo && (

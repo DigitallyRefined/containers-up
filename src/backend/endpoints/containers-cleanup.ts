@@ -54,5 +54,9 @@ export const containersCleanup = async (context: string) => {
     }
   }
 
+  const { stdout: systemPruneStdout } = await exec.run(`${getDockerCmd(context)} system prune -f`);
+  if (!systemPruneStdout.includes('Total reclaimed space: 0B'))
+    logger.info(`System prune: ${systemPruneStdout}`);
+
   return getLogs(event);
 };

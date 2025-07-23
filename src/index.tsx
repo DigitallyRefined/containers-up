@@ -182,11 +182,13 @@ const server = serve({
 
         const cleanupLogs = await containersCleanup(selectedRepo.name);
 
+        let logs: string | any[] = 'Cleanup complete, nothing was removed';
         if (cleanupLogs.length) {
           cleanupLogs.forEach((log) => logDb.create({ repo: selectedRepo.repo, ...log }));
+          logs = cleanupLogs;
         }
 
-        return Response.json(cleanupLogs);
+        return Response.json(logs);
       },
     },
 

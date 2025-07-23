@@ -1,9 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Plus, Play } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Tooltip } from '../ui/tooltip';
-import { Dialog } from '../ui/dialog';
-import { DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+
+import { Button } from '@/frontend/components/ui/button';
+import { Tooltip } from '@/frontend/components/ui/tooltip';
+import { Dialog } from '@/frontend/components/ui/dialog';
+import {
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/frontend/components/ui/dialog';
+import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 
 export const ComposeFiles = ({ repoName }: { repoName: string }) => {
   const [open, setOpen] = useState(false);
@@ -22,29 +29,6 @@ export const ComposeFiles = ({ repoName }: { repoName: string }) => {
         });
     }
   }, [open, repoName]);
-
-  const handleRun = async (composeFile: string) => {
-    setOpen(false);
-    (window as any).showToast('Starting service from compose file...');
-
-    try {
-      const res = await fetch(`/api/repo/${repoName}/compose`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ composeFile }),
-      });
-      if (res.ok) {
-        (window as any).showToast('Service started from compose file!');
-      } else {
-        const data = await res.json().catch(() => ({}));
-        (window as any).showToast(data.error || 'Failed to start service.');
-      }
-    } catch (err) {
-      (window as any).showToast('Error: ' + (err instanceof Error ? err.message : 'Unknown error'));
-    }
-  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -67,18 +51,19 @@ export const ComposeFiles = ({ repoName }: { repoName: string }) => {
           ) : files && files.length > 0 ? (
             <ul>
               {files.map((file, idx) => (
-                <li key={idx}>
-                  <a
-                    href='#'
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleRun(file);
-                    }}
-                    className='text-sm flex items-center gap-1 hover:underline'
+                <li key={idx} className='flex items-center gap-2'>
+                  <StreamingDialog
+                    url={`/api/repo/${repoName}/compose`}
+                    method='POST'
+                    body={{ composeFile: file }}
+                    dialogTitle={`Run Compose File: ${file}`}
+                    tooltipText={file ? `Run ${file}` : undefined}
                   >
-                    <Play className='size-4' />
-                    {file}
-                  </a>
+                    <a href='#' className='text-sm flex items-center gap-1 hover:underline'>
+                      <Play className='size-4' />
+                      <span className='text-sm'>{file}</span>
+                    </a>
+                  </StreamingDialog>
                 </li>
               ))}
             </ul>

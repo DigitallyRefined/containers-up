@@ -122,21 +122,29 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
       )}
 
       {containersData.composedContainers &&
-        (Object.keys(containersData.composedContainers).length ?? 0) > 0 && (
-          <div className='grid gap-4 md:grid-cols-1 2xl:grid-cols-2 3xl:grid-cols-3 mb-8'>
-            {Object.entries(containersData.composedContainers).map(
-              ([composeFile, containerData]) => (
-                <ComposedContainer
-                  key={composeFile}
-                  cardTitle={composeFile}
-                  services={containerData.services}
-                  jobs={containerData.jobs}
-                />
-              )
-            )}
-          </div>
-        )}
+      (Object.keys(containersData.composedContainers).length ?? 0) > 0 ? (
+        <div className='grid gap-4 md:grid-cols-1 2xl:grid-cols-2 3xl:grid-cols-3 mb-8'>
+          {Object.entries(containersData.composedContainers).map(([composeFile, containerData]) => (
+            <ComposedContainer
+              key={composeFile}
+              cardTitle={composeFile}
+              services={containerData.services}
+              jobs={containerData.jobs}
+              repoName={selectedRepo}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className='container mx-auto p-8 text-center relative'>
+          <p>No composed containers found</p>
+          <p className='text-xs'>
+            (if this is unexpected, check your SSH host, key, and working folder are correct)
+          </p>
+        </div>
+      )}
+
       <ComposeFiles repoName={selectedRepo} />
+
       <Accordion type='multiple' className='w-full'>
         {((containersData.otherComposedContainers &&
           Object.keys(containersData.otherComposedContainers).length) ??
@@ -147,7 +155,12 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
               <div className='container mx-auto py-1 sm:py-2 md:py-3 text-center relative max-w-none'>
                 <div className='grid gap-2 md:grid-cols-1 2xl:grid-cols-2 3xl:grid-cols-3'>
                   {Object.entries(containersData.otherComposedContainers).map(([key, services]) => (
-                    <ComposedContainer key={key} cardTitle={key} services={services} />
+                    <ComposedContainer
+                      key={key}
+                      cardTitle={key}
+                      services={services}
+                      repoName={selectedRepo}
+                    />
                   ))}
                 </div>
               </div>

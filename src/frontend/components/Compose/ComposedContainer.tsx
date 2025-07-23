@@ -1,21 +1,55 @@
+import { RotateCcw, PowerOff } from 'lucide-react';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/card';
 import type { Service } from '@/frontend/components/Layout';
 import { Jobs } from '@/frontend/components/Container/Jobs';
 import { getRelativeTime } from '@/frontend/lib/utils';
 import { Link } from '@/frontend/components/ui/link';
 import { JobWithLogs } from '@/backend/db/schema/job';
+import { Button } from '@/frontend/components/ui/button';
+import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 
 interface ComposedContainerProps {
   cardTitle: string;
   services: Service[];
   jobs?: JobWithLogs[];
+  repoName: string;
 }
 
-export const ComposedContainer = ({ cardTitle, services, jobs }: ComposedContainerProps) => {
+export const ComposedContainer = ({
+  cardTitle,
+  services,
+  jobs,
+  repoName,
+}: ComposedContainerProps) => {
   return (
     <Card key={cardTitle}>
-      <CardHeader>
+      <CardHeader className='flex flex-row items-center justify-between'>
         <CardTitle className='text-left'>{cardTitle}</CardTitle>
+        <div className='flex gap-2'>
+          <StreamingDialog
+            url={`/api/repo/${repoName}/compose`}
+            method='PUT'
+            body={{ composeFile: cardTitle }}
+            dialogTitle={`Restart: ${cardTitle}`}
+            tooltipText='Restart all containers in this compose file'
+          >
+            <Button variant='outline' size='sm' aria-label='Restart'>
+              <RotateCcw className='size-4' />
+            </Button>
+          </StreamingDialog>
+          <StreamingDialog
+            url={`/api/repo/${repoName}/compose`}
+            method='DELETE'
+            body={{ composeFile: cardTitle }}
+            dialogTitle={`Stop: ${cardTitle}`}
+            tooltipText='Stop all containers in this compose file'
+          >
+            <Button variant='outline' size='sm' aria-label='Stop'>
+              <PowerOff className='size-4' />
+            </Button>
+          </StreamingDialog>
+        </div>
       </CardHeader>
       <CardContent className='space-y-6'>
         {/* Services Section */}

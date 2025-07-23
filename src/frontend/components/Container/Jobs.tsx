@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GitPullRequestArrow, GitPullRequest, RefreshCcwIcon, LogsIcon } from 'lucide-react';
+import { GitPullRequestArrow, GitPullRequest, RotateCcw, LogsIcon } from 'lucide-react';
 
 import { Card, CardContent } from '@/frontend/components/ui/card';
 import {
@@ -151,7 +151,7 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
                 disabled={restarting}
                 aria-label='Restart Job'
               >
-                <RefreshCcwIcon className='size-4' />
+                <RotateCcw className='size-4' />
               </Button>
             </Tooltip>
           </div>
