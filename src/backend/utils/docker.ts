@@ -64,32 +64,32 @@ export const createDockerExec = (logger: Logger) => {
     restartOrStopContainer: (
       context: string,
       containerId: string,
-      action: 'restart' | 'stop' | 'start'
+      action: 'restart' | 'stop' | 'start' | 'remove'
     ) => {
-      return runStreamedCommand(`${getDockerCmd(context)} ${action} ${containerId}`);
+      return runStreamedCommand(`${getDockerCmd(context)} ${action} "${containerId}"`);
     },
     removeImage: (context: string, imageId: string) => {
-      return runStreamedCommand(`${getDockerCmd(context)} rmi ${imageId}`);
+      return runStreamedCommand(`${getDockerCmd(context)} rmi "${imageId}"`);
     },
     isInvalidComposeFile: async (repo: Repo, composeFile: string) =>
       typeof composeFile !== 'string' ||
       !/(docker-compose|compose)\.ya?ml$/.test(composeFile) ||
       !(await exec.pathExistsOnRemote(repo.name, repo.sshCmd, composeFile)),
     stopCompose: (repoName: string, host: string, composeFile: string) => {
-      return runStreamedCommand(`docker compose -f ${composeFile} down`, {
+      return runStreamedCommand(`docker compose -f "${composeFile}" down`, {
         repoName,
         host,
       });
     },
     startCompose: (repoName: string, host: string, composeFile: string) => {
-      return runStreamedCommand(`docker compose -f ${composeFile} up -d`, {
+      return runStreamedCommand(`docker compose -f "${composeFile}" up -d`, {
         repoName,
         host,
       });
     },
     restartCompose: (repoName: string, host: string, composeFile: string) => {
       return runStreamedCommand(
-        `docker compose -f ${composeFile} down && docker compose -f ${composeFile} up -d`,
+        `docker compose -f "${composeFile}" down && docker compose -f "${composeFile}" up -d`,
         {
           repoName,
           host,

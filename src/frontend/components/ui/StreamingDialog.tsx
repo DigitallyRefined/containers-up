@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useContainerRefresh } from '@/frontend/components/Container/ContainerRefreshContext';
 import type { ReactNode } from 'react';
 
 import {
@@ -32,6 +33,7 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
   const [logs, setLogs] = useState<string[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'error' | 'done'>('idle');
   const abortRef = useRef<AbortController | null>(null);
+  const { refresh } = useContainerRefresh();
 
   const handleOpenChange = async (isOpen: boolean) => {
     setOpen(isOpen);
@@ -75,6 +77,7 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
       }
     } else if (!isOpen && abortRef.current) {
       abortRef.current.abort();
+      refresh();
     }
   };
 

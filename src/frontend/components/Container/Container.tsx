@@ -4,17 +4,56 @@ import { Card, CardContent } from '@/frontend/components/ui/card';
 import { Link } from '@/frontend/components/ui/link';
 import type { Service } from '@/frontend/components/Layout';
 import { getRelativeTime } from '@/frontend/lib/utils';
+import { RotateCcw, PowerOff, Trash } from 'lucide-react';
+import { Button } from '@/frontend/components/ui/button';
+import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 
-export const Container = ({ service }: { service: Service }) => {
+export const Container = ({ service, repoName }: { service: Service; repoName: string }) => {
   return (
     <Card>
       <CardContent className='p-2 sm:p-3 md:p-4 relative flex flex-col'>
         <ContainerIcon size={16} className='absolute top-4 right-4 opacity-80 z-0' />
+        <div className='absolute top-2 right-2 flex gap-1 z-10'>
+          <StreamingDialog
+            url={`/api/repo/${repoName}/container/${service.Id}`}
+            method='POST'
+            dialogTitle={`Restart: ${service.Name}`}
+            tooltipText='Restart this container'
+          >
+            <Button variant='outline' size='sm' aria-label='Restart'>
+              <RotateCcw className='size-4' />
+            </Button>
+          </StreamingDialog>
+          {service.State.Status === 'running' ? (
+            <StreamingDialog
+              url={`/api/repo/${repoName}/container/${service.Id}`}
+              method='PUT'
+              dialogTitle={`Stop: ${service.Name}`}
+              tooltipText='Stop this container'
+            >
+              <Button variant='outline' size='sm' aria-label='Stop'>
+                <PowerOff className='size-4' />
+              </Button>
+            </StreamingDialog>
+          ) : (
+            <StreamingDialog
+              url={`/api/repo/${repoName}/container/${service.Id}`}
+              method='DELETE'
+              dialogTitle={`Delete: ${service.Name}`}
+              tooltipText='Delete this container'
+            >
+              <Button variant='outline' size='sm' aria-label='Delete'>
+                <Trash className='size-4' />
+              </Button>
+            </StreamingDialog>
+          )}
+        </div>
         <h5 className='font-semibold text-sm mb-2'>{service.Name}</h5>
         <p className='text-xs break-all'>{service.Config.Image.split('@')[0]}</p>
         <p
           className={`text-xs font-medium ${
-            service.State.Status === 'running' && service.State.Health?.Status === 'healthy'
+            service.State.Status === 'running' &&
+            (!service.State.Health?.Status || service.State.Health?.Status === 'healthy')
               ? 'text-green-600'
               : 'text-red-600'
           }`}

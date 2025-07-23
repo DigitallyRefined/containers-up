@@ -193,7 +193,7 @@ const server = serve({
     },
 
     '/api/repo/:repo/container/:containerId': {
-      async PUT(req) {
+      async POST(req) {
         const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
         if (error) return error;
 
@@ -205,7 +205,7 @@ const server = serve({
         return dockerExec.restartOrStopContainer(selectedRepo.name, containerId, 'restart');
       },
 
-      async DELETE(req) {
+      async PUT(req) {
         const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
         if (error) return error;
 
@@ -215,6 +215,18 @@ const server = serve({
         }
 
         return dockerExec.restartOrStopContainer(selectedRepo.name, containerId, 'stop');
+      },
+
+      async DELETE(req) {
+        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        if (error) return error;
+
+        const containerId = req.params.containerId;
+        if (!isValidContainerIdOrName(containerId)) {
+          return new Response('Invalid container ID or name', { status: 400 });
+        }
+
+        return dockerExec.restartOrStopContainer(selectedRepo.name, containerId, 'remove');
       },
     },
 

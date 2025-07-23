@@ -7,6 +7,10 @@ export const containersCleanup = async (context: string) => {
   const logger = mainLogger.child({ event });
   const exec = createExec(logger);
 
+  const { stdout: systemPruneStdout } = await exec.run(`${getDockerCmd(context)} system prune -f`);
+  if (!systemPruneStdout.includes('Total reclaimed space: 0B'))
+    logger.info(`System prune: ${systemPruneStdout}`);
+
   // Get all untagged images
   const { stdout: untaggedImagesStdout } = await exec.run(
     `docker --context ${context} images --filter "dangling=true" --format "{{.ID}}"`
@@ -16,7 +20,7 @@ export const containersCleanup = async (context: string) => {
   for (const imageId of untaggedImages) {
     // Get creation date
     let { stdout: createdDate } = await exec.run(
-      `${getDockerCmd(context)} inspect -f '{{.Created}}' ${imageId}`
+      `${getDockerCmd(context)} inspect -f '{{.Created}}' "${imageId}"`
     );
     createdDate = createdDate.split('T')[0].replace(/-/g, '.');
 
@@ -24,7 +28,7 @@ export const containersCleanup = async (context: string) => {
     let { stdout: repo } = await exec.run(
       `${getDockerCmd(
         context
-      )} inspect -f '{{if .RepoDigests}}{{index .RepoDigests 0}}{{end}}' ${imageId}`
+      )} inspect -f '{{if .RepoDigests}}{{index .RepoDigests 0}}{{end}}' "${imageId}"`
     );
     if (!repo) {
       repo = 'untagged';
@@ -32,7 +36,7 @@ export const containersCleanup = async (context: string) => {
     repo = repo.split('@')[0].split(':')[0];
 
     // Tag image
-    await exec.run(`${getDockerCmd(context)} tag ${imageId} ${repo}:${createdDate}`);
+    await exec.run(`${getDockerCmd(context)} tag "${imageId}" "${repo}:${createdDate}"`);
     logger.info(`Tagged image ${imageId} as ${repo}:${createdDate}`);
   }
 
@@ -46,17 +50,13 @@ export const containersCleanup = async (context: string) => {
 
   for (const image of images) {
     const imageWithoutTag = image.split(':')[0];
-    if (imageMap[imageWithoutTag]) {
+    if (imageMap[imageWithoutTag] && imageWithoutTag !== '<none>') {
       logger.info(`Removing previous image: ${image}`);
-      await exec.run(`${getDockerCmd(context)} rmi ${image}`);
+      await exec.run(`${getDockerCmd(context)} rmi "${image}"`);
     } else {
       imageMap[imageWithoutTag] = true;
     }
   }
-
-  const { stdout: systemPruneStdout } = await exec.run(`${getDockerCmd(context)} system prune -f`);
-  if (!systemPruneStdout.includes('Total reclaimed space: 0B'))
-    logger.info(`System prune: ${systemPruneStdout}`);
 
   return getLogs(event);
 };
