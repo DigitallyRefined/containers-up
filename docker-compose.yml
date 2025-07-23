@@ -1,21 +1,31 @@
 services:
   containers-up:
-    build: .
+    image: ghcr.io/digitallyrefined/containers-up:0.0.1
     container_name: containers-up
     restart: always
+    volumes:
+      - ./storage:/storage
+      - ./storage/.ssh:/root/.ssh
+      - ./storage/.docker:/root/.docker
+    env_file:
+      - ./.env
     # Disable Core Dumps
     ulimits:
       core:
         soft: 0
         hard: 0
-    volumes:
-      - ./storage:/storage
-      - ./storage/.ssh:/root/.ssh
-      - ./storage/.docker:/root/.docker
-      # Development mode
-      # - .:/home/bun/app
-    env_file:
-      - ./.env
+    build:
+      context: .
+      target: builder
+      tags:
+        - containers-up:develop
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /home/bun/app/src
+        - action: rebuild
+          path: package.json
     networks:
       - traefik
     labels:
