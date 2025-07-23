@@ -2,9 +2,10 @@ import { Log } from '@/backend/db/schema/log';
 
 export enum JobStatus {
   running = 1,
-  failed = 2,
-  open = 3,
-  completed = 4,
+  queued = 2,
+  failed = 3,
+  open = 4,
+  completed = 5,
 }
 
 export class Job {

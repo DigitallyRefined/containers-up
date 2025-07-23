@@ -98,6 +98,7 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, rep
   let runningJobs = await jobDb.getRunningJobs(repoConfig.id);
   if (runningJobs.length > 0) {
     logger.info(`Waiting up to 5 minutes for running jobs to complete`);
+    await jobDb.upsert({ ...jobData, status: JobStatus.queued });
     const maxWaits = 60 * 5;
     let waitCount = 0;
     while (waitCount < maxWaits) {
