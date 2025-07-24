@@ -4,12 +4,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/frontend/components/ui/dialog';
+} from '@/frontend/components/ui/Dialog';
 import { RepoForm } from '@/frontend/components/Repo/Form';
 import { z } from 'zod';
 import { repoSchema } from '@/backend/db/schema/repo';
 import { useState, useRef } from 'react';
-import { Button } from '@/frontend/components/ui/button';
+import { Button } from '@/frontend/components/ui/Button';
 
 interface RepoDialogProps {
   open: boolean;

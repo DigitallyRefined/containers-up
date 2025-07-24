@@ -1,11 +1,11 @@
 import { ContainerIcon } from 'lucide-react';
 
-import { Card, CardContent } from '@/frontend/components/ui/card';
-import { Link } from '@/frontend/components/ui/link';
+import { Card, CardContent } from '@/frontend/components/ui/Card';
+import { Link } from '@/frontend/components/ui/Link';
 import type { Service } from '@/frontend/components/Layout';
 import { getRelativeTime } from '@/frontend/lib/utils';
 import { RotateCcw, PowerOff, Trash } from 'lucide-react';
-import { Button } from '@/frontend/components/ui/button';
+import { Button } from '@/frontend/components/ui/Button';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 
 export const Container = ({ service, repoName }: { service: Service; repoName: string }) => {

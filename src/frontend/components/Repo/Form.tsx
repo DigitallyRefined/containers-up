@@ -1,5 +1,5 @@
-import { Button } from '@/frontend/components/ui/button';
-import { LabeledInput } from '@/frontend/components/ui/input';
+import { Button } from '@/frontend/components/ui/Button';
+import { LabeledInput } from '@/frontend/components/ui/Input';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';

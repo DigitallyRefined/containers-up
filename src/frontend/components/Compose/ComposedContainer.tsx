@@ -1,12 +1,12 @@
 import { RotateCcw, PowerOff } from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/Card';
 import type { Service } from '@/frontend/components/Layout';
 import { Jobs } from '@/frontend/components/Container/Jobs';
 import { getRelativeTime } from '@/frontend/lib/utils';
-import { Link } from '@/frontend/components/ui/link';
+import { Link } from '@/frontend/components/ui/Link';
 import { JobWithLogs } from '@/backend/db/schema/job';
-import { Button } from '@/frontend/components/ui/button';
+import { Button } from '@/frontend/components/ui/Button';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 
 interface ComposedContainerProps {

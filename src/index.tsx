@@ -6,14 +6,13 @@ import { githubWebhookHandler, type GitHubWebhookEvent } from '@/backend/endpoin
 import { containersCleanup } from '@/backend/endpoints/containers-cleanup';
 import { deleteRepo, getRepos, postRepo, putRepo } from '@/backend/endpoints/repo';
 import { repo } from '@/backend/db/repo';
-import { repoSchema } from '@/backend/db/schema/repo';
 import { log as logDb } from '@/backend/db/log';
 import { restartJob } from '@/backend/endpoints/jobs';
 import { job as jobDb } from '@/backend/db/job';
 import { Repo } from '@/backend/db/schema/repo';
 import { isValidContainerIdOrName } from '@/backend/utils';
 import { createDockerExec } from '@/backend/utils/docker';
-import { mainLogger } from './backend/utils/logger';
+import { mainLogger } from '@/backend/utils/logger';
 import { findComposeFiles } from '@/backend/endpoints/compose';
 
 const dockerExec = createDockerExec(mainLogger);

@@ -6,11 +6,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/frontend/components/ui/dialog';
-import { Button } from '@/frontend/components/ui/button';
+} from '@/frontend/components/ui/Dialog';
+import { Button } from '@/frontend/components/ui/Button';
 import { Logs } from '@/frontend/components/Container/Logs';
 import { LogsIcon } from 'lucide-react';
-import { Tooltip } from '@/frontend/components/ui/tooltip';
+import { Tooltip } from '@/frontend/components/ui/Tooltip';
 
 interface LogsDialogProps {
   selectedRepo: string | undefined;

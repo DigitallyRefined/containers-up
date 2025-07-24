@@ -1,11 +1,11 @@
 import { PackageIcon, Trash } from 'lucide-react';
 
-import { Card, CardContent } from '@/frontend/components/ui/card';
+import { Card, CardContent } from '@/frontend/components/ui/Card';
 import { getRelativeTime } from '@/frontend/lib/utils';
 import type { Image } from '@/frontend/components/Layout';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 import { useContainerRefresh } from '@/frontend/components/Container/ContainerRefreshContext';
-import { Button } from '@/frontend/components/ui/button';
+import { Button } from '@/frontend/components/ui/Button';
 
 type ContainerImageProps = { image: Image; repoName: string };
 

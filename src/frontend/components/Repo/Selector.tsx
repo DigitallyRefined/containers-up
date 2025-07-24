@@ -1,4 +1,10 @@
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '../ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '@/frontend/components/ui/Select';
 import type { Repo } from '@/backend/db/schema/repo';
 
 interface RepoSelectorProps {

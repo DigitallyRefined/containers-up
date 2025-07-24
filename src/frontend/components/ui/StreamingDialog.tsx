@@ -8,9 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/frontend/components/ui/dialog';
-import { Tooltip } from '@/frontend/components/ui/tooltip';
-import { Spinner } from '@/frontend/components/ui/spinner';
+} from '@/frontend/components/ui/Dialog';
+import { Tooltip } from '@/frontend/components/ui/Tooltip';
+import { Spinner } from '@/frontend/components/ui/Spinner';
 
 interface StreamingDialogProps {
   url: string;

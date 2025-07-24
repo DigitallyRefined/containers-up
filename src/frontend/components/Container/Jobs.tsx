@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import { GitPullRequestArrow, GitPullRequest, RotateCcw, LogsIcon } from 'lucide-react';
 
-import { Card, CardContent } from '@/frontend/components/ui/card';
+import { Card, CardContent } from '@/frontend/components/ui/Card';
 import {
   Dialog,
   DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/frontend/components/ui/dialog';
-import { Button } from '@/frontend/components/ui/button';
+} from '@/frontend/components/ui/Dialog';
+import { Button } from '@/frontend/components/ui/Button';
 import { JobStatus, type JobWithLogs } from '@/backend/db/schema/job';
 import { getRelativeTime } from '@/frontend/lib/utils';
-import { Link } from '@/frontend/components/ui/link';
+import { Link } from '@/frontend/components/ui/Link';
 import { Logs } from '@/frontend/components/Container/Logs';
-import { Tooltip } from '@/frontend/components/ui/tooltip';
+import { Tooltip } from '@/frontend/components/ui/Tooltip';
 
 export const RepoPrLink = ({
   repoPr,

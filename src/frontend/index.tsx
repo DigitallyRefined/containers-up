@@ -9,7 +9,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { TooltipProvider } from '@radix-ui/react-tooltip';
 import { App } from '@/frontend/App';
-import { ToastProvider } from '@/frontend/components/ui/toast';
+import { ToastProvider } from '@/frontend/components/ui/Toast';
 
 const elem = document.getElementById('root')!;
 const app = (

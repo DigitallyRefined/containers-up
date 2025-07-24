@@ -7,7 +7,7 @@ import {
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
-} from '@/frontend/components/ui/accordion';
+} from '@/frontend/components/ui/Accordion';
 
 const getRunningComposedFiles = (
   composedContainers?: ContainersResponse['composedContainers'],

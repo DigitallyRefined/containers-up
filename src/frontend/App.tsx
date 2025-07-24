@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { BrushCleaning, PencilIcon } from 'lucide-react';
 
-import { Button } from '@/frontend/components/ui/button';
+import { Button } from '@/frontend/components/ui/Button';
 import { RepoSelector } from '@/frontend/components/Repo/Selector';
 import { RepoDialog } from '@/frontend/components/Repo/Dialog';
 import { ContainerLayout } from '@/frontend/components/Layout';
 import { ContainerRefreshProvider } from '@/frontend/components/Container/ContainerRefreshContext';
-import { useLocalStorage } from './lib/useLocalStorage';
-import { Tooltip } from '@/frontend/components/ui/tooltip';
+import { useLocalStorage } from '@/frontend/lib/useLocalStorage';
+import { Tooltip } from '@/frontend/components/ui/Tooltip';
 import { LogsDialog } from '@/frontend/components/Container/LogsDialog';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 

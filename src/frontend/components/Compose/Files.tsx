@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Plus, Play } from 'lucide-react';
 
-import { Button } from '@/frontend/components/ui/button';
-import { Tooltip } from '@/frontend/components/ui/tooltip';
-import { Dialog } from '@/frontend/components/ui/dialog';
+import { Button } from '@/frontend/components/ui/Button';
+import { Tooltip } from '@/frontend/components/ui/Tooltip';
+import { Dialog } from '@/frontend/components/ui/Dialog';
 import {
   DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/frontend/components/ui/dialog';
+} from '@/frontend/components/ui/Dialog';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 
 export const ComposeFiles = ({ repoName }: { repoName: string }) => {

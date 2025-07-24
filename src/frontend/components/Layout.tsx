@@ -9,11 +9,11 @@ import {
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
-} from '@/frontend/components/ui/accordion';
+} from '@/frontend/components/ui/Accordion';
 import { Container } from '@/frontend/components/Container/Container';
 import { ContainerImage } from '@/frontend/components/Container/Image';
 import { Jobs } from '@/frontend/components/Container/Jobs';
-import { Card, CardContent } from '@/frontend/components/ui/card';
+import { Card, CardContent } from '@/frontend/components/ui/Card';
 import { ComposeFiles } from '@/frontend/components/Compose/Files';
 import { PreviousRunningComposeFiles } from '@/frontend/components/Compose/PreviousRunningComposeFiles';
 import { useLocalStorage } from '@/frontend/lib/useLocalStorage';
