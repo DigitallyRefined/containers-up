@@ -8,6 +8,7 @@ import { Link } from '@/frontend/components/ui/Link';
 import { JobWithLogs } from '@/backend/db/schema/job';
 import { Button } from '@/frontend/components/ui/Button';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
+import { getContainerStatusColor } from '@/frontend/lib/utils';
 
 interface ComposedContainerProps {
   cardTitle: string;
@@ -70,12 +71,10 @@ export const ComposedContainer = ({
                   </h5>
                   <p className='text-xs break-all'>{service.Config.Image.split('@')[0]}</p>
                   <p
-                    className={`text-xs font-medium ${
-                      service.State.Status === 'running' &&
-                      (!service.State.Health?.Status || service.State.Health?.Status === 'healthy')
-                        ? 'text-green-600'
-                        : 'text-red-600'
-                    }`}
+                    className={`text-xs font-medium ${getContainerStatusColor(
+                      service.State.Status,
+                      service.State.Health?.Status
+                    )}`}
                   >
                     Status: {service.State.Status}{' '}
                     {service.State.Health?.Status && `(${service.State.Health.Status})`}

@@ -7,6 +7,7 @@ import { getRelativeTime } from '@/frontend/lib/utils';
 import { RotateCcw, PowerOff, Trash } from 'lucide-react';
 import { Button } from '@/frontend/components/ui/Button';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
+import { getContainerStatusColor } from '@/frontend/lib/utils';
 
 export const Container = ({ service, repoName }: { service: Service; repoName: string }) => {
   return (
@@ -51,12 +52,10 @@ export const Container = ({ service, repoName }: { service: Service; repoName: s
         <h5 className='font-semibold text-sm mb-2'>{service.Name}</h5>
         <p className='text-xs break-all'>{service.Config.Image.split('@')[0]}</p>
         <p
-          className={`text-xs font-medium ${
-            service.State.Status === 'running' &&
-            (!service.State.Health?.Status || service.State.Health?.Status === 'healthy')
-              ? 'text-green-600'
-              : 'text-red-600'
-          }`}
+          className={`text-xs font-medium ${getContainerStatusColor(
+            service.State.Status,
+            service.State.Health?.Status
+          )}`}
         >
           Status: {service.State.Status}{' '}
           {service.State.Health?.Status && `(${service.State.Health.Status})`}

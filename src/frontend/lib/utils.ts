@@ -36,3 +36,20 @@ export const getRelativeTime = (
 
   return 'just now';
 };
+
+export function getContainerStatusColor(status: string, healthStatus?: string) {
+  if (
+    status === 'created' ||
+    status === 'starting' ||
+    healthStatus === 'starting' ||
+    healthStatus === 'restarting'
+  ) {
+    return 'text-orange-500';
+  }
+
+  if (status === 'running' && (!healthStatus || healthStatus === 'healthy')) {
+    return 'text-green-600';
+  }
+
+  return 'text-red-600';
+}
