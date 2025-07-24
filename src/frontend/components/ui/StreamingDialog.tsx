@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useContainerRefresh } from '@/frontend/components/Container/ContainerRefreshContext';
 import type { ReactNode } from 'react';
 
@@ -34,6 +34,13 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
   const [status, setStatus] = useState<'idle' | 'loading' | 'error' | 'done'>('idle');
   const abortRef = useRef<AbortController | null>(null);
   const { refresh } = useContainerRefresh();
+  const logsEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: 'auto' });
+    }
+  }, [logs]);
 
   const handleOpenChange = async (isOpen: boolean) => {
     setOpen(isOpen);
@@ -102,6 +109,7 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
           {status === 'done' && logs.length === 0 && (
             <div className='text-muted-foreground'>No output.</div>
           )}
+          <div ref={logsEndRef} />
         </div>
         {status === 'loading' && <Spinner />}
       </DialogContent>
