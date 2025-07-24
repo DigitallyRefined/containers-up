@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
  * useLocalStorage hook for persistent state synced with localStorage.
@@ -24,6 +24,10 @@ export function useLocalStorage<T>(
     }
   });
 
+  useEffect(() => {
+    window.localStorage.setItem(fullKey, JSON.stringify(storedValue));
+  }, [storedValue]);
+
   const setValue = (value: T | ((val: T) => T)) => {
     if (!key || !keySuffix) return;
     if (mode === 'append') {
@@ -41,9 +45,11 @@ export function useLocalStorage<T>(
   };
 
   const removeValue = (itemToRemove: string) => {
-    const currentValues = JSON.parse(window.localStorage.getItem(fullKey) || '[]') as T[];
-    const newValue = currentValues.filter((value) => value !== itemToRemove);
-    window.localStorage.setItem(fullKey, JSON.stringify(newValue));
+    setStoredValue((prev) => {
+      const prevArr = Array.isArray(prev) ? prev : [];
+      const nextArr = prevArr.filter((value) => value !== itemToRemove);
+      return nextArr as unknown as T;
+    });
   };
 
   return [storedValue, setValue, removeValue] as const;

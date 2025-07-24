@@ -15,8 +15,7 @@ import { ContainerImage } from '@/frontend/components/Container/Image';
 import { Jobs } from '@/frontend/components/Container/Jobs';
 import { Card, CardContent } from '@/frontend/components/ui/card';
 import { ComposeFiles } from '@/frontend/components/Compose/Files';
-import { useLocalStorage } from '../lib/useLocalStorage';
-import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
+import { PreviousRunningComposeFiles } from '@/frontend/components/Compose/PreviousRunningComposeFiles';
 
 export interface Service {
   Id: string;
@@ -51,7 +50,7 @@ export interface Image {
   CreatedAt: string;
 }
 
-interface ContainersResponse {
+export interface ContainersResponse {
   composedContainers?: {
     [key: string]: ComposedContainer;
   };
@@ -68,19 +67,7 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
   const { refreshKey } = useContainerRefresh();
   const [containersData, setContainersData] = useState<ContainersResponse>({});
   const [loading, setLoading] = useState(false);
-  const [seenComposedFiles, setSeenComposedFiles, removeSeenComposedFile] = useLocalStorage<
-    string[]
-  >(`seenComposedFiles`, selectedRepo, [], 'append');
   const [error, setError] = useState<string | null>(null);
-
-  const getRunningComposedFiles = (
-    composedContainers: ContainersResponse['composedContainers'],
-    otherComposedContainers: ContainersResponse['otherComposedContainers']
-  ) => {
-    const composedFiles = Object.keys(composedContainers);
-    const otherComposedFiles = Object.keys(otherComposedContainers);
-    return [...composedFiles, ...otherComposedFiles];
-  };
 
   useEffect(() => {
     const fetchContainers = async () => {
@@ -100,11 +87,6 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
 
         const data: ContainersResponse = await response.json();
         setContainersData(data);
-        const runningComposedFiles = getRunningComposedFiles(
-          data.composedContainers,
-          data.otherComposedContainers
-        );
-        setSeenComposedFiles(runningComposedFiles);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch containers');
       } finally {
@@ -124,14 +106,6 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
       <div className='container mx-auto p-8 text-center relative text-red-600'>Error: {error}</div>
     );
   }
-
-  const runningComposedFiles = getRunningComposedFiles(
-    containersData.composedContainers,
-    containersData.otherComposedContainers
-  );
-  const previousRunningComposedFiles = seenComposedFiles.filter(
-    (file) => !runningComposedFiles.includes(file)
-  );
 
   return (
     <div className='container mx-auto p-2 sm:p-4 md:p-6 relative max-w-none'>
@@ -175,37 +149,13 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
 
       <ComposeFiles repoName={selectedRepo} />
 
-      {previousRunningComposedFiles.length > 0 && (
-        <>
-          <h2 className='text-md font-bold text-left mb-2'>Previously Running Composed Files</h2>
-          <ul className='mt-4 mb-4'>
-            {previousRunningComposedFiles.map((file, idx) => (
-              <li key={file} className='pl-4'>
-                <StreamingDialog
-                  url={`/api/repo/${selectedRepo}/compose`}
-                  method='POST'
-                  body={{ composeFile: file }}
-                  dialogTitle={`Run Compose File: ${file}`}
-                >
-                  <a href='#' className='text-sm flex items-center gap-1 hover:underline'>
-                    <Play className='size-4' />
-                    <Trash
-                      className='size-4'
-                      onClick={(e) => {
-                        e.preventDefault();
-                        removeSeenComposedFile(file);
-                      }}
-                    />
-                    <span className='text-sm'>{file}</span>
-                  </a>
-                </StreamingDialog>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-
       <Accordion type='multiple' className='w-full'>
+        <PreviousRunningComposeFiles
+          selectedRepo={selectedRepo}
+          composedContainers={containersData.composedContainers}
+          otherComposedContainers={containersData.otherComposedContainers}
+        />
+
         {((containersData.otherComposedContainers &&
           Object.keys(containersData.otherComposedContainers).length) ??
           0) > 0 && (
@@ -227,6 +177,7 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
             </AccordionContent>
           </AccordionItem>
         )}
+
         {(containersData.separateContainers?.length ?? 0) > 0 && (
           <AccordionItem value='separateContainers'>
             <AccordionTrigger>Separate Containers</AccordionTrigger>
@@ -239,6 +190,7 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
             </AccordionContent>
           </AccordionItem>
         )}
+
         {(containersData.images?.length ?? 0) > 0 && (
           <AccordionItem value='images'>
             <AccordionTrigger>Images</AccordionTrigger>
@@ -251,6 +203,7 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
             </AccordionContent>
           </AccordionItem>
         )}
+
         {(containersData.unusedDockerImages?.length ?? 0) > 0 && (
           <AccordionItem value='unusedDockerImages'>
             <AccordionTrigger>Unused Docker Images</AccordionTrigger>
