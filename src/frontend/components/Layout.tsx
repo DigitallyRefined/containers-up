@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useContainerRefresh } from '@/frontend/components/Container/ContainerRefreshContext';
-import { Info, Play, Trash } from 'lucide-react';
+import { Info, RefreshCw } from 'lucide-react';
 
 import { ComposedContainer } from '@/frontend/components/Compose/ComposedContainer';
 import { JobWithLogs } from '@/backend/db/schema/job';
@@ -17,6 +17,8 @@ import { Card, CardContent } from '@/frontend/components/ui/card';
 import { ComposeFiles } from '@/frontend/components/Compose/Files';
 import { PreviousRunningComposeFiles } from '@/frontend/components/Compose/PreviousRunningComposeFiles';
 import { useLocalStorage } from '@/frontend/lib/useLocalStorage';
+import { Tooltip } from '@/frontend/components/ui/Tooltip';
+import { Button } from '@/frontend/components/ui/Button';
 
 export interface Service {
   Id: string;
@@ -109,14 +111,26 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
     fetchContainers();
   }, [selectedRepo, refreshKey]);
 
-  if (loading || !Object.keys(containersData).length) {
-    return <div className='container mx-auto p-8 text-center relative'>Loading containers...</div>;
-  }
-
   if (error) {
     return (
-      <div className='container mx-auto p-8 text-center relative text-red-600'>Error: {error}</div>
+      <div className='container mx-auto p-8 text-center relative flex items-center justify-center gap-2'>
+        <Tooltip content='Refresh'>
+          <Button
+            variant='outline'
+            size='sm'
+            aria-label='Refresh'
+            onClick={() => window.location.reload()}
+          >
+            <RefreshCw className='w-5 h-5' />
+          </Button>
+        </Tooltip>
+        <span className='text-red-500'>Error: {error}</span>
+      </div>
     );
+  }
+
+  if (loading || !Object.keys(containersData).length) {
+    return <div className='container mx-auto p-8 text-center relative'>Loading containers...</div>;
   }
 
   return (
