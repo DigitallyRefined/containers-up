@@ -49,7 +49,7 @@ export const createExec = (logger: Logger) => {
   };
 
   const getSshCommand = (
-    repoName: string,
+    hostName: string,
     host: string,
     command: string
   ) => `if ! pgrep -u "$(whoami)" ssh-agent > /dev/null; then
@@ -59,21 +59,21 @@ export const createExec = (logger: Logger) => {
       if [ -n "$SSH_AUTH_SOCK" ]; then
         export SSH_AGENT_PID=$(echo "$SSH_AUTH_SOCK" | grep -oE 'agent\.[0-9]+' | grep -oE '[0-9]+')
       fi
-      ssh-add ~/.ssh/id_ed25519-${repoName} > /dev/null 2>&1
+      ssh-add ~/.ssh/id_ed25519-${hostName} > /dev/null 2>&1
       ssh ${host} '${command}'`;
 
-  const sshRun = async (repoName: string, host: string, command: string, throwOnError = true) =>
-    run(getSshCommand(repoName, host, command), throwOnError);
+  const sshRun = async (hostName: string, host: string, command: string, throwOnError = true) =>
+    run(getSshCommand(hostName, host, command), throwOnError);
 
   return {
     run,
     stream,
     sshRun,
-    sshStream: (repoName: string, host: string, command: string, options: StreamOptions) =>
-      stream(getSshCommand(repoName, host, command), options),
-    pathExistsOnRemote: async (repoName: string, host: string, path: string) => {
+    sshStream: (hostName: string, host: string, command: string, options: StreamOptions) =>
+      stream(getSshCommand(hostName, host, command), options),
+    pathExistsOnRemote: async (hostName: string, host: string, path: string) => {
       try {
-        await sshRun(repoName, host, `test -e "${path.replace(/"/g, '')}"`);
+        await sshRun(hostName, host, `test -e "${path.replace(/"/g, '')}"`);
         return true;
       } catch (error) {
         return false;

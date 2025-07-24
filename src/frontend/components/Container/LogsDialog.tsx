@@ -13,17 +13,17 @@ import { LogsIcon } from 'lucide-react';
 import { Tooltip } from '@/frontend/components/ui/Tooltip';
 
 interface LogsDialogProps {
-  selectedRepo: string | undefined;
+  selectedHost: string | undefined;
 }
 
-export const LogsDialog: React.FC<LogsDialogProps> = ({ selectedRepo }) => {
+export const LogsDialog: React.FC<LogsDialogProps> = ({ selectedHost }) => {
   const [open, setOpen] = useState(false);
   const [logs, setLogs] = useState<any[] | 'error' | 'loading'>();
 
   useEffect(() => {
-    if (open && selectedRepo) {
+    if (open && selectedHost) {
       setLogs('loading');
-      fetch(`/api/repo/${selectedRepo}/logs`)
+      fetch(`/api/host/${selectedHost}/logs`)
         .then((res) => res.json())
         .then((data) => {
           setLogs(data);
@@ -32,9 +32,9 @@ export const LogsDialog: React.FC<LogsDialogProps> = ({ selectedRepo }) => {
           setLogs('error');
         });
     }
-  }, [open, selectedRepo]);
+  }, [open, selectedHost]);
 
-  if (!selectedRepo) return null;
+  if (!selectedHost) return null;
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <Tooltip content='Show logs'>
@@ -46,13 +46,15 @@ export const LogsDialog: React.FC<LogsDialogProps> = ({ selectedRepo }) => {
       </Tooltip>
       <DialogContent className='w-full max-w-screen-lg max-h-[90vh]'>
         <DialogHeader>
-          <DialogTitle>Logs for {selectedRepo}</DialogTitle>
+          <DialogTitle>Logs for {selectedHost}</DialogTitle>
         </DialogHeader>
         <div className='space-y-2 max-h-[80vh] overflow-y-auto'>
           {logs === 'loading' ? (
             <div className='text-muted-foreground'>Loading logs...</div>
           ) : logs === 'error' ? (
             <div className='text-muted-foreground'>Failed to fetch logs.</div>
+          ) : Array.isArray(logs) && logs.length === 0 ? (
+            <div className='text-muted-foreground'>No logs to display.</div>
           ) : (
             logs?.map((log, logIndex) => <Logs key={logIndex} log={log} />)
           )}

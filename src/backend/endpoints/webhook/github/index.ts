@@ -1,7 +1,7 @@
 import * as path from 'path';
 
 import { mainLogger, getLogs } from '@/backend/utils/logger';
-import { type Repo } from '@/backend/db/schema/repo';
+import { type Host } from '@/backend/db/schema/host';
 import { containersCleanup } from '@/backend/endpoints/containers-cleanup';
 import { createExec } from '@/backend/utils/exec';
 import type { Logger } from 'pino';
@@ -27,8 +27,8 @@ const fileExcluded = (file: string, excludeFolders: string | null): boolean => {
   return regex.test(file);
 };
 
-const pullRestartUpdatedContainers = async (folder: string, repoConfig: Repo, logger: Logger) => {
-  const { workingFolder, excludeFolders, name, sshCmd: host } = repoConfig;
+const pullRestartUpdatedContainers = async (folder: string, repoConfig: Host, logger: Logger) => {
+  const { workingFolder, excludeFolders, name, sshHost: host } = repoConfig;
 
   const exec = createExec(logger);
 
@@ -78,24 +78,24 @@ const pullRestartUpdatedContainers = async (folder: string, repoConfig: Repo, lo
   }
 };
 
-export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, repoConfig: Repo) => {
+export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, hostConfig: Host) => {
   const { action, merged, title, number, sender } = webhookEvent;
 
   // Extract folder from title (like sed -E 's/.* in (.*)/\1/')
   const folderMatch = title.match(/ in (.*)/);
   const folder = folderMatch ? folderMatch[1] : '';
 
-  const event = `${baseEvent} ${repoConfig.name} ${folder}`;
+  const event = `${baseEvent} ${hostConfig.name} ${folder}`;
   const logger = mainLogger.child({ event });
 
   const jobData = {
-    repoId: repoConfig.id,
-    repoPr: `${repoConfig.repo}#${number}`,
+    hostId: hostConfig.id,
+    repoPr: `${hostConfig.repo}#${number}`,
     folder,
     title,
   };
 
-  let runningJobs = await jobDb.getRunningJobs(repoConfig.id);
+  let runningJobs = await jobDb.getRunningJobs(hostConfig.id);
   if (runningJobs.length > 0) {
     logger.info(`Waiting up to 5 minutes for running jobs to complete`);
     await jobDb.upsert({ ...jobData, status: JobStatus.queued });
@@ -103,7 +103,7 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, rep
     let waitCount = 0;
     while (waitCount < maxWaits) {
       await waitASecond();
-      runningJobs = await jobDb.getRunningJobs(repoConfig.id);
+      runningJobs = await jobDb.getRunningJobs(hostConfig.id);
       if (runningJobs.length === 0) {
         logger.info(`Running jobs completed after ${waitCount} seconds, continuing...`);
         break;
@@ -120,18 +120,18 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, rep
 
   let containersCleanupLogs;
   let jobId: number;
-  if (!repoConfig.workingFolder || action !== 'closed' || !merged || !title) {
+  if (!hostConfig.workingFolder || action !== 'closed' || !merged || !title) {
     if (sender === 'dependabot[bot]') {
       jobId = await jobDb.upsert({ ...jobData, status: JobStatus.open });
     }
     logger.info(
-      `No action required for workingFolder: '${repoConfig.workingFolder}' action: '${action}' merged: '${merged}' title: '${title}'`
+      `No action required for workingFolder: '${hostConfig.workingFolder}' action: '${action}' merged: '${merged}' title: '${title}'`
     );
   } else {
     jobId = await jobDb.upsert({ ...jobData, status: JobStatus.running });
     try {
-      await pullRestartUpdatedContainers(folder, repoConfig, logger);
-      containersCleanupLogs = await containersCleanup(repoConfig.name);
+      await pullRestartUpdatedContainers(folder, hostConfig, logger);
+      containersCleanupLogs = await containersCleanup(hostConfig.name);
       jobId = await jobDb.upsert({ ...jobData, status: JobStatus.completed });
     } catch (err: any) {
       jobId = await jobDb.upsert({ ...jobData, status: JobStatus.failed });
@@ -143,6 +143,6 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, rep
     .filter(Boolean)
     .flat()
     .forEach((log) => {
-      logDb.create({ jobId, repo: repoConfig.repo, ...log });
+      logDb.create({ jobId, hostId: hostConfig.id, ...log });
     });
 };

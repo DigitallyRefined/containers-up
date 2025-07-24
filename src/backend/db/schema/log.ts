@@ -1,7 +1,7 @@
 export class Log {
   id?: number;
   jobId?: number;
-  repo: string;
+  hostId: number;
   level: number;
   time: string;
   event: string;
@@ -10,9 +10,9 @@ export class Log {
 
 export const logCreateTableSql = `
   CREATE TABLE IF NOT EXISTS log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     jobId INTEGER,
-    repo TEXT NOT NULL,
+    hostId INTEGER NOT NULL,
     level INTEGER NOT NULL,
     time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     event TEXT NOT NULL,

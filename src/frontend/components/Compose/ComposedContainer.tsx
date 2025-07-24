@@ -14,14 +14,14 @@ interface ComposedContainerProps {
   cardTitle: string;
   services: Service[];
   jobs?: JobWithLogs[];
-  repoName: string;
+  hostName: string;
 }
 
 export const ComposedContainer = ({
   cardTitle,
   services,
   jobs,
-  repoName,
+  hostName,
 }: ComposedContainerProps) => {
   return (
     <Card key={cardTitle}>
@@ -29,7 +29,7 @@ export const ComposedContainer = ({
         <CardTitle className='text-left'>{cardTitle}</CardTitle>
         <div className='flex gap-2'>
           <StreamingDialog
-            url={`/api/repo/${repoName}/compose`}
+            url={`/api/host/${hostName}/compose`}
             method='PUT'
             body={{ composeFile: cardTitle }}
             dialogTitle={`Restart: ${cardTitle}`}
@@ -40,7 +40,7 @@ export const ComposedContainer = ({
             </Button>
           </StreamingDialog>
           <StreamingDialog
-            url={`/api/repo/${repoName}/compose`}
+            url={`/api/host/${hostName}/compose`}
             method='DELETE'
             body={{ composeFile: cardTitle }}
             dialogTitle={`Stop: ${cardTitle}`}

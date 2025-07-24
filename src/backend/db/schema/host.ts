@@ -1,41 +1,41 @@
 import { z } from 'zod';
 
-export class Repo {
+export class Host {
   id?: number;
   name: string;
-  sshCmd: string;
+  sshHost: string;
   sshKey: string;
-  repo: string;
-  webhookSecret: string;
-  workingFolder: string;
+  repo?: string;
+  webhookSecret?: string;
+  workingFolder?: string;
   excludeFolders?: string;
   created?: string;
 }
 
-export const repoCreateTableSql = `
-  CREATE TABLE IF NOT EXISTS repo (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+export const hostCreateTableSql = `
+  CREATE TABLE IF NOT EXISTS host (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
-    sshCmd TEXT NOT NULL,
-    repo TEXT NOT NULL UNIQUE,
-    webhookSecret TEXT NOT NULL,
-    workingFolder TEXT NOT NULL,
+    sshHost TEXT NOT NULL,
+    repo TEXT,
+    webhookSecret TEXT,
+    workingFolder TEXT,
     excludeFolders TEXT,
     created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   )
 `;
 
-export const repoSchema = z.object({
+export const hostSchema = z.object({
   id: z.number().optional(),
   name: z
     .string()
     .min(1, 'Name is required')
     .regex(/^[a-z0-9-]+$/, 'Only lowercase letters, numbers, and hyphens are allowed'),
-  sshCmd: z
+  sshHost: z
     .string()
-    .min(1, 'SSH Command is required')
+    .min(1, 'SSH Host is required')
     .refine((val) => val.includes('@'), {
-      message: 'SSH Command must include an @ (e.g. user@example.com)',
+      message: 'SSH Host must include an @ (e.g. user@example.com)',
     }),
   sshKey: z
     .string()
@@ -49,8 +49,8 @@ export const repoSchema = z.object({
         message: 'Invalid SSH private key format',
       }
     ),
-  repo: z.string().min(1, 'Repository URL is required'),
-  webhookSecret: z.string().min(1, 'Webhook Secret is required'),
-  workingFolder: z.string().min(1, 'Working Folder is required'),
+  repo: z.string().optional(),
+  webhookSecret: z.string().optional(),
+  workingFolder: z.string().optional(),
   excludeFolders: z.string().optional(),
 });

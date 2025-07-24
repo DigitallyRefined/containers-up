@@ -1,17 +1,17 @@
 import { getDb, upsert } from '@/backend/db/connection';
-import { Repo, repoCreateTableSql } from '@/backend/db/schema/repo';
+import { Host, hostCreateTableSql } from '@/backend/db/schema/host';
 
-export const repo = {
+export const host = {
   get: async (id: number) => {
     const db = await getDb();
 
-    return db.query(`SELECT * FROM repo WHERE id=$id`).as(Repo).get({ id });
+    return db.query(`SELECT * FROM host WHERE id=$id`).as(Host).get({ id });
   },
   getAll: async () => {
     const db = await getDb();
 
     try {
-      return db.query(`SELECT * FROM repo`).as(Repo).all();
+      return db.query(`SELECT * FROM host`).as(Host).all();
     } catch (error) {
       return [];
     }
@@ -19,41 +19,39 @@ export const repo = {
   getByName: async (name: string) => {
     const db = await getDb();
 
-    return db.query(`SELECT * FROM repo WHERE name=$name`).as(Repo).get({ name });
+    db.query(hostCreateTableSql).run();
+
+    return db.query(`SELECT * FROM host WHERE name=$name`).as(Host).get({ name });
   },
   getAllByRepo: async (repo: string) => {
     const db = await getDb();
 
-    return db.query(`SELECT * FROM repo WHERE repo=$repo`).as(Repo).all({ repo });
+    return db.query(`SELECT * FROM host WHERE repo=$repo`).as(Host).all({ repo });
   },
   upsert: async ({
     id,
     name,
-    sshCmd,
+    sshHost,
     repo,
     webhookSecret,
     workingFolder,
     excludeFolders,
-  }: Repo) => {
-    const db = await getDb();
-
-    db.query(repoCreateTableSql).run();
-
+  }: Host) => {
     const data = {
       id,
       name,
-      sshCmd,
+      sshHost,
       repo,
       webhookSecret,
       workingFolder,
       excludeFolders: excludeFolders || '',
     };
 
-    return upsert({ table: 'repo', data, conflictKey: 'id' });
+    return upsert({ table: 'host', data, conflictKey: 'id' });
   },
   delete: async (id: number) => {
     const db = await getDb();
 
-    return db.query(`DELETE FROM repo WHERE id=$id`).run({ id });
+    return db.query(`DELETE FROM host WHERE id=$id`).run({ id });
   },
 };

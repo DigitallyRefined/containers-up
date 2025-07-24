@@ -66,7 +66,7 @@ export interface ContainersResponse {
   incompleteJobs?: JobWithLogs[];
 }
 
-export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
+export const ContainerLayout = ({ selectedHost }: { selectedHost: string }) => {
   const { refreshKey } = useContainerRefresh();
   const [containersData, setContainersData] = useState<ContainersResponse>({});
   const [loading, setLoading] = useState(false);
@@ -85,13 +85,13 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
 
   useEffect(() => {
     const fetchContainers = async () => {
-      if (!selectedRepo) return;
+      if (!selectedHost) return;
 
       setLoading(true);
       setError(null);
 
       try {
-        const response = await fetch(`/api/repo/${selectedRepo}/containers`);
+        const response = await fetch(`/api/host/${selectedHost}/containers`);
 
         if (!response.ok) {
           throw new Error(
@@ -109,7 +109,7 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
     };
 
     fetchContainers();
-  }, [selectedRepo, refreshKey]);
+  }, [selectedHost, refreshKey]);
 
   if (error) {
     return (
@@ -160,7 +160,7 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
               cardTitle={composeFile}
               services={containerData.services}
               jobs={containerData.jobs}
-              repoName={selectedRepo}
+              hostName={selectedHost}
             />
           ))}
         </div>
@@ -173,7 +173,7 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
         </div>
       )}
 
-      <ComposeFiles repoName={selectedRepo} />
+      <ComposeFiles hostName={selectedHost} />
 
       <Accordion
         type='multiple'
@@ -182,7 +182,7 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
         onValueChange={handleAccordionChange}
       >
         <PreviousRunningComposeFiles
-          selectedRepo={selectedRepo}
+          selectedHost={selectedHost}
           composedContainers={containersData.composedContainers}
           otherComposedContainers={containersData.otherComposedContainers}
         />
@@ -200,7 +200,7 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
                       key={key}
                       cardTitle={key}
                       services={services}
-                      repoName={selectedRepo}
+                      hostName={selectedHost}
                     />
                   ))}
                 </div>
@@ -215,7 +215,7 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
             <AccordionContent>
               <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-3 text-left'>
                 {containersData.separateContainers.map((service, idx) => (
-                  <Container key={idx} service={service} repoName={selectedRepo} />
+                  <Container key={idx} service={service} hostName={selectedHost} />
                 ))}
               </div>
             </AccordionContent>
@@ -228,7 +228,7 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
             <AccordionContent>
               <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-3 text-left'>
                 {containersData.images.map((image, idx) => (
-                  <ContainerImage key={idx} image={image} repoName={selectedRepo} />
+                  <ContainerImage key={idx} image={image} hostName={selectedHost} />
                 ))}
               </div>
             </AccordionContent>
@@ -241,7 +241,7 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
             <AccordionContent>
               <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-3 text-left'>
                 {containersData.unusedDockerImages.map((image, idx) => (
-                  <ContainerImage key={idx} image={image} repoName={selectedRepo} />
+                  <ContainerImage key={idx} image={image} hostName={selectedHost} />
                 ))}
               </div>
             </AccordionContent>

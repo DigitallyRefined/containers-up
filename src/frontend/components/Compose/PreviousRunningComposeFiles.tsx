@@ -19,17 +19,17 @@ const getRunningComposedFiles = (
 };
 
 export const PreviousRunningComposeFiles = ({
-  selectedRepo,
+  selectedHost,
   composedContainers,
   otherComposedContainers,
 }: {
-  selectedRepo: string;
+  selectedHost: string;
   composedContainers: ContainersResponse['composedContainers'];
   otherComposedContainers: ContainersResponse['otherComposedContainers'];
 }) => {
   const [seenComposedFiles, setSeenComposedFiles, removeSeenComposedFile] = useLocalStorage<
     string[]
-  >(`seenComposedFiles`, selectedRepo, [], 'append');
+  >(`seenComposedFiles`, selectedHost, [], 'append');
 
   useEffect(() => {
     const newSeenComposedFiles = getRunningComposedFiles(
@@ -37,7 +37,7 @@ export const PreviousRunningComposeFiles = ({
       otherComposedContainers
     );
     setSeenComposedFiles(newSeenComposedFiles);
-  }, [selectedRepo, composedContainers, otherComposedContainers]);
+  }, [selectedHost, composedContainers, otherComposedContainers]);
 
   const runningComposedFiles = getRunningComposedFiles(composedContainers, otherComposedContainers);
   const previousRunningComposedFiles = seenComposedFiles.filter(
@@ -54,7 +54,7 @@ export const PreviousRunningComposeFiles = ({
           {previousRunningComposedFiles.map((file, idx) => (
             <li key={file} className='pl-7'>
               <StreamingDialog
-                url={`/api/repo/${selectedRepo}/compose`}
+                url={`/api/host/${selectedHost}/compose`}
                 method='POST'
                 body={{ composeFile: file }}
                 dialogTitle={`Run Compose File: ${file}`}

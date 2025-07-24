@@ -12,23 +12,27 @@ import {
 } from '@/frontend/components/ui/Dialog';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 
-export const ComposeFiles = ({ repoName }: { repoName: string }) => {
+export const ComposeFiles = ({ hostName }: { hostName: string }) => {
   const [open, setOpen] = useState(false);
-  const [files, setFiles] = useState<string[] | 'loading' | 'error'>();
+  const [files, setFiles] = useState<string[] | 'loading' | 'error' | 'noWorkingFolder'>();
 
   useEffect(() => {
-    if (open && repoName) {
+    if (open && hostName) {
       setFiles('loading');
-      fetch(`/api/repo/${repoName}/compose`)
+      fetch(`/api/host/${hostName}/compose`)
         .then((res) => res.json())
         .then((data) => {
+          if (data.error && data.cause === 'NO_WORKING_FOLDER') {
+            setFiles('noWorkingFolder');
+            return;
+          }
           setFiles(Array.isArray(data) ? data : []);
         })
         .catch(() => {
           setFiles('error');
         });
     }
-  }, [open, repoName]);
+  }, [open, hostName]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -48,12 +52,16 @@ export const ComposeFiles = ({ repoName }: { repoName: string }) => {
             <div className='text-muted-foreground'>Loading...</div>
           ) : files === 'error' ? (
             <div className='text-muted-foreground'>Failed to fetch compose files.</div>
+          ) : files === 'noWorkingFolder' ? (
+            <div className='text-muted-foreground'>
+              Working folder is not set. Please set it in the host settings.
+            </div>
           ) : files && files.length > 0 ? (
             <ul>
               {files.map((file, idx) => (
                 <li key={idx} className='flex items-center gap-2'>
                   <StreamingDialog
-                    url={`/api/repo/${repoName}/compose`}
+                    url={`/api/host/${hostName}/compose`}
                     method='POST'
                     body={{ composeFile: file }}
                     dialogTitle={`Run Compose File: ${file}`}

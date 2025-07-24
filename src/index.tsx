@@ -4,12 +4,12 @@ import index from '@/index.html';
 import { getContainers } from '@/backend/endpoints/containers';
 import { githubWebhookHandler, type GitHubWebhookEvent } from '@/backend/endpoints/webhook/github';
 import { containersCleanup } from '@/backend/endpoints/containers-cleanup';
-import { deleteRepo, getRepos, postRepo, putRepo } from '@/backend/endpoints/repo';
-import { repo } from '@/backend/db/repo';
+import { deleteHost, getHosts, postHost, putHost } from '@/backend/endpoints/host';
+import { host } from '@/backend/db/host';
 import { log as logDb } from '@/backend/db/log';
 import { restartJob } from '@/backend/endpoints/jobs';
 import { job as jobDb } from '@/backend/db/job';
-import { Repo } from '@/backend/db/schema/repo';
+import { Host } from '@/backend/db/schema/host';
 import { isValidContainerIdOrName } from '@/backend/utils';
 import { createDockerExec } from '@/backend/utils/docker';
 import { mainLogger } from '@/backend/utils/logger';
@@ -27,19 +27,31 @@ const requireAuthKey = (req: Request) => {
   return null;
 };
 
-const getAuthorizedRepo = async (
+const getAuthorizedHost = async (
   req: Request,
-  repoParam: string
-): Promise<{ error?: Response; selectedRepo?: Repo }> => {
+  repoHost: string
+): Promise<{ error?: Response; selectedHost?: Host }> => {
   const auth = requireAuthKey(req);
   if (auth) return { error: auth };
 
-  const selectedRepo = await repo.getByName(repoParam);
-  if (!selectedRepo) {
-    return { error: new Response('Repository not found', { status: 404 }) };
+  const selectedHost = await host.getByName(repoHost);
+  if (!selectedHost) {
+    return { error: new Response('Host not found', { status: 404 }) };
   }
-  return { selectedRepo };
+  return { selectedHost };
 };
+
+async function resolveAndValidateComposeFile(selectedHost: Host, data: { composeFile: string }) {
+  const composeFile = data.composeFile.startsWith('/')
+    ? data.composeFile
+    : `${selectedHost.workingFolder}/${data.composeFile}`;
+  if (await dockerExec.isInvalidComposeFile(selectedHost, composeFile)) {
+    return {
+      composeError: Response.json({ error: 'Invalid or missing compose file' }, { status: 400 }),
+    };
+  }
+  return { composeFile };
+}
 
 const serverOptions: Partial<Serve> = {
   idleTimeout: 30,
@@ -115,75 +127,77 @@ const server = serve({
       }
     },
 
-    '/api/repo': {
+    '/api/host': {
       async GET(req) {
         const auth = requireAuthKey(req);
         if (auth) return auth;
 
         return Response.json(
-          (await getRepos()).map((repo) => ({ ...repo, webhookSecret: undefined }))
+          (await getHosts()).map((host) => ({ ...host, webhookSecret: undefined }))
         );
       },
     },
 
-    '/api/repo/:name': {
-      async POST(req) {
+    '/api/host/:host': {
+      async POST(req, server) {
+        server.timeout(req, 10);
         const auth = requireAuthKey(req);
         if (auth) return auth;
 
-        return Response.json(await postRepo({ name: req.params.name, ...(await req.json()) }));
+        return Response.json(await postHost({ name: req.params.host, ...(await req.json()) }));
       },
 
-      async PUT(req) {
+      async PUT(req, server) {
+        server.timeout(req, 10);
         const auth = requireAuthKey(req);
         if (auth) return auth;
 
-        return Response.json(await putRepo({ name: req.params.name, ...(await req.json()) }));
+        return Response.json(await putHost({ name: req.params.host, ...(await req.json()) }));
       },
 
       async DELETE(req) {
         const auth = requireAuthKey(req);
         if (auth) return auth;
 
-        return Response.json(await deleteRepo({ name: req.params.name } as Repo));
+        return Response.json(await deleteHost({ name: req.params.host } as Host));
       },
     },
 
-    '/api/repo/:name/logs': {
+    '/api/host/:host/logs': {
       async GET(req) {
-        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.name);
+        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
         if (error) return error;
 
-        return Response.json(await logDb.getByRepo(selectedRepo.repo));
+        return Response.json(await logDb.getByHostId(selectedHost.id));
       },
     },
 
-    '/api/repo/:name/jobs': {
+    '/api/host/:host/jobs': {
       async GET(req) {
-        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.name);
+        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
         if (error) return error;
 
-        return Response.json(await jobDb.getJobsWithLogs(selectedRepo.id));
+        return Response.json(await jobDb.getJobsWithLogs(selectedHost.id));
       },
     },
 
-    '/api/repo/:repo/containers': {
+    '/api/host/:host/containers': {
       async GET(req) {
-        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
         if (error) return error;
 
-        return Response.json(await getContainers(selectedRepo));
+        return Response.json(await getContainers(selectedHost));
       },
 
       async DELETE(req) {
-        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
         if (error) return error;
 
-        const cleanupLogs = await containersCleanup(selectedRepo.name);
+        const cleanupLogs = await containersCleanup(selectedHost.name);
 
         let logs: string | any[] = 'Done';
         if (cleanupLogs.length) {
-          cleanupLogs.forEach((log) => logDb.create({ repo: selectedRepo.repo, ...log }));
+          cleanupLogs.forEach((log) => logDb.create({ hostId: selectedHost.id, ...log }));
           logs = cleanupLogs.map((log) => log.msg).join('\n');
         }
 
@@ -191,9 +205,9 @@ const server = serve({
       },
     },
 
-    '/api/repo/:repo/container/:containerId': {
+    '/api/host/:host/container/:containerId': {
       async POST(req) {
-        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
         if (error) return error;
 
         const containerId = req.params.containerId;
@@ -201,11 +215,11 @@ const server = serve({
           return new Response('Invalid container ID or name', { status: 400 });
         }
 
-        return dockerExec.restartOrStopContainer(selectedRepo.name, containerId, 'restart');
+        return dockerExec.restartOrStopContainer(selectedHost.name, containerId, 'restart');
       },
 
       async PUT(req) {
-        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
         if (error) return error;
 
         const containerId = req.params.containerId;
@@ -213,11 +227,11 @@ const server = serve({
           return new Response('Invalid container ID or name', { status: 400 });
         }
 
-        return dockerExec.restartOrStopContainer(selectedRepo.name, containerId, 'stop');
+        return dockerExec.restartOrStopContainer(selectedHost.name, containerId, 'stop');
       },
 
       async DELETE(req) {
-        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
         if (error) return error;
 
         const containerId = req.params.containerId;
@@ -225,13 +239,13 @@ const server = serve({
           return new Response('Invalid container ID or name', { status: 400 });
         }
 
-        return dockerExec.restartOrStopContainer(selectedRepo.name, containerId, 'remove');
+        return dockerExec.restartOrStopContainer(selectedHost.name, containerId, 'remove');
       },
     },
 
-    '/api/repo/:repo/image/:imageId': {
+    '/api/host/:host/image/:imageId': {
       async DELETE(req) {
-        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
         if (error) return error;
 
         const imageId = req.params.imageId;
@@ -239,60 +253,64 @@ const server = serve({
           return new Response('Invalid image ID or name', { status: 400 });
         }
 
-        return dockerExec.removeImage(selectedRepo.name, imageId);
+        return dockerExec.removeImage(selectedHost.name, imageId);
       },
     },
 
-    '/api/repo/:repo/compose': {
+    '/api/host/:host/compose': {
       async GET(req) {
-        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
         if (error) return error;
 
         return Response.json(
-          await findComposeFiles(selectedRepo.name, selectedRepo.sshCmd, selectedRepo.workingFolder)
+          await findComposeFiles(
+            selectedHost.name,
+            selectedHost.sshHost,
+            selectedHost.workingFolder
+          )
         );
       },
 
       async POST(req) {
-        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
         if (error) return error;
 
         const data = await req.json();
+        const { composeError, composeFile } = await resolveAndValidateComposeFile(
+          selectedHost,
+          data
+        );
+        if (composeError) return composeError;
 
-        const composeFile = `${selectedRepo.workingFolder}/${data.composeFile}`;
-        if (await dockerExec.isInvalidComposeFile(selectedRepo, composeFile)) {
-          return Response.json({ error: 'Invalid or missing compose file' }, { status: 400 });
-        }
-
-        return dockerExec.startCompose(selectedRepo.name, selectedRepo.sshCmd, composeFile);
+        return dockerExec.startCompose(selectedHost.name, selectedHost.sshHost, composeFile);
       },
 
       async PUT(req) {
-        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
         if (error) return error;
 
         const data = await req.json();
+        const { composeError, composeFile } = await resolveAndValidateComposeFile(
+          selectedHost,
+          data
+        );
+        if (composeError) return composeError;
 
-        const composeFile = `${selectedRepo.workingFolder}/${data.composeFile}`;
-        if (await dockerExec.isInvalidComposeFile(selectedRepo, composeFile)) {
-          return Response.json({ error: 'Invalid or missing compose file' }, { status: 400 });
-        }
-
-        return dockerExec.restartCompose(selectedRepo.name, selectedRepo.sshCmd, composeFile);
+        return dockerExec.restartCompose(selectedHost.name, selectedHost.sshHost, composeFile);
       },
 
       async DELETE(req) {
-        const { error, selectedRepo } = await getAuthorizedRepo(req, req.params.repo);
+        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
         if (error) return error;
 
         const data = await req.json();
+        const { composeError, composeFile } = await resolveAndValidateComposeFile(
+          selectedHost,
+          data
+        );
+        if (composeError) return composeError;
 
-        const composeFile = `${selectedRepo.workingFolder}/${data.composeFile}`;
-        if (await dockerExec.isInvalidComposeFile(selectedRepo, composeFile)) {
-          return Response.json({ error: 'Invalid or missing compose file' }, { status: 400 });
-        }
-
-        return dockerExec.stopCompose(selectedRepo.name, selectedRepo.sshCmd, composeFile);
+        return dockerExec.stopCompose(selectedHost.name, selectedHost.sshHost, composeFile);
       },
     },
 
@@ -316,10 +334,10 @@ console.log(`🚀 Server running at ${server.url}`);
 const webhookServer = serve({
   port: 3001,
   routes: {
-    '/api/webhook/github/repo/:name': {
+    '/api/webhook/github/host/:host': {
       async POST(req) {
-        const selectedRepo = await repo.getByName(req.params.name);
-        if (!selectedRepo) {
+        const selectedHost = await host.getByName(req.params.host);
+        if (!selectedHost) {
           return new Response('Not Found', { status: 404 });
         }
 
@@ -331,7 +349,7 @@ const webhookServer = serve({
         const bodyBuffer = new Uint8Array(await req.arrayBuffer());
         const key = await crypto.subtle.importKey(
           'raw',
-          new TextEncoder().encode(selectedRepo.webhookSecret),
+          new TextEncoder().encode(selectedHost.webhookSecret),
           { name: 'HMAC', hash: 'SHA-256' },
           false,
           ['sign']
@@ -356,13 +374,13 @@ const webhookServer = serve({
           title: webhookData.pull_request?.title,
         };
 
-        const selectedRepos = await repo.getAllByRepo(webhookEvent.repo);
-        if (!selectedRepos) {
-          return new Response('Repository not found', { status: 404 });
+        const foundHosts = await host.getAllByRepo(webhookEvent.repo);
+        if (!foundHosts?.length) {
+          return new Response('Host not found', { status: 404 });
         }
 
-        for (const selectedRepo of selectedRepos) {
-          githubWebhookHandler(webhookEvent, selectedRepo);
+        for (const foundHost of foundHosts) {
+          githubWebhookHandler(webhookEvent, foundHost);
         }
 
         return Response.json({ message: 'webhook received' });

@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { BrushCleaning, PencilIcon } from 'lucide-react';
 
 import { Button } from '@/frontend/components/ui/Button';
-import { RepoSelector } from '@/frontend/components/Repo/Selector';
-import { RepoDialog } from '@/frontend/components/Repo/Dialog';
+import { HostSelector } from '@/frontend/components/Host/Selector';
+import { HostDialog } from '@/frontend/components/Host/Dialog';
 import { ContainerLayout } from '@/frontend/components/Layout';
 import { ContainerRefreshProvider } from '@/frontend/components/Container/ContainerRefreshContext';
 import { useLocalStorage } from '@/frontend/lib/useLocalStorage';
@@ -16,34 +16,34 @@ import './img/icon-containers-up.svg';
 import './img/icon-containers-up.webp';
 
 export function App() {
-  const [selectedRepo, setSelectedRepo] = useLocalStorage<string | undefined>(
-    'selectedRepo',
+  const [selectedHost, setSelectedHost] = useLocalStorage<string | undefined>(
+    'selectedHost',
     'global'
   );
-  const [repos, setRepos] = useState([]);
+  const [hosts, setHosts] = useState([]);
 
-  const refreshRepos = () => {
-    fetch('/api/repo')
+  const refreshHosts = () => {
+    fetch('/api/host')
       .then((res) => res.json())
       .then((data) => {
-        setRepos(data);
+        setHosts(data);
         if (data.length === 0) {
           openAddDialog();
         } else {
-          if (selectedRepo && data.some((repo) => repo.name === selectedRepo)) {
-            setSelectedRepo(selectedRepo);
+          if (selectedHost && data.some((host) => host.name === selectedHost)) {
+            setSelectedHost(selectedHost);
           } else if (data.length > 0) {
-            setSelectedRepo(String(data[0].name));
+            setSelectedHost(String(data[0].name));
           }
         }
       })
       .catch(() => {
-        setSelectedRepo('add');
+        setSelectedHost('add');
       });
   };
 
   useEffect(() => {
-    refreshRepos();
+    refreshHosts();
   }, []);
 
   // Unified dialog state
@@ -53,7 +53,7 @@ export function App() {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     if (dialogMode === 'add') {
-      setSelectedRepo(undefined);
+      setSelectedHost(undefined);
     }
   };
 
@@ -67,46 +67,45 @@ export function App() {
     setDialogOpen(true);
   };
 
-  const hasSelectedRepo = selectedRepo && selectedRepo !== 'add';
+  const hasSelectedHost = selectedHost && selectedHost !== 'add';
 
-  // Find the selected repo object
-  const selectedRepoObj = repos.find((r) => r.name === selectedRepo);
+  const selectedHostObj = hosts.find((r) => r.name === selectedHost);
 
   return (
     <ContainerRefreshProvider>
       <div className='container mx-auto p-4 sm:p-6 md:p-8 text-center relative max-w-none'>
         <div className='relative pb-7'>
           <h2 className='text-2xl font-bold mb-0 text-center'>
-            {hasSelectedRepo ? `Containers for ${selectedRepo}` : 'Containers Up!'}
+            {hasSelectedHost ? `Containers for ${selectedHost}` : 'Containers Up!'}
           </h2>
         </div>
         <div className='px-2 sm:px-4 md:px-8'>
           <div className='flex items-center gap-2'>
-            <RepoSelector
-              selected={selectedRepo}
+            <HostSelector
+              selected={selectedHost}
               setSelected={(value) => {
                 if (value === 'add') {
                   openAddDialog();
                 } else {
-                  setSelectedRepo(value);
+                  setSelectedHost(value);
                 }
               }}
-              repos={repos}
+              hosts={hosts}
             />
-            <Tooltip content='Edit Repository'>
+            <Tooltip content='Edit Host'>
               <Button
                 variant='outline'
                 size='sm'
-                disabled={!selectedRepo || selectedRepo === 'add'}
+                disabled={!selectedHost || selectedHost === 'add'}
                 onClick={openEditDialog}
-                aria-label='Edit Repository'
+                aria-label='Edit Host'
               >
                 <PencilIcon className='size-4' />
               </Button>
             </Tooltip>
-            {hasSelectedRepo && (
+            {hasSelectedHost && (
               <StreamingDialog
-                url={`/api/repo/${selectedRepo}/containers`}
+                url={`/api/host/${selectedHost}/containers`}
                 method='DELETE'
                 dialogTitle='Cleanup'
                 tooltipText='Cleanup'
@@ -116,25 +115,20 @@ export function App() {
                 </Button>
               </StreamingDialog>
             )}
-            <LogsDialog selectedRepo={selectedRepo} />
+            <LogsDialog selectedHost={selectedHost} />
           </div>
-          {hasSelectedRepo && (
-            <div className='text-xs text-muted-foreground'>
-              GitHub Webhook: <code>/api/webhook/github/repo/{selectedRepo}</code>
-            </div>
-          )}
         </div>
 
-        <ContainerLayout selectedRepo={selectedRepo} />
+        <ContainerLayout selectedHost={selectedHost} />
 
-        <RepoDialog
+        <HostDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
-          title={`${dialogMode === 'add' ? 'Add New' : 'Edit'} Repository`}
-          initialValues={dialogMode === 'edit' ? selectedRepoObj : undefined}
+          title={`${dialogMode === 'add' ? 'Add New' : 'Edit'} Host`}
+          initialValues={dialogMode === 'edit' ? selectedHostObj : undefined}
           onSuccess={() => {
             handleCloseDialog();
-            refreshRepos();
+            refreshHosts();
           }}
         />
       </div>

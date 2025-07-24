@@ -3,27 +3,42 @@ import { LabeledInput } from '@/frontend/components/ui/Input';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { repoSchema } from '@/backend/db/schema/repo';
+import { hostSchema } from '@/backend/db/schema/host';
 import { useEffect, useRef } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/frontend/components/ui/Dialog';
+import { Info } from 'lucide-react';
 
-export const RepoForm = ({
+export const HostForm = ({
   onSuccess,
   initialValues,
   onAlert,
   onDeleteConfirm,
 }: {
   onSuccess?: () => void;
-  initialValues?: Partial<z.infer<typeof repoSchema>>;
+  initialValues?: Partial<z.infer<typeof hostSchema>>;
   onAlert?: (alert: { open: boolean; message: string; type: 'success' | 'error' }) => void;
   onDeleteConfirm?: (confirm: { open: boolean; name: string }) => void;
 }) => {
-  type RepoForm = z.infer<typeof repoSchema>;
+  type HostForm = z.infer<typeof hostSchema>;
+
+  function normalizeNulls<T extends object>(obj?: T): T {
+    if (!obj) return {} as T;
+    return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, v === null ? '' : v])) as T;
+  }
+
+  const normalizedInitialValues = normalizeNulls(initialValues);
 
   const lastSuccess = useRef(false);
 
-  const onSubmit = async (data: RepoForm) => {
+  const onSubmit = async (data: HostForm) => {
     try {
-      const res = await fetch(`/api/repo/${encodeURIComponent(data.name)}`, {
+      const res = await fetch(`/api/host/${encodeURIComponent(data.name)}`, {
         method: initialValues ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -35,18 +50,18 @@ export const RepoForm = ({
       if (!res.ok) {
         onAlert?.({
           open: true,
-          message: result.error || 'Failed to save repository',
+          message: result.error || 'Failed to save host',
           type: 'error',
         });
         lastSuccess.current = false;
         return;
       }
       reset();
-      onAlert?.({ open: true, message: 'Repository saved!', type: 'success' });
+      onAlert?.({ open: true, message: 'Host saved!', type: 'success' });
       onSuccess?.();
       lastSuccess.current = true;
     } catch (err) {
-      onAlert?.({ open: true, message: 'Error saving repository: ' + err, type: 'error' });
+      onAlert?.({ open: true, message: 'Error saving host: ' + err, type: 'error' });
       lastSuccess.current = false;
     }
   };
@@ -63,42 +78,51 @@ export const RepoForm = ({
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-  } = useForm<RepoForm>({
-    resolver: zodResolver(repoSchema),
-    defaultValues: initialValues,
+    watch,
+  } = useForm<HostForm>({
+    resolver: zodResolver(hostSchema),
+    defaultValues: normalizedInitialValues,
   });
 
   useEffect(() => {
     if (initialValues) {
-      reset(initialValues);
+      reset(normalizeNulls(initialValues));
     }
   }, [initialValues, reset]);
 
+  const watchedName = watch('name');
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className='space-y-4 text-left'>
-      {initialValues && <input type='hidden' {...register('id')} />}
+      {initialValues?.id && <input type='hidden' {...register('id')} />}
       <LabeledInput
         label='Name'
         id='name'
         type='text'
-        placeholder='e.g. my-repo'
+        required
+        placeholder='e.g. my-host'
         error={errors.name?.message}
+        disabled={isSubmitting}
         {...register('name')}
       />
       <LabeledInput
         label='SSH Hostname'
-        id='sshCmd'
+        id='sshHost'
         type='text'
+        required
         placeholder='e.g. user@example.com'
-        error={errors.sshCmd?.message}
-        {...register('sshCmd')}
+        error={errors.sshHost?.message}
+        disabled={isSubmitting}
+        {...register('sshHost')}
       />
       <LabeledInput
         label='SSH Key'
         id='sshKey'
         type='textarea'
+        required
         placeholder='Paste your SSH private key here'
         error={errors.sshKey?.message}
+        disabled={isSubmitting}
         {...register('sshKey')}
       />
       <LabeledInput
@@ -107,14 +131,43 @@ export const RepoForm = ({
         type='text'
         placeholder='e.g. user/repo (without https://github.com/)'
         error={errors.repo?.message}
+        disabled={isSubmitting}
         {...register('repo')}
       />
       <LabeledInput
-        label='Webhook Secret'
+        label={
+          <>
+            Webhook Secret
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  aria-label='Show GitHub Webhook URL'
+                  className='cursor-pointer'
+                >
+                  <Info className='size-4' />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className='max-w-xs'>
+                <DialogHeader>
+                  <DialogTitle>GitHub Webhook URL</DialogTitle>
+                </DialogHeader>
+                <div className='text-xs break-all'>
+                  <code>/api/webhook/github/host/{watchedName}</code>
+                </div>
+                <div className='mt-2 text-xs text-muted-foreground'>
+                  Use this URL as the webhook endpoint in your GitHub repository settings.
+                </div>
+              </DialogContent>
+            </Dialog>
+          </>
+        }
         id='webhookSecret'
         type='text'
         placeholder='Copy from webhook settings'
         error={errors.webhookSecret?.message}
+        disabled={isSubmitting}
         {...register('webhookSecret')}
       />
       <LabeledInput
@@ -123,18 +176,20 @@ export const RepoForm = ({
         type='text'
         placeholder='e.g. /home/debian/stacks'
         error={errors.workingFolder?.message}
+        disabled={isSubmitting}
         {...register('workingFolder')}
       />
       <LabeledInput
-        label='Exclude Folders regex (optional)'
+        label='Exclude Folders regex'
         id='excludeFolders'
         type='text'
         placeholder='e.g. (manual|test)'
         error={undefined}
+        disabled={isSubmitting}
         {...register('excludeFolders')}
       />
       <Button type='submit' className='w-full font-semibold mt-4' disabled={isSubmitting}>
-        {isSubmitting ? 'Saving...' : 'Save Repository'}
+        {isSubmitting ? 'Saving...' : 'Save Host'}
       </Button>
       {initialValues && (
         <Button
@@ -144,7 +199,7 @@ export const RepoForm = ({
           onClick={onDelete}
           type='button'
         >
-          Delete Repository
+          Delete Host
         </Button>
       )}
     </form>

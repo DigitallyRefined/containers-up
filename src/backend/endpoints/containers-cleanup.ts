@@ -26,16 +26,15 @@ export const containersCleanup = async (context: string) => {
     );
     createdDate = createdDate.split('T')[0].replace(/-/g, '.');
 
-    // Get repository
     let { stdout: repo } = await exec.run(
       `${getDockerCmd(
         context
       )} inspect -f '{{if .RepoDigests}}{{index .RepoDigests 0}}{{end}}' "${imageId}"`
     );
     if (repo) {
-      const repoName = repo.split('@')[0].split(':')[0];
-      await exec.run(`${getDockerCmd(context)} tag "${imageId}" "${repoName}:${createdDate}"`);
-      logger.info(`Tagged image ${imageId} as ${repoName}:${createdDate}`);
+      const hostName = repo.split('@')[0].split(':')[0];
+      await exec.run(`${getDockerCmd(context)} tag "${imageId}" "${hostName}:${createdDate}"`);
+      logger.info(`Tagged image ${imageId} as ${hostName}:${createdDate}`);
     }
   }
 

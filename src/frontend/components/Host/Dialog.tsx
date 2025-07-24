@@ -5,27 +5,27 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/frontend/components/ui/Dialog';
-import { RepoForm } from '@/frontend/components/Repo/Form';
+import { HostForm } from '@/frontend/components/Host/Form';
 import { z } from 'zod';
-import { repoSchema } from '@/backend/db/schema/repo';
+import { hostSchema } from '@/backend/db/schema/host';
 import { useState, useRef } from 'react';
 import { Button } from '@/frontend/components/ui/Button';
 
-interface RepoDialogProps {
+interface HostDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  initialValues?: Partial<z.infer<typeof repoSchema>>;
+  initialValues?: Partial<z.infer<typeof hostSchema>>;
   onSuccess: () => void;
 }
 
-export const RepoDialog = ({
+export const HostDialog = ({
   open,
   onOpenChange,
   title,
   initialValues,
   onSuccess,
-}: RepoDialogProps) => {
+}: HostDialogProps) => {
   const [alert, setAlert] = useState<{ open: boolean; message: string; type: 'success' | 'error' }>(
     { open: false, message: '', type: 'success' }
   );
@@ -54,7 +54,7 @@ export const RepoDialog = ({
 
   const confirmDelete = async () => {
     try {
-      const res = await fetch(`/api/repo/${encodeURIComponent(deleteConfirm.name)}`, {
+      const res = await fetch(`/api/host/${encodeURIComponent(deleteConfirm.name)}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -65,17 +65,17 @@ export const RepoDialog = ({
       if (!res.ok) {
         setAlert({
           open: true,
-          message: result.error || 'Failed to delete repository',
+          message: result.error || 'Failed to delete host',
           type: 'error',
         });
         lastSuccess.current = false;
         return;
       }
 
-      setAlert({ open: true, message: 'Repository deleted!', type: 'success' });
+      setAlert({ open: true, message: 'Host deleted!', type: 'success' });
       lastSuccess.current = true;
     } catch (err) {
-      setAlert({ open: true, message: 'Error deleting repository: ' + err, type: 'error' });
+      setAlert({ open: true, message: 'Error deleting host: ' + err, type: 'error' });
       lastSuccess.current = false;
     } finally {
       setDeleteConfirm({ open: false, name: '' });
@@ -88,12 +88,10 @@ export const RepoDialog = ({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>
-              Configure repository settings for container management.
-            </DialogDescription>
+            <DialogDescription>Configure host settings for container management.</DialogDescription>
           </DialogHeader>
           <div className='py-4'>
-            <RepoForm
+            <HostForm
               initialValues={initialValues}
               onSuccess={onSuccess}
               onAlert={handleAlert}
@@ -138,11 +136,11 @@ export const RepoDialog = ({
           <DialogHeader>
             <DialogTitle>Confirm Delete</DialogTitle>
             <DialogDescription>
-              This action will permanently delete the repository and cannot be undone.
+              This action will permanently delete the host and cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <div className='space-y-4'>
-            <p>Are you sure you want to delete the repository "{deleteConfirm.name}"?</p>
+            <p>Are you sure you want to delete the host "{deleteConfirm.name}"?</p>
             <p className='text-sm text-muted-foreground'>This action cannot be undone.</p>
             <div className='flex gap-2 justify-end'>
               <Button variant='outline' onClick={() => setDeleteConfirm({ open: false, name: '' })}>

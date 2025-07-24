@@ -1,7 +1,7 @@
 import type { Logger } from 'pino';
 
 import { createExec } from '@/backend/utils/exec';
-import type { Repo } from '@/backend/db/schema/repo';
+import type { Host } from '@/backend/db/schema/host';
 import { mainLogger } from '@/backend/utils/logger';
 
 const exec = createExec(mainLogger);
@@ -14,7 +14,7 @@ const parseDockerStdout = (stdout: string) =>
 
 export const getDockerCmd = (context: string) => `docker --context ${context}`;
 
-const runStreamedCommand = (command: string, options?: { repoName: string; host: string }) => {
+const runStreamedCommand = (command: string, options?: { hostName: string; host: string }) => {
   const stream = new ReadableStream({
     start(controller) {
       const handlers = {
@@ -28,7 +28,7 @@ const runStreamedCommand = (command: string, options?: { repoName: string; host:
       };
 
       if (options) {
-        exec.sshStream(options.repoName, options.host, command, handlers);
+        exec.sshStream(options.hostName, options.host, command, handlers);
       } else {
         exec.stream(command, handlers);
       }
@@ -71,27 +71,27 @@ export const createDockerExec = (logger: Logger) => {
     removeImage: (context: string, imageId: string) => {
       return runStreamedCommand(`${getDockerCmd(context)} rmi "${imageId}"`);
     },
-    isInvalidComposeFile: async (repo: Repo, composeFile: string) =>
+    isInvalidComposeFile: async (host: Host, composeFile: string) =>
       typeof composeFile !== 'string' ||
       !/(docker-compose|compose)\.ya?ml$/.test(composeFile) ||
-      !(await exec.pathExistsOnRemote(repo.name, repo.sshCmd, composeFile)),
-    stopCompose: (repoName: string, host: string, composeFile: string) => {
+      !(await exec.pathExistsOnRemote(host.name, host.sshHost, composeFile)),
+    stopCompose: (hostName: string, host: string, composeFile: string) => {
       return runStreamedCommand(`docker compose -f "${composeFile}" down`, {
-        repoName,
+        hostName,
         host,
       });
     },
-    startCompose: (repoName: string, host: string, composeFile: string) => {
+    startCompose: (hostName: string, host: string, composeFile: string) => {
       return runStreamedCommand(`docker compose -f "${composeFile}" up -d`, {
-        repoName,
+        hostName,
         host,
       });
     },
-    restartCompose: (repoName: string, host: string, composeFile: string) => {
+    restartCompose: (hostName: string, host: string, composeFile: string) => {
       return runStreamedCommand(
         `docker compose -f "${composeFile}" down && docker compose -f "${composeFile}" up -d`,
         {
-          repoName,
+          hostName,
           host,
         }
       );

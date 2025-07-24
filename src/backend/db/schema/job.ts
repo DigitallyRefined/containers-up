@@ -10,7 +10,7 @@ export enum JobStatus {
 
 export class Job {
   id?: number;
-  repoId: number;
+  hostId: number;
   repoPr: string;
   folder: string;
   title: string;
@@ -25,8 +25,8 @@ export class JobWithLogs extends Job {
 
 export const jobCreateTableSql = `
   CREATE TABLE IF NOT EXISTS job (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    repoId INTEGER NOT NULL,
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    hostId INTEGER NOT NULL,
     repoPr TEXT NOT NULL UNIQUE,
     folder TEXT NOT NULL,
     title TEXT NOT NULL,

@@ -1,11 +1,11 @@
 import { job as jobDb } from '@/backend/db/job';
 import { githubWebhookHandler } from '@/backend/endpoints/webhook/github';
-import { repo as repoDb } from '@/backend/db/repo';
+import { host as hostDb } from '@/backend/db/host';
 
 export const restartJob = async (id: string) => {
-  const { repoId, folder, repoPr, title } = await jobDb.get(id);
+  const { hostId, folder, repoPr, title } = await jobDb.get(id);
 
-  const repoConfig = await repoDb.get(repoId);
+  const repoConfig = await hostDb.get(hostId);
 
   await githubWebhookHandler(
     {
@@ -18,5 +18,5 @@ export const restartJob = async (id: string) => {
     repoConfig
   );
 
-  return await jobDb.getJobsWithLogs(repoId, folder);
+  return await jobDb.getJobsWithLogs(hostId, folder);
 };

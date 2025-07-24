@@ -5,28 +5,28 @@ import {
   SelectItem,
   SelectValue,
 } from '@/frontend/components/ui/Select';
-import type { Repo } from '@/backend/db/schema/repo';
+import type { Host } from '@/backend/db/schema/host';
 
-interface RepoSelectorProps {
+interface HostSelectorProps {
   selected: string | undefined;
   setSelected: (value: string | undefined) => void;
-  repos: Repo[];
+  hosts: Host[];
 }
 
-export const RepoSelector = ({ selected, setSelected, repos }: RepoSelectorProps) => {
+export const HostSelector = ({ selected, setSelected, hosts }: HostSelectorProps) => {
   return (
     <Select value={selected || ''} onValueChange={setSelected}>
       <SelectTrigger>
-        <SelectValue placeholder='Select or add a repo...' />
+        <SelectValue placeholder='Select or add a host...' />
       </SelectTrigger>
       <SelectContent>
-        {repos.map((repo) => (
-          <SelectItem key={repo.name} value={repo.name}>
-            {repo.name}
+        {hosts.map((host) => (
+          <SelectItem key={host.name} value={host.name}>
+            {host.name}
           </SelectItem>
         ))}
         <SelectItem key='add' value='add'>
-          Add a new repo...
+          Add a new host...
         </SelectItem>
       </SelectContent>
     </Select>

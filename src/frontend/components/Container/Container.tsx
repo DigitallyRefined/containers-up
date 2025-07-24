@@ -9,14 +9,14 @@ import { Button } from '@/frontend/components/ui/Button';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 import { getContainerStatusColor } from '@/frontend/lib/utils';
 
-export const Container = ({ service, repoName }: { service: Service; repoName: string }) => {
+export const Container = ({ service, hostName }: { service: Service; hostName: string }) => {
   return (
     <Card>
       <CardContent className='p-2 sm:p-3 md:p-4 relative flex flex-col'>
         <ContainerIcon size={16} className='absolute top-4 right-4 opacity-80 z-0' />
         <div className='absolute top-2 right-2 flex gap-1 z-10'>
           <StreamingDialog
-            url={`/api/repo/${repoName}/container/${service.Id}`}
+            url={`/api/host/${hostName}/container/${service.Id}`}
             method='POST'
             dialogTitle={`Restart: ${service.Name}`}
             tooltipText='Restart this container'
@@ -27,7 +27,7 @@ export const Container = ({ service, repoName }: { service: Service; repoName: s
           </StreamingDialog>
           {service.State.Status === 'running' ? (
             <StreamingDialog
-              url={`/api/repo/${repoName}/container/${service.Id}`}
+              url={`/api/host/${hostName}/container/${service.Id}`}
               method='PUT'
               dialogTitle={`Stop: ${service.Name}`}
               tooltipText='Stop this container'
@@ -38,7 +38,7 @@ export const Container = ({ service, repoName }: { service: Service; repoName: s
             </StreamingDialog>
           ) : (
             <StreamingDialog
-              url={`/api/repo/${repoName}/container/${service.Id}`}
+              url={`/api/host/${hostName}/container/${service.Id}`}
               method='DELETE'
               dialogTitle={`Delete: ${service.Name}`}
               tooltipText='Delete this container'

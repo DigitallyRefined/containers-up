@@ -31,12 +31,13 @@ function Textarea({ className, ...props }: React.ComponentProps<'textarea'>) {
 }
 
 type LabeledInput = {
-  label: string;
+  label: string | React.ReactNode;
   id: string;
   error?: string;
   className?: string;
   labelClassName?: string;
   containerClassName?: string;
+  required?: boolean;
 };
 
 type LabeledInputProps =
@@ -47,14 +48,20 @@ type LabeledInputProps =
   | ({ type: 'textarea' } & React.ComponentProps<'textarea'> & LabeledInput);
 
 export function LabeledInput(props: LabeledInputProps) {
-  const { label, id, error, className, labelClassName, containerClassName, ...rest } = props;
+  const { label, id, error, className, labelClassName, containerClassName, required, ...rest } =
+    props;
+  const labelContent = (
+    <>
+      {label} {required && <span className='text-destructive'>*</span>}
+    </>
+  );
 
   if (props.type === 'textarea') {
     const textareaProps = rest as React.ComponentProps<'textarea'>;
     return (
       <div className={containerClassName}>
         <label htmlFor={id} className={labelClassName ?? 'block font-medium mb-1'}>
-          {label}
+          {labelContent}
         </label>
         <Textarea id={id} className={className} {...textareaProps} aria-invalid={!!error} />
         {error && <p className='text-destructive text-sm mt-1'>{error}</p>}
@@ -66,7 +73,7 @@ export function LabeledInput(props: LabeledInputProps) {
   return (
     <div className={containerClassName}>
       <label htmlFor={id} className={labelClassName ?? 'block font-medium mb-1'}>
-        {label}
+        {labelContent}
       </label>
       <Input id={id} className={className} {...inputProps} aria-invalid={!!error} />
       {error && <p className='text-destructive text-sm mt-1'>{error}</p>}
