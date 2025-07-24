@@ -7,8 +7,10 @@ export const containersCleanup = async (context: string) => {
   const logger = mainLogger.child({ event });
   const exec = createExec(logger);
 
-  const { stdout: systemPruneStdout } = await exec.run(`${getDockerCmd(context)} system prune -f`);
-  if (!systemPruneStdout.includes('Total reclaimed space: 0B'))
+  const { stdout: systemPruneStdout, stderr: systemPruneStderr } = await exec.run(
+    `${getDockerCmd(context)} system prune -f`
+  );
+  if (systemPruneStdout.includes('\n') || !systemPruneStdout.includes('0B'))
     logger.info(`System prune: ${systemPruneStdout}`);
 
   // Get all untagged images
@@ -30,14 +32,11 @@ export const containersCleanup = async (context: string) => {
         context
       )} inspect -f '{{if .RepoDigests}}{{index .RepoDigests 0}}{{end}}' "${imageId}"`
     );
-    if (!repo) {
-      repo = 'untagged';
+    if (repo) {
+      const repoName = repo.split('@')[0].split(':')[0];
+      await exec.run(`${getDockerCmd(context)} tag "${imageId}" "${repoName}:${createdDate}"`);
+      logger.info(`Tagged image ${imageId} as ${repoName}:${createdDate}`);
     }
-    repo = repo.split('@')[0].split(':')[0];
-
-    // Tag image
-    await exec.run(`${getDockerCmd(context)} tag "${imageId}" "${repo}:${createdDate}"`);
-    logger.info(`Tagged image ${imageId} as ${repo}:${createdDate}`);
   }
 
   // Remove older duplicate images
@@ -46,15 +45,15 @@ export const containersCleanup = async (context: string) => {
   );
   const images = imagesStdout.split('\n').filter((img) => img);
 
-  const imageMap: { [key: string]: boolean } = {};
+  const seenImageMap: { [key: string]: boolean } = {};
 
   for (const image of images) {
     const imageWithoutTag = image.split(':')[0];
-    if (imageMap[imageWithoutTag] && imageWithoutTag !== '<none>') {
+    if (seenImageMap[imageWithoutTag] && imageWithoutTag !== '<none>') {
       logger.info(`Removing previous image: ${image}`);
-      await exec.run(`${getDockerCmd(context)} rmi "${image}"`);
+      await exec.run(`${getDockerCmd(context)} rmi -f "${image}"`);
     } else {
-      imageMap[imageWithoutTag] = true;
+      seenImageMap[imageWithoutTag] = true;
     }
   }
 
