@@ -16,6 +16,7 @@ import { Jobs } from '@/frontend/components/Container/Jobs';
 import { Card, CardContent } from '@/frontend/components/ui/card';
 import { ComposeFiles } from '@/frontend/components/Compose/Files';
 import { PreviousRunningComposeFiles } from '@/frontend/components/Compose/PreviousRunningComposeFiles';
+import { useLocalStorage } from '@/frontend/lib/useLocalStorage';
 
 export interface Service {
   Id: string;
@@ -68,6 +69,17 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
   const [containersData, setContainersData] = useState<ContainersResponse>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [openAccordionItems, setOpenAccordionItems] = useLocalStorage<string[]>(
+    'openAccordionItems',
+    'global',
+    ['previousRunningComposedFiles', 'otherComposedContainers', 'separateContainers'],
+    'replace'
+  );
+
+  const handleAccordionChange = (values: string[]) => {
+    setOpenAccordionItems(values);
+  };
 
   useEffect(() => {
     const fetchContainers = async () => {
@@ -149,7 +161,12 @@ export const ContainerLayout = ({ selectedRepo }: { selectedRepo: string }) => {
 
       <ComposeFiles repoName={selectedRepo} />
 
-      <Accordion type='multiple' className='w-full'>
+      <Accordion
+        type='multiple'
+        className='w-full'
+        value={openAccordionItems}
+        onValueChange={handleAccordionChange}
+      >
         <PreviousRunningComposeFiles
           selectedRepo={selectedRepo}
           composedContainers={containersData.composedContainers}

@@ -18,7 +18,7 @@ import './img/icon-containers-up.webp';
 export function App() {
   const [selectedRepo, setSelectedRepo] = useLocalStorage<string | undefined>(
     'selectedRepo',
-    'default'
+    'global'
   );
   const [repos, setRepos] = useState([]);
 

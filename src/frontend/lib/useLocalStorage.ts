@@ -11,7 +11,7 @@ export function useLocalStorage<T>(
   initialValue: T = '' as T,
   mode: 'append' | 'replace' = 'replace'
 ) {
-  const fullKey = `${key}-${keySuffix}`;
+  const fullKey = `${key}:${keySuffix}`;
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === 'undefined') {
       return initialValue;

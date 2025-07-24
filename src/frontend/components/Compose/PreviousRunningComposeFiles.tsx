@@ -50,7 +50,7 @@ export const PreviousRunningComposeFiles = ({
     <AccordionItem value='previousRunningComposedFiles'>
       <AccordionTrigger>Previously Running Composed Files</AccordionTrigger>
       <AccordionContent>
-        <ul className='mt-4 mb-4'>
+        <ul className='mb-4'>
           {previousRunningComposedFiles.map((file, idx) => (
             <li key={file} className='pl-7'>
               <StreamingDialog
@@ -60,13 +60,14 @@ export const PreviousRunningComposeFiles = ({
                 dialogTitle={`Run Compose File: ${file}`}
               >
                 <a href='#' className='text-sm flex items-center gap-1 hover:underline'>
-                  <Play className='size-4' />
+                  <Play className='size-4' style={{ minWidth: '1rem' }} />
                   <BrushCleaning
-                    className='size-4'
                     onClick={(e) => {
                       e.preventDefault();
                       removeSeenComposedFile(file);
                     }}
+                    className='size-4'
+                    style={{ minWidth: '1rem' }}
                   />
                   <span className='text-sm'>{file}</span>
                 </a>
