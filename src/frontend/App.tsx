@@ -10,6 +10,7 @@ import { useLocalStorage } from '@/frontend/lib/useLocalStorage';
 import { Tooltip } from '@/frontend/components/ui/Tooltip';
 import { LogsDialog } from '@/frontend/components/Container/LogsDialog';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
+import { ComposeFiles } from '@/frontend/components/Compose/Files';
 import type { Host } from '@/backend/db/schema/host';
 import {
   Select,
@@ -117,7 +118,7 @@ export function App() {
             </Tooltip>
           </div>
           {hasSelectedHost && (
-            <div className='flex items-center gap-2 w-1/3 md:w-2/3 md:justify-end min-w-50'>
+            <div className='flex items-center gap-2 w-1/3 md:w-2/3 md:justify-end min-w-60'>
               <Select value={selectedSort || ''} onValueChange={setSelectedSort}>
                 <Tooltip content='Sort by'>
                   <SelectTrigger className='max-w-30'>
@@ -146,6 +147,7 @@ export function App() {
                 </Button>
               </StreamingDialog>
               <LogsDialog selectedHost={selectedHost} />
+              <ComposeFiles hostName={selectedHost} />
             </div>
           )}
         </div>

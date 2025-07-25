@@ -14,7 +14,6 @@ import { Container } from '@/frontend/components/Container/Container';
 import { ContainerImage } from '@/frontend/components/Container/Image';
 import { Jobs } from '@/frontend/components/Container/Jobs';
 import { Card, CardContent } from '@/frontend/components/ui/Card';
-import { ComposeFiles } from '@/frontend/components/Compose/Files';
 import { PreviousRunningComposeFiles } from '@/frontend/components/Compose/PreviousRunningComposeFiles';
 import { useLocalStorage } from '@/frontend/lib/useLocalStorage';
 import { Tooltip } from '@/frontend/components/ui/Tooltip';
@@ -137,7 +136,7 @@ export const ContainerLayout = ({
     );
   }
 
-  if (loading || !Object.keys(containersData).length) {
+  if (loading) {
     return <div className='container mx-auto p-8 text-center relative'>Loading containers...</div>;
   }
 
@@ -181,18 +180,14 @@ export const ContainerLayout = ({
         </div>
       )}
 
-      <ComposeFiles hostName={selectedHost} />
-
-      <Accordion
-        type='multiple'
-        value={openAccordionItems}
-        onValueChange={handleAccordionChange}
-      >
-        <PreviousRunningComposeFiles
-          selectedHost={selectedHost}
-          composedContainers={containersData.composedContainers}
-          otherComposedContainers={containersData.otherComposedContainers}
-        />
+      <Accordion type='multiple' value={openAccordionItems} onValueChange={handleAccordionChange}>
+        {selectedHost && (
+          <PreviousRunningComposeFiles
+            selectedHost={selectedHost}
+            composedContainers={containersData.composedContainers}
+            otherComposedContainers={containersData.otherComposedContainers}
+          />
+        )}
 
         {((containersData.otherComposedContainers &&
           Object.keys(containersData.otherComposedContainers).length) ??
