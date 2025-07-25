@@ -50,7 +50,9 @@ export const createDockerExec = (logger: Logger) => {
   return {
     listContainers: async (context: string) => {
       const { stdout } = await exec.run(
-        `${getDockerCmd(context)} inspect --format "{{json .}}" $(${getDockerCmd(context)} ps -aq)`
+        `${getDockerCmd(context)} inspect --format "{{json .}}" $(${getDockerCmd(
+          context
+        )} ps -aq --no-trunc)`
       );
 
       return parseDockerStdout(stdout);

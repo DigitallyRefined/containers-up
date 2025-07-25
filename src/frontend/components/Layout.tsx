@@ -66,7 +66,13 @@ export interface ContainersResponse {
   incompleteJobs?: JobWithLogs[];
 }
 
-export const ContainerLayout = ({ selectedHost }: { selectedHost: string }) => {
+export const ContainerLayout = ({
+  selectedHost,
+  selectedSort,
+}: {
+  selectedHost: string;
+  selectedSort: string;
+}) => {
   const { refreshKey } = useContainerRefresh();
   const [containersData, setContainersData] = useState<ContainersResponse>({});
   const [loading, setLoading] = useState(false);
@@ -91,7 +97,9 @@ export const ContainerLayout = ({ selectedHost }: { selectedHost: string }) => {
       setError(null);
 
       try {
-        const response = await fetch(`/api/host/${selectedHost}/containers`);
+        const response = await fetch(
+          `/api/host/${selectedHost}/containers${selectedSort ? `?sort=${selectedSort}` : ''}`
+        );
 
         if (!response.ok) {
           throw new Error(
@@ -109,7 +117,7 @@ export const ContainerLayout = ({ selectedHost }: { selectedHost: string }) => {
     };
 
     fetchContainers();
-  }, [selectedHost, refreshKey]);
+  }, [selectedHost, refreshKey, selectedSort]);
 
   if (error) {
     return (
@@ -177,7 +185,6 @@ export const ContainerLayout = ({ selectedHost }: { selectedHost: string }) => {
 
       <Accordion
         type='multiple'
-        className='w-full'
         value={openAccordionItems}
         onValueChange={handleAccordionChange}
       >
@@ -193,17 +200,15 @@ export const ContainerLayout = ({ selectedHost }: { selectedHost: string }) => {
           <AccordionItem value='otherComposedContainers'>
             <AccordionTrigger>Other Composed Containers</AccordionTrigger>
             <AccordionContent>
-              <div className='container mx-auto py-1 sm:py-2 md:py-3 text-center relative max-w-none'>
-                <div className='grid gap-2 md:grid-cols-1 2xl:grid-cols-2 3xl:grid-cols-3'>
-                  {Object.entries(containersData.otherComposedContainers).map(([key, services]) => (
-                    <ComposedContainer
-                      key={key}
-                      cardTitle={key}
-                      services={services}
-                      hostName={selectedHost}
-                    />
-                  ))}
-                </div>
+              <div className='grid gap-4 md:grid-cols-1 2xl:grid-cols-2 3xl:grid-cols-3 mb-8'>
+                {Object.entries(containersData.otherComposedContainers).map(([key, services]) => (
+                  <ComposedContainer
+                    key={key}
+                    cardTitle={key}
+                    services={services}
+                    hostName={selectedHost}
+                  />
+                ))}
               </div>
             </AccordionContent>
           </AccordionItem>

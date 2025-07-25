@@ -24,9 +24,9 @@ export const ComposedContainer = ({
   hostName,
 }: ComposedContainerProps) => {
   return (
-    <Card key={cardTitle}>
+    <Card key={cardTitle} className='my-2'>
       <CardHeader className='flex flex-row items-center justify-between'>
-        <CardTitle className='text-left'>{cardTitle}</CardTitle>
+        <CardTitle className='text-left break-all'>{cardTitle}</CardTitle>
         <div className='flex gap-2'>
           <StreamingDialog
             url={`/api/host/${hostName}/compose`}
@@ -53,7 +53,6 @@ export const ComposedContainer = ({
         </div>
       </CardHeader>
       <CardContent className='space-y-6'>
-        {/* Services Section */}
         <div>
           <h4 className='text-lg font-medium mb-3 text-left'>Services</h4>
           <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>

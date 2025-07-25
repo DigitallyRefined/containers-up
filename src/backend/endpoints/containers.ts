@@ -7,6 +7,8 @@ import { mainLogger } from '@/backend/utils/logger';
 import { job as jobDb } from '@/backend/db/job';
 import { getTraefikUrl } from '@/backend/utils';
 
+export type SortOptions = 'updates' | 'uptime' | 'name';
+
 const event = 'containers';
 const logger = mainLogger.child({ event });
 const dockerExec = createDockerExec(logger);
@@ -16,8 +18,10 @@ const getUnusedDockerImages = async (containers, images) => {
   return images.filter((img) => !usedImageIds.has(img.ID));
 };
 
-const getContainersRunningViaCompose = async (context: string) => {
+const getGroupedContainersRunning = async (context: string, sort: SortOptions) => {
   const containers = await dockerExec.listContainers(context);
+  if (sort === 'name') containers.sort((a, b) => a.Name.localeCompare(b.Name));
+
   const composedContainers = containers.filter(
     (container) =>
       container.Config.Labels &&
@@ -33,10 +37,10 @@ const getContainersRunningViaCompose = async (context: string) => {
   return { containers, composedContainers, nonComposedContainers };
 };
 
-export const getContainers = async (selectedHost: Host) => {
+export const getContainers = async (selectedHost: Host, sort: SortOptions = 'updates') => {
   const [images, { containers, composedContainers, nonComposedContainers }] = await Promise.all([
     dockerExec.listImages(selectedHost.name),
-    getContainersRunningViaCompose(selectedHost.name),
+    getGroupedContainersRunning(selectedHost.name, sort),
   ]);
 
   const composeFiles = new Set();
@@ -107,20 +111,26 @@ export const getContainers = async (selectedHost: Host) => {
     )
   );
 
-  composedContainersByComposeFileEntries.sort((a, b) => {
-    const aHasJobs = a[1].jobs && a[1].jobs.length > 0;
-    const bHasJobs = b[1].jobs && b[1].jobs.length > 0;
+  if (sort === 'updates') {
+    composedContainersByComposeFileEntries.sort((a, b) => {
+      const aHasJobs = a[1].jobs && a[1].jobs.length > 0;
+      const bHasJobs = b[1].jobs && b[1].jobs.length > 0;
 
-    if (aHasJobs && bHasJobs) {
-      return b[1].jobs[0].updated > a[1].jobs[0].updated ? 1 : -1; // Descending order (newest first)
-    } else if (aHasJobs) {
-      return -1; // a comes before b
-    } else if (bHasJobs) {
-      return 1; // b comes before a
-    } else {
-      return 0; // both have no jobs, keep order
-    }
-  });
+      if (aHasJobs && bHasJobs) {
+        return b[1].jobs[0].updated > a[1].jobs[0].updated ? 1 : -1; // Descending order (newest first)
+      } else if (aHasJobs) {
+        return -1; // a comes before b
+      } else if (bHasJobs) {
+        return 1; // b comes before a
+      } else {
+        return 0; // both have no jobs, keep order
+      }
+    });
+  }
+
+  if (sort === 'name') {
+    composedContainersByComposeFileEntries.sort();
+  }
 
   const composedContainersByComposeFile = Object.fromEntries(
     composedContainersByComposeFileEntries

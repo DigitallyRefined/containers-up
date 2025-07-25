@@ -1,7 +1,7 @@
 import { serve, type ErrorLike, type Serve } from 'bun';
 import index from '@/index.html';
 
-import { getContainers } from '@/backend/endpoints/containers';
+import { getContainers, type SortOptions } from '@/backend/endpoints/containers';
 import { githubWebhookHandler, type GitHubWebhookEvent } from '@/backend/endpoints/webhook/github';
 import { containersCleanup } from '@/backend/endpoints/containers-cleanup';
 import { deleteHost, getHosts, postHost, putHost } from '@/backend/endpoints/host';
@@ -186,7 +186,8 @@ const server = serve({
         const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
         if (error) return error;
 
-        return Response.json(await getContainers(selectedHost));
+        const sort = (new URL(req.url).searchParams.get('sort') ?? 'updates') as SortOptions;
+        return Response.json(await getContainers(selectedHost, sort));
       },
 
       async DELETE(req) {

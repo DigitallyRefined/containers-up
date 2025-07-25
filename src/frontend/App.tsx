@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrushCleaning, PencilIcon } from 'lucide-react';
+import { BrushCleaning, PencilIcon, SortDesc } from 'lucide-react';
 
 import { Button } from '@/frontend/components/ui/Button';
 import { HostSelector } from '@/frontend/components/Host/Selector';
@@ -10,6 +10,14 @@ import { useLocalStorage } from '@/frontend/lib/useLocalStorage';
 import { Tooltip } from '@/frontend/components/ui/Tooltip';
 import { LogsDialog } from '@/frontend/components/Container/LogsDialog';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
+import type { Host } from '@/backend/db/schema/host';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/frontend/components/ui/Select';
 
 import './index.css';
 import './img/icon-containers-up.svg';
@@ -20,7 +28,12 @@ export function App() {
     'selectedHost',
     'global'
   );
-  const [hosts, setHosts] = useState([]);
+  const [hosts, setHosts] = useState<Host[]>([]);
+
+  const [selectedSort, setSelectedSort] = useLocalStorage<string | undefined>(
+    'selectedSort',
+    'global'
+  );
 
   const refreshHosts = () => {
     fetch('/api/host')
@@ -46,7 +59,6 @@ export function App() {
     refreshHosts();
   }, []);
 
-  // Unified dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
 
@@ -73,14 +85,14 @@ export function App() {
 
   return (
     <ContainerRefreshProvider>
-      <div className='container mx-auto p-4 sm:p-6 md:p-8 text-center relative max-w-none'>
+      <div className='p-4 sm:p-6 md:p-8 text-center relative'>
         <div className='relative pb-7'>
           <h2 className='text-2xl font-bold mb-0 text-center'>
             {hasSelectedHost ? `Containers for ${selectedHost}` : 'Containers Up!'}
           </h2>
         </div>
-        <div className='px-2 sm:px-4 md:px-8'>
-          <div className='flex items-center gap-2'>
+        <div className='flex flex-col sm:flex-row gap-2 px-0 mx-0 w-full px-2 sm:px-4 md:px-6'>
+          <div className='flex items-center gap-2 w-2/3 md:w-1/3 min-w-85'>
             <HostSelector
               selected={selectedHost}
               setSelected={(value) => {
@@ -103,7 +115,26 @@ export function App() {
                 <PencilIcon className='size-4' />
               </Button>
             </Tooltip>
-            {hasSelectedHost && (
+          </div>
+          {hasSelectedHost && (
+            <div className='flex items-center gap-2 w-1/3 md:w-2/3 md:justify-end min-w-50'>
+              <Select value={selectedSort || ''} onValueChange={setSelectedSort}>
+                <Tooltip content='Sort by'>
+                  <SelectTrigger className='max-w-30'>
+                    <SelectValue placeholder='Sort by...' />
+                  </SelectTrigger>
+                </Tooltip>
+                <SelectContent>
+                  {['Updates', 'Uptime', 'Name'].map((sort) => (
+                    <SelectItem key={sort} value={sort.toLowerCase()}>
+                      <span className='inline-flex items-center gap-1'>
+                        <SortDesc className='size-4 inline' /> {sort}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <StreamingDialog
                 url={`/api/host/${selectedHost}/containers`}
                 method='DELETE'
@@ -114,12 +145,12 @@ export function App() {
                   <BrushCleaning className='size-4' />
                 </Button>
               </StreamingDialog>
-            )}
-            <LogsDialog selectedHost={selectedHost} />
-          </div>
+              <LogsDialog selectedHost={selectedHost} />
+            </div>
+          )}
         </div>
 
-        <ContainerLayout selectedHost={selectedHost} />
+        <ContainerLayout selectedHost={selectedHost} selectedSort={selectedSort} />
 
         <HostDialog
           open={dialogOpen}

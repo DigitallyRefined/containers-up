@@ -49,7 +49,7 @@ export const Container = ({ service, hostName }: { service: Service; hostName: s
             </StreamingDialog>
           )}
         </div>
-        <h5 className='font-semibold text-sm mb-2'>{service.Name}</h5>
+        <h5 className='font-semibold text-sm mb-2 break-all'>{service.Name}</h5>
         <p className='text-xs break-all'>{service.Config.Image.split('@')[0]}</p>
         <p
           className={`text-xs font-medium ${getContainerStatusColor(

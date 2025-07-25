@@ -26,7 +26,7 @@ export const ContainerImage = ({ image, hostName }: ContainerImageProps) => {
             </Button>
           </StreamingDialog>
         </div>
-        <h5 className='font-semibold text-sm mb-2'>
+        <h5 className='font-semibold text-sm mb-2 break-all'>
           {image.Repository}:{image.Tag}
         </h5>
         <p className='text-xs'>ID: {imageId}</p>
