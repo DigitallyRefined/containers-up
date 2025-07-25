@@ -54,7 +54,7 @@ export const ComposeFiles = ({ hostName }: { hostName: string }) => {
             <div className='text-muted-foreground'>Failed to fetch compose files.</div>
           ) : files === 'noWorkingFolder' ? (
             <div className='text-muted-foreground'>
-              Working folder is not set. Please set it in the host settings.
+              Working folder is not configured. Please set it in the host settings.
             </div>
           ) : files && files.length > 0 ? (
             <ul>

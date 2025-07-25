@@ -7,7 +7,7 @@ const exec = createExec(logger);
 
 export const findComposeFiles = async (hostName: string, host: string, workingFolder?: string) => {
   if (!workingFolder) {
-    throw new Error('Working folder is not set', { cause: 'NO_WORKING_FOLDER' });
+    throw new Error('Working folder is not configured', { cause: 'NO_WORKING_FOLDER' });
   }
 
   const sshHost = `find ${workingFolder}/ -regextype posix-extended -regex ".*/(docker-)?compose\.ya?ml$" 2>/dev/null`;

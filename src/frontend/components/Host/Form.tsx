@@ -116,7 +116,7 @@ export const HostForm = ({
         {...register('sshHost')}
       />
       <LabeledInput
-        label='SSH Key'
+        label='SSH Private Key'
         id='sshKey'
         type='textarea'
         required
@@ -124,6 +124,24 @@ export const HostForm = ({
         error={errors.sshKey?.message}
         disabled={isSubmitting}
         {...register('sshKey')}
+      />
+      <LabeledInput
+        label='Working Folder'
+        id='workingFolder'
+        type='text'
+        placeholder='e.g. /home/user/stacks'
+        error={errors.workingFolder?.message}
+        disabled={isSubmitting}
+        {...register('workingFolder')}
+      />
+      <LabeledInput
+        label='Exclude Folders regex'
+        id='excludeFolders'
+        type='text'
+        placeholder='e.g. (manual|test)'
+        error={undefined}
+        disabled={isSubmitting}
+        {...register('excludeFolders')}
       />
       <LabeledInput
         label='GitHub Repository'
@@ -137,7 +155,7 @@ export const HostForm = ({
       <LabeledInput
         label={
           <>
-            Webhook Secret
+            GitHub Webhook Secret
             <Dialog>
               <DialogTrigger asChild>
                 <Button
@@ -165,31 +183,13 @@ export const HostForm = ({
         }
         id='webhookSecret'
         type='text'
-        placeholder='Copy from webhook settings'
+        placeholder='Copy from GitHub Webhook settings page'
         error={errors.webhookSecret?.message}
         disabled={isSubmitting}
         {...register('webhookSecret')}
       />
-      <LabeledInput
-        label='Working Folder'
-        id='workingFolder'
-        type='text'
-        placeholder='e.g. /home/debian/stacks'
-        error={errors.workingFolder?.message}
-        disabled={isSubmitting}
-        {...register('workingFolder')}
-      />
-      <LabeledInput
-        label='Exclude Folders regex'
-        id='excludeFolders'
-        type='text'
-        placeholder='e.g. (manual|test)'
-        error={undefined}
-        disabled={isSubmitting}
-        {...register('excludeFolders')}
-      />
       <Button type='submit' className='w-full font-semibold mt-4' disabled={isSubmitting}>
-        {isSubmitting ? 'Saving...' : 'Save Host'}
+        {isSubmitting ? 'Testing connection...' : 'Save Host'}
       </Button>
       {initialValues && (
         <Button
