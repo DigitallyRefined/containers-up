@@ -1,6 +1,7 @@
 import { mainLogger, getLogs } from '@/backend/utils/logger';
 import { createExec } from '@/backend/utils/exec';
 import { getDockerCmd } from '@/backend/utils/docker';
+import { log as logDb } from '@/backend/db/log';
 
 export const containersCleanup = async (context: string) => {
   const event = `containers-cleanup ${context}`;
@@ -55,6 +56,8 @@ export const containersCleanup = async (context: string) => {
       seenImageMap[imageWithoutTag] = true;
     }
   }
+
+  logDb.removeOldLogs();
 
   return getLogs(event);
 };

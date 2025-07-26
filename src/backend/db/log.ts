@@ -32,4 +32,15 @@ export const log = {
       .as(Log)
       .all({ hostId });
   },
+  removeOldLogs: async () => {
+    const db = await getDb();
+
+    db.query(logCreateTableSql).run();
+
+    const now = new Date();
+    now.setMonth(now.getMonth() - 3);
+    const time = getDatetime(now.getTime());
+
+    db.query(`DELETE FROM log WHERE time < $time`).run({ time });
+  },
 };
