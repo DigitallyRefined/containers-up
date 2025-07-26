@@ -1,6 +1,6 @@
 {
   "name": "bun-react-template",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "private": true,
   "type": "module",
   "main": "src/index.tsx",
@@ -12,7 +12,7 @@
     "update-dependencies": "bunx npm-check-updates --target minor --upgrade && bun i && bunx npm-check-updates"
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.1.1",
+    "@hookform/resolvers": "^5.2.0",
     "@js-temporal/polyfill": "^0.5.1",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-dialog": "^1.1.14",
@@ -24,20 +24,20 @@
     "bun-plugin-tailwind": "^0.0.15",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^0.525.0",
+    "lucide-react": "^0.526.0",
     "pino": "^9.7.0",
     "pino-pretty": "^13.0.0",
     "react": "^19",
     "react-dom": "^19",
-    "react-hook-form": "^7.60.0",
+    "react-hook-form": "^7.61.1",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.11",
     "tailwindcss-animate": "^1.0.7",
-    "zod": "^4.0.5"
+    "zod": "^4.0.10"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.11",
-    "@types/bun": "^1.2.18",
+    "@types/bun": "^1.2.19",
     "@types/pino": "^7.0.5",
     "@types/pino-pretty": "^5.0.0",
     "@types/react": "^19",
