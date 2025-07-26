@@ -1,5 +1,10 @@
 FROM oven/bun:1.2.19-alpine AS builder
 
+ARG TARGETPLATFORM
+
+LABEL org.opencontainers.image.source=https://github.com/DigitallyRefined/containers-up
+LABEL org.opencontainers.image.description="containers-up ${TARGETPLATFORM}"
+
 RUN apk add --no-cache \
     openssh \
     docker \

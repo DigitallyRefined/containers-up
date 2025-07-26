@@ -21,7 +21,7 @@ const API_PROXY_KEY = process.env.API_PROXY_KEY;
 
 const requireAuthKey = (req: Request) => {
   const key = req.headers.get(`x-proxy-key`);
-  if (!API_PROXY_KEY || key !== API_PROXY_KEY) {
+  if (API_PROXY_KEY && key !== API_PROXY_KEY) {
     return new Response('Unauthorized', { status: 401 });
   }
   return null;

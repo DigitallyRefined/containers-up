@@ -1,0 +1,34 @@
+version: 2
+enable-beta-ecosystems: true
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: saturday
+      time: '03:23'
+      timezone: Europe/London
+
+  - package-ecosystem: docker
+    directory: "**/Dockerfile"
+    schedule:
+      interval: "weekly"
+      day: "saturday"
+      time: "03:33"
+      timezone: "Europe/London"
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+      day: saturday
+      time: '03:43'
+      timezone: Europe/London
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: saturday
+      time: '03:53'
+      timezone: Europe/London
