@@ -154,10 +154,15 @@ http:
 
 ## Setting up automatic `compose.yml` updates via Dependabot
 
-1. Make sure that your Containers Up! instance is available online via HTTPS (e.g. via a [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) or a [Docker Wireguard Tunnel](https://github.com/DigitallyRefined/docker-wireguard-tunnel))
-2. Create a GitHub repository containing your container `compose.yml` files
+1. Make sure that your Containers Up! instance is available online publicly via HTTPS,  sharing only the webhook port `3001`. E.g. via a [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) or a [Docker Wireguard Tunnel](https://github.com/DigitallyRefined/docker-wireguard-tunnel)
+
+2. Create a GitHub repository with your container `compose.yml` files
+
 3. Each of your `compose.yml` files must use the full image version (**not** `:latest`) to receive Dependabot updates
-4. In your repo add `.github/dependabot.template.yml`:
+
+4. Under the **Settings > Actions**, enable **Allow all actions and reusable workflows** and under **Workflow permissions** allow **Read and write permissions**
+
+5. In your repo add `.github/dependabot.template.yml`:
 
 ```yaml
 version: 2
@@ -170,7 +175,7 @@ updates:
     directory: "/"
 ```
 
-5. Create a `.github/workflows/generate_dependabot.yml` file with the following content:
+6. Create a `.github/workflows/generate_dependabot.yml` file with the following content:
 
 ```yaml
 name: Generate dependabot.yml
@@ -196,10 +201,10 @@ jobs:
         uses: peter-evans/create-pull-request@v7
 ```
 
-6. Make sure that actions are enabled for your repo and that they have permissions to write/create PRs
+7. This will automatically create a PR that will create a GitHub action managed `.github/dependabot.yml` file, which will automatically be updated for each of your `compose.yml` files. If it doesn't, click **Actions > Generate dependabot.yml > Run workflow**
 
-    This will automatically create a PR that will create a GitHub action managed `.github/dependabot.yml` file, which will automatically be updated for each of your `compose.yml` files.
+8. Next edit your host in Containers Up! and add the working folder where your repo is checked out on your server and add your GitHub repo URL `user/repo` (without `https://github.com/`), generate a random webhook secret and click the ℹ️ info icon copy the base URL to the webhook
 
-7. Next update your host in Containers Up! and add the working folder where your repo is checked out on your server and add your repo URL `user/repo` (without `https://github.com/`) and copy the GitHub webhook secret from your repo settings and set the webhook URL to the URL/path listed on the Containers Up! edit webhook info screen.
+9. Back on GitHub, go to **Settings > Webhooks > Add webhook**, add your public webhook domain and base URL (listed on the Containers Up! edit webhook info screen). Use the same random webhook secret from your repo settings, choose **Let me select individual events > Pull requests** 
 
-8. If everything has been set up correctly the next time Dependabot creates a PR to update a `compose.yml` file an update will also appear on the Containers Up! dashboard.
+If everything has been set up correctly the next time Dependabot creates a PR to update a `compose.yml` file an update will also appear on the Containers Up! dashboard.
