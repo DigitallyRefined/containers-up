@@ -19,6 +19,7 @@ interface StreamingDialogProps {
   dialogTitle: string;
   children: ReactNode;
   tooltipText?: string;
+  shouldRefreshOnClose?: boolean;
 }
 
 export const StreamingDialog: React.FC<StreamingDialogProps> = ({
@@ -28,6 +29,7 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
   dialogTitle,
   children,
   tooltipText,
+  shouldRefreshOnClose = true,
 }) => {
   const [open, setOpen] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
@@ -84,7 +86,7 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
       }
     } else if (!isOpen && abortRef.current) {
       abortRef.current.abort();
-      refresh();
+      if (shouldRefreshOnClose) refresh();
     }
   };
 

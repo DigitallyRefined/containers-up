@@ -14,6 +14,7 @@ import { isValidContainerIdOrName } from '@/backend/utils';
 import { createDockerExec } from '@/backend/utils/docker';
 import { mainLogger } from '@/backend/utils/logger';
 import { findComposeFiles } from '@/backend/endpoints/compose';
+import { findTagsMatchingImageDigest } from '@/backend/endpoints/docker-hub-tags';
 
 const dockerExec = createDockerExec(mainLogger);
 
@@ -323,6 +324,17 @@ const server = serve({
         restartJob(req.params.id);
 
         return Response.json({ message: 'job restarted' });
+      },
+    },
+
+    '/api/docker-hub/tags': {
+      async POST(req) {
+        const { image } = await req.json();
+        if (!image) {
+          return new Response('Image not specified', { status: 400 });
+        }
+
+        return Response.json(await findTagsMatchingImageDigest(image));
       },
     },
   },

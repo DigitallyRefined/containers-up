@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GitPullRequestArrow, GitPullRequest, RotateCcw, LogsIcon } from 'lucide-react';
+import { GitPullRequestArrow, GitPullRequest, RotateCcw, LogsIcon, Tags } from 'lucide-react';
 
 import { Card, CardContent } from '@/frontend/components/ui/Card';
 import {
@@ -15,6 +15,7 @@ import { getRelativeTime } from '@/frontend/lib/utils';
 import { Link } from '@/frontend/components/ui/Link';
 import { Logs } from '@/frontend/components/Container/Logs';
 import { Tooltip } from '@/frontend/components/ui/Tooltip';
+import { StreamingDialog } from '../ui/StreamingDialog';
 
 export const RepoPrLink = ({
   repoPr,
@@ -88,6 +89,12 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
     prUrl = `https://github.com/${repo}/pull/${prId}`;
   }
 
+  let shaUpdate = job.title.match(/Bump (.*) from .* to `(.*)`/);
+  let imageSha: string | undefined;
+  if (shaUpdate) {
+    imageSha = `${shaUpdate[1]}@sha256:${shaUpdate[2]}`;
+  }
+
   return (
     <Card key={job.id}>
       <CardContent className='p-2 sm:p-3 md:p-4 relative'>
@@ -133,6 +140,22 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
                 </div>
               </DialogContent>
             </Dialog>
+
+            {imageSha && (
+              <StreamingDialog
+                url='/api/docker-hub/tags'
+                method='POST'
+                body={{ image: imageSha }}
+                shouldRefreshOnClose={false}
+                dialogTitle='Find Docker tags'
+                tooltipText='Find Docker tags'
+              >
+                <Button variant='outline' size='sm' aria-label='Find Docker tags'>
+                  <Tags className='size-4' />
+                </Button>
+              </StreamingDialog>
+            )}
+
             <Tooltip content='Restart Job'>
               <Button
                 variant='outline'
