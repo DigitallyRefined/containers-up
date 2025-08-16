@@ -118,14 +118,14 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, hos
 
   let containersCleanupLogs;
   let jobId: number;
-  if (!hostConfig.workingFolder || action !== 'closed' || !merged || !title) {
+  if (!hostConfig.workingFolder || action !== 'closed' || !title) {
     if (sender === 'dependabot[bot]') {
       jobId = await jobDb.upsert({ ...jobData, status: JobStatus.open });
     }
     logger.info(
       `No action required for workingFolder: '${hostConfig.workingFolder}' action: '${action}' merged: '${merged}' title: '${title}'`
     );
-  } else {
+  } else if (merged && action === 'closed') {
     jobId = await jobDb.upsert({ ...jobData, status: JobStatus.running });
     try {
       await pullRestartUpdatedContainers(folder, hostConfig, logger);
@@ -134,6 +134,11 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, hos
     } catch (err: any) {
       jobId = await jobDb.upsert({ ...jobData, status: JobStatus.failed });
     }
+  } else if (action === 'closed') {
+    jobId = await jobDb.upsert({ ...jobData, status: JobStatus.closed });
+  } else {
+    console.error('Unknown webhook event', jobData, { action, merged });
+    return;
   }
 
   // save logs

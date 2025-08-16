@@ -6,6 +6,7 @@ export enum JobStatus {
   failed = 3,
   open = 4,
   completed = 5,
+  closed = 6,
 }
 
 export class Job {

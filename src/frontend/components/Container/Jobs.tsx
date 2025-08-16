@@ -26,7 +26,7 @@ export const RepoPrLink = ({
   url: string;
   status: JobStatus;
 }) => {
-  const isClosed = status === JobStatus.completed;
+  const isClosed = status === JobStatus.completed || status === JobStatus.closed;
   const Icon = isClosed ? GitPullRequest : GitPullRequestArrow;
   const iconColor = isClosed ? '#8250df' : '#1a7f37';
   if (url) {
@@ -58,6 +58,7 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
         return 'bg-yellow-100 text-yellow-800';
       case JobStatus.completed:
         return 'bg-green-100 text-green-800';
+      case JobStatus.closed:
       case JobStatus.failed:
         return 'bg-red-100 text-red-800';
       default:

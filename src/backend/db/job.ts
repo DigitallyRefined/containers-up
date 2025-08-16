@@ -36,7 +36,7 @@ export const job = {
       .query(
         `SELECT * FROM job WHERE hostId = $hostId ${
           hasFolder ? `AND folder = $folder` : ''
-        } ORDER BY status, updated DESC LIMIT 50`
+        } ORDER BY updated DESC LIMIT 50`
       )
       .as(JobWithLogs)
       .all({ hostId, ...(hasFolder ? { folder } : {}) });
@@ -47,7 +47,7 @@ export const job = {
     const db = await getDb();
     const jobs = db
       .query(
-        `SELECT * FROM job WHERE hostId = $hostId AND status != ${JobStatus.completed} ORDER BY status, updated DESC LIMIT 50`
+        `SELECT * FROM job WHERE hostId = $hostId AND status != ${JobStatus.completed} AND status != ${JobStatus.closed} ORDER BY status, updated DESC LIMIT 50`
       )
       .as(JobWithLogs)
       .all({ hostId });
