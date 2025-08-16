@@ -24,7 +24,7 @@ export interface Service {
   Name: string;
   State: {
     Status: string;
-    StartedAt: string;
+    StartedAt?: string;
     Health?: {
       Status: string;
     };

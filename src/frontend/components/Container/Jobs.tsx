@@ -52,6 +52,7 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
     switch (status) {
       case JobStatus.open:
         return 'bg-blue-100 text-blue-700 border-2 border-orange-300 font-bold';
+      case JobStatus.queued:
       case JobStatus.running:
         return 'bg-yellow-100 text-yellow-800';
       case JobStatus.completed:
