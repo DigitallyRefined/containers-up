@@ -366,6 +366,14 @@ const webhookServer = serve({
         }
 
         const webhookData = JSON.parse(new TextDecoder().decode(bodyBuffer));
+
+        const isDockerComposePr = webhookData.pull_request?.labels?.some(
+          (label: { name: string }) => label.name === 'docker_compose'
+        );
+        if (!isDockerComposePr) {
+          return Response.json({ message: 'Not a Docker Compose PR' });
+        }
+
         const webhookEvent: GitHubWebhookEvent = {
           sender: webhookData.sender?.login,
           repo: webhookData.repository.full_name,
