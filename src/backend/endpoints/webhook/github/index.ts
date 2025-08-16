@@ -7,10 +7,11 @@ import { createExec } from '@/backend/utils/exec';
 import type { Logger } from 'pino';
 import { log as logDb } from '@/backend/db/log';
 import { job as jobDb } from '@/backend/db/job';
-import { waitASecond } from '@/backend/utils';
+import { isComposeFilename, waitASecond } from '@/backend/utils';
 import { JobStatus } from '@/backend/db/schema/job';
 
 export const baseEvent = 'github-webhook';
+const composeFilename = process.env.COMPOSE_FILENAME || 'compose.yml';
 
 export type GitHubWebhookEvent = {
   repo?: string;
@@ -43,7 +44,7 @@ const pullRestartUpdatedContainers = async (folder: string, repoConfig: Host, lo
 
   await exec.sshRun(name, host, `cd ${workingFolder} && git pull --prune`);
 
-  const file = path.join(workingFolder, folder, 'docker-compose.yml');
+  const file = path.join(workingFolder, folder, composeFilename);
   const { stdout: fileExists } = await exec.sshRun(
     name,
     host,
@@ -53,7 +54,7 @@ const pullRestartUpdatedContainers = async (folder: string, repoConfig: Host, lo
     if (!fileExcluded(file, excludeFolders)) {
       await composePullDownUp(file);
     } else {
-      logger.info(`docker-compose.yml file excluded: ${file}`);
+      logger.info(`Compose file excluded: ${file}`);
     }
   } else {
     // Single Dependabot watch (via git diff)
@@ -63,17 +64,14 @@ const pullRestartUpdatedContainers = async (folder: string, repoConfig: Host, lo
       `cd ${workingFolder} && git diff --name-only HEAD~1 HEAD`
     );
     const changedFiles = changedFilesStdout.split('\n').filter(Boolean);
-    if (changedFiles.some((f) => f.endsWith('docker-compose.yml'))) {
+    if (changedFiles.some((f) => isComposeFilename(f))) {
       for (const changedFile of changedFiles) {
-        if (
-          changedFile.endsWith('docker-compose.yml') &&
-          !fileExcluded(changedFile, excludeFolders)
-        ) {
+        if (isComposeFilename(changedFile) && !fileExcluded(changedFile, excludeFolders)) {
           await composePullDownUp(changedFile);
         }
       }
     } else {
-      logger.info('No docker-compose.yml files have been changed');
+      logger.info('No compose YAML files have been changed');
     }
   }
 };

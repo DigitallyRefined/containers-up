@@ -53,3 +53,6 @@ export const getTraefikUrl = (ruleLabel: string) => {
 
 export const isValidContainerIdOrName = (id: string) =>
   typeof id === 'string' && /^[a-zA-Z0-9_.-]+$/.test(id);
+
+export const isComposeFilename = (filename: string) =>
+  typeof filename === 'string' && /compose.y(?:a?)ml$/.test(filename);
