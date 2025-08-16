@@ -19,6 +19,7 @@ It provides a unified interface for managing containerized applications, and aut
 - 🔄 **Automated Updates**: Container updates via GitHub webhooks (via Dependabot)
 - 🌐 **Service Discovery**: Display web app icons and URLs (via existing Traefik labels)
 - 🧹 **Resource Management**: Cleanup of older images
+- 🏷️ **Tag Lookup**: Updates for images using SHA hashes can be reverse looked up to find their associated tags
 - 📱 **Responsive Design**: Works seamlessly on desktop and mobile devices
 - 🌓 **Modern UX**: Automatic light and dark mode (based on system settings)
 - 📊 **Job Tracking**: Monitor update jobs with detailed logs and retry capabilities
@@ -36,7 +37,7 @@ The app can be started using the following `compose.yml`:
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:0.0.1
+    image: ghcr.io/digitallyrefined/containers-up:0.0.2
     restart: always
     ports:
       - 3000:3000
@@ -49,6 +50,8 @@ services:
 
 Open `http://localhost:3000` to set up a new host. Set a name, SSH host and private key to display a dashboard of running composed containers, individual containers, images and actions.
 
+Optional system wide configuration can be changed by copying `.env.default` to `.env` and adding `env_file: ./.env` to the compose file.
+
 <details>
 <summary>compose.yml example with HTTPS & authentication (via Pocket ID & Traefik)</summary>
 
@@ -58,7 +61,7 @@ Open `http://localhost:3000` to set up a new host. Set a name, SSH host and priv
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:0.0.1
+    image: ghcr.io/digitallyrefined/containers-up:0.0.2
     restart: always
     volumes:
       - ./containers-up/storage:/storage
@@ -192,7 +195,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         
       - name: Generate dependabot.yml
         uses: Makeshift/generate-dependabot-glob-action@master
