@@ -1,4 +1,4 @@
-FROM oven/bun:1.2.19-alpine AS builder
+FROM oven/bun:1.2.20-alpine AS builder
 
 ARG TARGETPLATFORM
 
