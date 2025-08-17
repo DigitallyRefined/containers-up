@@ -78,25 +78,26 @@ export const createDockerExec = (logger: Logger) => {
       !/(docker-compose|compose)\.ya?ml$/.test(composeFile) ||
       !(await exec.pathExistsOnRemote(host.name, host.sshHost, composeFile)),
     stopCompose: (hostName: string, host: string, composeFile: string) => {
-      return runStreamedCommand(`docker compose -f "${composeFile}" down`, {
+      return runStreamedCommand(`docker compose -f '${composeFile}' down`, {
         hostName,
         host,
       });
     },
     startCompose: (hostName: string, host: string, composeFile: string) => {
-      return runStreamedCommand(`docker compose -f "${composeFile}" up -d`, {
+      return runStreamedCommand(`docker compose -f '${composeFile}' up -d`, {
         hostName,
         host,
       });
     },
     restartCompose: (hostName: string, host: string, composeFile: string) => {
-      return runStreamedCommand(
-        `docker compose -f "${composeFile}" down && docker compose -f "${composeFile}" up -d`,
-        {
-          hostName,
-          host,
-        }
-      );
+      let command = `docker compose -f '${composeFile}' down && docker compose -f '${composeFile}' up -d`;
+      if (composeFile.includes('containers-up')) {
+        command = `nohup bash -c "${command}" >> /tmp/containers-up.log 2>&1 &`;
+      }
+      return runStreamedCommand(command, {
+        hostName,
+        host,
+      });
     },
   };
 };

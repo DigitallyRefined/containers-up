@@ -44,7 +44,7 @@ const pullRestartUpdatedContainers = async (folder: string, repoConfig: Host, lo
       await exec.sshRun(
         name,
         host,
-        `nohup bash -c "docker compose -f '${composeFile}' down && docker compose -f '${composeFile}' up -d" > /tmp/containers-up.log 2>&1 &`
+        `nohup bash -c "docker compose -f '${composeFile}' down && docker compose -f '${composeFile}' up -d" >> /tmp/containers-up.log 2>&1 &`
       );
     } else {
       logger.info(`Stopping and removing containers for compose file: ${composeFile}`);
