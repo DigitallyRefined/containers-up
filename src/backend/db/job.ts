@@ -61,4 +61,8 @@ export const job = {
       .as(Job)
       .all({ hostId });
   },
+  markJobAsComplete: async (id: string) => {
+    const db = await getDb();
+    return db.query(`UPDATE job SET status = ${JobStatus.completed} WHERE id = $id`).run({ id });
+  },
 };

@@ -1,5 +1,12 @@
-import { useState } from 'react';
-import { GitPullRequestArrow, GitPullRequest, RotateCcw, LogsIcon, Tags } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  GitPullRequestArrow,
+  GitPullRequest,
+  RotateCcw,
+  LogsIcon,
+  Tags,
+  Check,
+} from 'lucide-react';
 
 import { Card, CardContent } from '@/frontend/components/ui/Card';
 import {
@@ -48,6 +55,12 @@ export const RepoPrLink = ({
 export const Jobs = ({ job }: { job: JobWithLogs }) => {
   const [openJobId, setOpenJobId] = useState<number | null>(null);
   const [restarting, setRestarting] = useState(false);
+
+  useEffect(() => {
+    if (job.title.includes('containers-up') && job.status === JobStatus.running) {
+      fetch(`/api/job/${job.id}`, { method: 'PATCH' });
+    }
+  }, [job.id, job.status, job.title]);
 
   const getStatusColor = (status: JobStatus) => {
     switch (status) {
@@ -117,8 +130,8 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
           PR: <RepoPrLink repoPr={job.repoPr} url={prUrl} status={job.status} />
         </p>
         <p className='text-xs '>{getRelativeTime(`${job.updated}Z`)}</p>
-        {job.logs.length > 0 && (
-          <div className='mt-3 w-full flex items-center justify-center gap-2'>
+        <div className='mt-3 w-full flex items-center justify-center gap-2'>
+          {job.logs.length > 0 && (
             <Dialog
               open={openJobId === job.id}
               onOpenChange={(open) => setOpenJobId(open ? job.id : null)}
@@ -141,46 +154,59 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
                 </div>
               </DialogContent>
             </Dialog>
+          )}
 
-            {imageSha && (
-              <StreamingDialog
-                url='/api/docker-hub/tags'
-                method='POST'
-                body={{ image: imageSha }}
-                shouldRefreshOnClose={false}
-                dialogTitle='Find Docker tags'
-                tooltipText='Find Docker tags'
-              >
-                <Button variant='outline' size='sm' aria-label='Find Docker tags'>
-                  <Tags className='size-4' />
-                </Button>
-              </StreamingDialog>
-            )}
-
-            <Tooltip content='Restart Job'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={
-                  job.status === JobStatus.open
-                    ? () => {
-                        window.open(
-                          `https://github.com/${job.repoPr.split('/')[0]}/${
-                            job.repoPr.split('/')[1].split('#')[0]
-                          }/settings/hooks`,
-                          '_blank'
-                        );
-                      }
-                    : handleRestart
-                }
-                disabled={restarting}
-                aria-label='Restart Job'
-              >
-                <RotateCcw className='size-4' />
+          {imageSha && (
+            <StreamingDialog
+              url='/api/docker-hub/tags'
+              method='POST'
+              body={{ image: imageSha }}
+              shouldRefreshOnClose={false}
+              dialogTitle='Find Docker tags'
+              tooltipText='Find Docker tags'
+            >
+              <Button variant='outline' size='sm' aria-label='Find Docker tags'>
+                <Tags className='size-4' />
               </Button>
-            </Tooltip>
-          </div>
-        )}
+            </StreamingDialog>
+          )}
+
+          <Tooltip content='Restart Job'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={
+                job.status === JobStatus.open
+                  ? () => {
+                      window.open(
+                        `https://github.com/${job.repoPr.split('/')[0]}/${
+                          job.repoPr.split('/')[1].split('#')[0]
+                        }/settings/hooks`,
+                        '_blank'
+                      );
+                    }
+                  : handleRestart
+              }
+              disabled={restarting}
+              aria-label='Restart Job'
+            >
+              <RotateCcw className='size-4' />
+            </Button>
+          </Tooltip>
+
+          {job.status === JobStatus.running && (
+            <StreamingDialog
+              url={`/api/job/${job.id}`}
+              method='PATCH'
+              dialogTitle='Mark as completed'
+              tooltipText='Mark as completed'
+            >
+              <Button variant='outline' size='sm' aria-label='Mark as completed'>
+                <Check className='size-4' />
+              </Button>
+            </StreamingDialog>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

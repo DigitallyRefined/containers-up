@@ -35,11 +35,23 @@ const pullRestartUpdatedContainers = async (folder: string, repoConfig: Host, lo
 
   const composePullDownUp = async (composeFile: string) => {
     logger.info(`Pulling images for compose file: ${composeFile}`);
-    await exec.sshRun(name, host, `docker compose -f ${composeFile} pull`);
-    logger.info(`Stopping and removing containers for compose file: ${composeFile}`);
-    await exec.sshRun(name, host, `docker compose -f ${composeFile} down`);
-    logger.info(`Starting containers for compose file: ${composeFile}`);
-    await exec.sshRun(name, host, `docker compose -f ${composeFile} up -d`);
+    await exec.sshRun(name, host, `docker compose -f '${composeFile}' pull`);
+
+    if (composeFile.includes('containers-up')) {
+      logger.info(
+        `Restarting containers-up with new images via nohup for compose file: ${composeFile}`
+      );
+      await exec.sshRun(
+        name,
+        host,
+        `nohup bash -c "docker compose -f '${composeFile}' down && docker compose -f '${composeFile}' up -d" > /tmp/containers-up.log 2>&1 &`
+      );
+    } else {
+      logger.info(`Stopping and removing containers for compose file: ${composeFile}`);
+      await exec.sshRun(name, host, `docker compose -f '${composeFile}' down`);
+      logger.info(`Starting containers for compose file: ${composeFile}`);
+      await exec.sshRun(name, host, `docker compose -f '${composeFile}' up -d`);
+    }
   };
 
   await exec.sshRun(name, host, `cd ${workingFolder} && git pull --prune`);

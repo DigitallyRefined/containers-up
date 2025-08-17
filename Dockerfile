@@ -26,6 +26,7 @@ FROM builder
 
 RUN rm -rf /home/bun/app && mkdir /home/bun/app
 
+COPY --from=builder /home/bun/app/package.json .
 COPY --from=builder /home/bun/app/dist .
 
 EXPOSE 3000

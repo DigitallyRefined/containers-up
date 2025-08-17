@@ -10,7 +10,7 @@ updates:
       timezone: Europe/London
 
   - package-ecosystem: docker
-    directory: "**/Dockerfile"
+    directory: /
     schedule:
       interval: "weekly"
       day: "saturday"

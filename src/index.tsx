@@ -325,6 +325,15 @@ const server = serve({
 
         return Response.json({ message: 'job restarted' });
       },
+
+      async PATCH(req) {
+        const auth = requireAuthKey(req);
+        if (auth) return auth;
+
+        await jobDb.markJobAsComplete(req.params.id);
+
+        return new Response('Marked as complete');
+      },
     },
 
     '/api/docker-hub/tags': {

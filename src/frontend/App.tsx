@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrushCleaning, PencilIcon, SortDesc } from 'lucide-react';
 
+import { version } from '@/../package.json';
 import { Button } from '@/frontend/components/ui/Button';
 import { HostSelector } from '@/frontend/components/Host/Selector';
 import { HostDialog } from '@/frontend/components/Host/Dialog';
@@ -164,6 +165,8 @@ export function App() {
             refreshHosts();
           }}
         />
+
+        <div className='text-center text-xs text-gray-500'>Containers Up! - {version}</div>
       </div>
     </ContainerRefreshProvider>
   );
