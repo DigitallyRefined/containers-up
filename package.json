@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.11",
-    "@types/bun": "^1.2.19",
+    "@types/bun": "^1.2.20",
     "@types/pino": "^7.0.5",
     "@types/pino-pretty": "^5.0.0",
     "@types/react": "^19",
