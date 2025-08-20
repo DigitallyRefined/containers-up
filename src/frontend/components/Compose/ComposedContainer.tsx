@@ -1,4 +1,4 @@
-import { RotateCcw, PowerOff } from 'lucide-react';
+import { RotateCcw, PowerOff, CloudCog } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/Card';
 import type { Service } from '@/frontend/components/Layout';
@@ -9,20 +9,25 @@ import { JobWithLogs } from '@/backend/db/schema/job';
 import { Button } from '@/frontend/components/ui/Button';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 import { getContainerStatusColor } from '@/frontend/lib/utils';
+import { Tooltip } from '@/frontend/components/ui/Tooltip';
+import type { Host } from '@/backend/db/schema/host';
 
 interface ComposedContainerProps {
   cardTitle: string;
   services: Service[];
   jobs?: JobWithLogs[];
-  hostName: string;
+  host: Host;
+  hideViewDependabot?: boolean;
 }
 
 export const ComposedContainer = ({
   cardTitle,
   services,
   jobs,
-  hostName,
+  host,
+  hideViewDependabot = false,
 }: ComposedContainerProps) => {
+  const hostName = host.name;
   return (
     <Card key={cardTitle} className='my-2'>
       <CardHeader className='flex flex-row items-center justify-between'>
@@ -39,6 +44,7 @@ export const ComposedContainer = ({
               <RotateCcw className='size-4' />
             </Button>
           </StreamingDialog>
+
           <StreamingDialog
             url={`/api/host/${hostName}/compose`}
             method='DELETE'
@@ -50,6 +56,25 @@ export const ComposedContainer = ({
               <PowerOff className='size-4' />
             </Button>
           </StreamingDialog>
+
+          {!hideViewDependabot && (
+            <Tooltip content='Check for updates'>
+              <Button
+                variant='outline'
+                size='sm'
+                aria-label='Check for updates'
+                onClick={() => {
+                  window.open(
+                    `https://github.com/${host.repo}/network/updates#:~:text=${encodeURIComponent(
+                      cardTitle
+                    ).replace(/-/g, '%2D')}`
+                  );
+                }}
+              >
+                <CloudCog className='size-4' />
+              </Button>
+            </Tooltip>
+          )}
         </div>
       </CardHeader>
       <CardContent className='space-y-6'>

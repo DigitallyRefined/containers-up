@@ -153,7 +153,7 @@ export function App() {
           )}
         </div>
 
-        <ContainerLayout selectedHost={selectedHost} selectedSort={selectedSort} />
+        <ContainerLayout selectedHost={selectedHostObj} selectedSort={selectedSort} />
 
         <HostDialog
           open={dialogOpen}

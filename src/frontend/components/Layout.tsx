@@ -18,6 +18,7 @@ import { PreviousRunningComposeFiles } from '@/frontend/components/Compose/Previ
 import { useLocalStorage } from '@/frontend/lib/useLocalStorage';
 import { Tooltip } from '@/frontend/components/ui/Tooltip';
 import { Button } from '@/frontend/components/ui/Button';
+import type { Host } from '@/backend/db/schema/host';
 
 export interface Service {
   Id: string;
@@ -69,13 +70,14 @@ export const ContainerLayout = ({
   selectedHost,
   selectedSort,
 }: {
-  selectedHost: string;
+  selectedHost?: Host;
   selectedSort: string;
 }) => {
   const { refreshKey } = useContainerRefresh();
   const [containersData, setContainersData] = useState<ContainersResponse>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const selectedHostName = selectedHost?.name;
 
   const [openAccordionItems, setOpenAccordionItems] = useLocalStorage<string[]>(
     'openAccordionItems',
@@ -90,14 +92,14 @@ export const ContainerLayout = ({
 
   useEffect(() => {
     const fetchContainers = async () => {
-      if (!selectedHost) return;
+      if (!selectedHostName) return;
 
       setLoading(true);
       setError(null);
 
       try {
         const response = await fetch(
-          `/api/host/${selectedHost}/containers${selectedSort ? `?sort=${selectedSort}` : ''}`
+          `/api/host/${selectedHostName}/containers${selectedSort ? `?sort=${selectedSort}` : ''}`
         );
 
         if (!response.ok) {
@@ -116,7 +118,7 @@ export const ContainerLayout = ({
     };
 
     fetchContainers();
-  }, [selectedHost, refreshKey, selectedSort]);
+  }, [selectedHostName, refreshKey, selectedSort]);
 
   if (error) {
     return (
@@ -167,7 +169,7 @@ export const ContainerLayout = ({
               cardTitle={composeFile}
               services={containerData.services}
               jobs={containerData.jobs}
-              hostName={selectedHost}
+              host={selectedHost}
             />
           ))}
         </div>
@@ -183,7 +185,7 @@ export const ContainerLayout = ({
       <Accordion type='multiple' value={openAccordionItems} onValueChange={handleAccordionChange}>
         {selectedHost && (
           <PreviousRunningComposeFiles
-            selectedHost={selectedHost}
+            selectedHost={selectedHostName}
             composedContainers={containersData.composedContainers}
             otherComposedContainers={containersData.otherComposedContainers}
           />
@@ -201,7 +203,8 @@ export const ContainerLayout = ({
                     key={key}
                     cardTitle={key}
                     services={services}
-                    hostName={selectedHost}
+                    host={selectedHost}
+                    hideViewDependabot
                   />
                 ))}
               </div>
@@ -215,7 +218,7 @@ export const ContainerLayout = ({
             <AccordionContent>
               <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-3 text-left'>
                 {containersData.separateContainers.map((service, idx) => (
-                  <Container key={idx} service={service} hostName={selectedHost} />
+                  <Container key={idx} service={service} hostName={selectedHostName} />
                 ))}
               </div>
             </AccordionContent>
@@ -228,7 +231,7 @@ export const ContainerLayout = ({
             <AccordionContent>
               <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-3 text-left'>
                 {containersData.images.map((image, idx) => (
-                  <ContainerImage key={idx} image={image} hostName={selectedHost} />
+                  <ContainerImage key={idx} image={image} hostName={selectedHostName} />
                 ))}
               </div>
             </AccordionContent>
@@ -241,7 +244,7 @@ export const ContainerLayout = ({
             <AccordionContent>
               <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-3 text-left'>
                 {containersData.unusedDockerImages.map((image, idx) => (
-                  <ContainerImage key={idx} image={image} hostName={selectedHost} />
+                  <ContainerImage key={idx} image={image} hostName={selectedHostName} />
                 ))}
               </div>
             </AccordionContent>
