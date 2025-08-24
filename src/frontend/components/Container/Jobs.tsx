@@ -6,6 +6,7 @@ import {
   LogsIcon,
   Tags,
   Check,
+  CloudDownload,
 } from 'lucide-react';
 
 import { Card, CardContent } from '@/frontend/components/ui/Card';
@@ -52,7 +53,15 @@ export const RepoPrLink = ({
   );
 };
 
-export const Jobs = ({ job }: { job: JobWithLogs }) => {
+export const Jobs = ({
+  job,
+  hostName,
+  composeFile,
+}: {
+  job: JobWithLogs;
+  hostName: string;
+  composeFile: string;
+}) => {
   const [openJobId, setOpenJobId] = useState<number | null>(null);
   const [restarting, setRestarting] = useState(false);
 
@@ -122,7 +131,7 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
           {JobStatus[job.status]}
         </span>
         <div className='my-2'>
-          <h5 className='font-medium text-sm text-center w-full break-words'>
+          <h5 className='font-medium text-sm text-center w-full break-all'>
             {prUrl ? <Link href={prUrl}>{job.title}</Link> : job.title}
           </h5>
         </div>
@@ -133,6 +142,20 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
         )}
         <p className='text-xs '>{getRelativeTime(`${job.updated}Z`)}</p>
         <div className='mt-3 w-full flex items-center justify-center gap-2'>
+          {!job.repoPr && (
+            <StreamingDialog
+              url={`/api/host/${hostName}/compose`}
+              method='PUT'
+              body={{ composeFile, pullFirst: true }}
+              dialogTitle='Pull image & restart'
+              tooltipText='Pull image & restart'
+            >
+              <Button variant='outline' size='sm' aria-label='Pull image & restart'>
+                <CloudDownload className='size-4' />
+              </Button>
+            </StreamingDialog>
+          )}
+
           {job.logs.length > 0 && (
             <Dialog
               open={openJobId === job.id}

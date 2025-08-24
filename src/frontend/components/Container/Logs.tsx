@@ -22,7 +22,7 @@ export const Logs = ({ log }: { log: Log }) => {
           {logLevelInfo.label}
         </span>
       </div>
-      <pre className='whitespace-pre-wrap text-left break-words'>{log.msg}</pre>
+      <pre className='whitespace-pre-wrap text-left break-all'>{log.msg}</pre>
     </div>
   );
 };

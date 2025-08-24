@@ -1,4 +1,4 @@
-import { RotateCcw, PowerOff, CloudCog } from 'lucide-react';
+import { RotateCcw, PowerOff, Bot, WifiSync } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/Card';
 import type { Service } from '@/frontend/components/Layout';
@@ -58,11 +58,11 @@ export const ComposedContainer = ({
           </StreamingDialog>
 
           {!hideViewDependabot && (
-            <Tooltip content='Check for updates'>
+            <Tooltip content='Dependabot updates'>
               <Button
                 variant='outline'
                 size='sm'
-                aria-label='Check for updates'
+                aria-label='Dependabot updates'
                 onClick={() => {
                   window.open(
                     `https://github.com/${host.repo}/network/updates#:~:text=${encodeURIComponent(
@@ -71,7 +71,7 @@ export const ComposedContainer = ({
                   );
                 }}
               >
-                <CloudCog className='size-4' />
+                <Bot className='size-4' />
               </Button>
             </Tooltip>
           )}
@@ -90,6 +90,34 @@ export const ComposedContainer = ({
                     className='absolute top-4 left-4 w-8 opacity-80 z-0'
                     onError={(e) => (e.currentTarget.style.display = 'none')}
                   />
+                  <div className='absolute top-2 right-2 flex gap-1 z-10'>
+                    <Tooltip content='Check for updates'>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={async () => {
+                          const res = await fetch(`/api/host/${hostName}/update`, {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ checkService: service.Config.Image }),
+                          });
+                          if (!res.ok) {
+                            const data = await res.json().catch(() => ({}));
+                            (window as any).showToast(
+                              data.error || 'Failed to trigger update check'
+                            );
+                          } else {
+                            (window as any).showToast('Checking for updates, see logs');
+                          }
+                        }}
+                        aria-label='Check for updates'
+                      >
+                        <WifiSync className='size-4' />
+                      </Button>
+                    </Tooltip>
+                  </div>
                   <h5 className='font-semibold text-sm mb-2'>
                     {service.Config.Labels['com.docker.compose.service']}
                   </h5>
@@ -130,7 +158,7 @@ export const ComposedContainer = ({
             <h4 className='text-lg font-medium mb-3 text-left'>Updates</h4>
             <div className='grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3'>
               {jobs.map((job) => (
-                <Jobs key={job.id} job={job} />
+                <Jobs key={job.id} job={job} hostName={hostName} composeFile={cardTitle} />
               ))}
             </div>
           </div>

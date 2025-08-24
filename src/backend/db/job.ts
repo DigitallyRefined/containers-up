@@ -36,7 +36,7 @@ export const job = {
       .query(
         `SELECT * FROM job WHERE hostId = $hostId ${
           hasFolder ? `AND folder = $folder` : ''
-        } ORDER BY updated DESC LIMIT 50`
+        } ORDER BY updated DESC LIMIT 6`
       )
       .as(JobWithLogs)
       .all({ hostId, ...(hasFolder ? { folder } : {}) });

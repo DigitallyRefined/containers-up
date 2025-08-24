@@ -24,6 +24,10 @@ export class JobWithLogs extends Job {
   logs: Log[];
 }
 
+export class JobEnriched extends JobWithLogs {
+  composeFile: string;
+}
+
 export const jobCreateTableSql = `
   CREATE TABLE IF NOT EXISTS job (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,

@@ -19,7 +19,7 @@ const getSmallHash = (digest: string) => {
 const getImagesToCheck = async (
   selectedHostname: string,
   containers: Awaited<ReturnType<typeof getContainers>>,
-  ignored: Array<string> = []
+  checkService?: string | undefined
 ) => {
   const imagesToCheck = new Map<string, string>();
   const composedContainers = new Map<
@@ -30,7 +30,7 @@ const getImagesToCheck = async (
   for (const [composeFile, { services }] of Object.entries(containers.composedContainers)) {
     const containers = [];
     for (const service of services) {
-      if (ignored.includes(service.Config.Image.split(':')[0])) continue;
+      if (checkService && checkService !== service.Config.Image) continue;
       const digest = await dockerExec.getLocalImageDigest(selectedHostname, service.Image);
       if (digest) {
         imagesToCheck.set(digest, service.Config.Image);
@@ -46,7 +46,10 @@ const getImagesToCheck = async (
 };
 
 const isRunning = {};
-export const checkHostForImageUpdates = async (selectedHost: Host) => {
+export const checkHostForImageUpdates = async (
+  selectedHost: Host,
+  checkService?: string | undefined
+) => {
   if (isRunning[selectedHost.name]) {
     logger.info(`Update check already in progress for ${selectedHost.name}, skipping this run.`);
     return;
@@ -57,7 +60,8 @@ export const checkHostForImageUpdates = async (selectedHost: Host) => {
 
   const { imagesToCheck, composedContainers } = await getImagesToCheck(
     selectedHost.name,
-    containers
+    containers,
+    checkService
   );
 
   const digests = await batchPromises(

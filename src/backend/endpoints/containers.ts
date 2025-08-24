@@ -6,6 +6,7 @@ import type { Host } from '@/backend/db/schema/host';
 import { mainLogger } from '@/backend/utils/logger';
 import { job as jobDb } from '@/backend/db/job';
 import { getTraefikUrl } from '@/backend/utils';
+import type { JobWithLogs } from '@/backend/db/schema/job';
 
 export type SortOptions = 'updates' | 'uptime' | 'name';
 
@@ -35,6 +36,22 @@ const getGroupedContainersRunning = async (context: string, sort: SortOptions) =
   const nonComposedContainers = containers.filter((container) => !composedIds.has(container.Id));
 
   return { containers, composedContainers, nonComposedContainers };
+};
+
+const enrichJobsWithComposeFile = (
+  jobs: JobWithLogs[],
+  composedContainers: Record<string, any>
+) => {
+  return jobs.map((job) => {
+    const composeFile = Object.keys(composedContainers).find((file) => {
+      const compose = file.split('/').slice(0, -1).join('/');
+      return job.folder.endsWith(compose);
+    });
+    return {
+      ...job,
+      composeFile,
+    };
+  });
 };
 
 export const getContainers = async (selectedHost: Host, sort: SortOptions = 'updates') => {
@@ -145,6 +162,9 @@ export const getContainers = async (selectedHost: Host, sort: SortOptions = 'upd
     separateContainers: nonComposedContainers,
     images,
     unusedDockerImages: await getUnusedDockerImages(containers, images),
-    incompleteJobs: await jobDb.getIncompleteJobs(selectedHost.id),
+    incompleteJobs: enrichJobsWithComposeFile(
+      await jobDb.getIncompleteJobs(selectedHost.id),
+      composedContainersByComposeFile
+    ),
   };
 };

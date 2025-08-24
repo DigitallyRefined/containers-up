@@ -15,7 +15,7 @@ import { createDockerExec } from '@/backend/utils/docker';
 import { mainLogger } from '@/backend/utils/logger';
 import { findComposeFiles } from '@/backend/endpoints/compose';
 import { findTagsMatchingImageDigest } from '@/backend/endpoints/docker-hub-tags';
-import { checkHostForImageUpdates } from './backend/endpoints/update-check';
+import { checkHostForImageUpdates } from '@/backend/endpoints/update-check';
 
 const dockerExec = createDockerExec(mainLogger);
 
@@ -43,7 +43,8 @@ const getAuthorizedHost = async (
   return { selectedHost };
 };
 
-async function resolveAndValidateComposeFile(selectedHost: Host, data: { composeFile: string }) {
+async function resolveAndValidateComposeFile(selectedHost: Host, data: { composeFile?: string }) {
+  if (!data.composeFile) throw new Error('composeFile is required');
   const composeFile = data.composeFile.startsWith('/')
     ? data.composeFile
     : `${selectedHost.workingFolder}/${data.composeFile}`;
@@ -301,7 +302,12 @@ const server = serve({
         );
         if (composeError) return composeError;
 
-        return dockerExec.restartCompose(selectedHost.name, selectedHost.sshHost, composeFile);
+        return dockerExec.restartCompose(
+          selectedHost.name,
+          selectedHost.sshHost,
+          composeFile,
+          Boolean(data.pullFirst)
+        );
       },
 
       async DELETE(req) {
@@ -324,7 +330,9 @@ const server = serve({
         const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
         if (error) return error;
 
-        checkHostForImageUpdates(selectedHost);
+        const data = await req.json();
+        console.log(data.checkService);
+        checkHostForImageUpdates(selectedHost, data.checkService);
 
         return new Response('Triggered update check');
       },

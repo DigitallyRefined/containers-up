@@ -3,7 +3,7 @@ import { useContainerRefresh } from '@/frontend/components/Container/ContainerRe
 import { Info, RefreshCw } from 'lucide-react';
 
 import { ComposedContainer } from '@/frontend/components/Compose/ComposedContainer';
-import { JobWithLogs } from '@/backend/db/schema/job';
+import { JobEnriched } from '@/backend/db/schema/job';
 import {
   Accordion,
   AccordionItem,
@@ -42,7 +42,7 @@ export interface Service {
 
 export interface ComposedContainer {
   services: Service[];
-  jobs: JobWithLogs[];
+  jobs: JobEnriched[];
 }
 
 export interface Image {
@@ -63,7 +63,7 @@ export interface ContainersResponse {
   separateContainers?: Service[];
   images?: Image[];
   unusedDockerImages?: Image[];
-  incompleteJobs?: JobWithLogs[];
+  incompleteJobs?: JobEnriched[];
 }
 
 export const ContainerLayout = ({
@@ -153,7 +153,12 @@ export const ContainerLayout = ({
             </div>
             <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2'>
               {containersData.incompleteJobs.map((job) => (
-                <Jobs key={job.id} job={job} />
+                <Jobs
+                  key={job.id}
+                  job={job}
+                  hostName={selectedHostName}
+                  composeFile={job.composeFile}
+                />
               ))}
             </div>
           </CardContent>

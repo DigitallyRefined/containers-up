@@ -80,8 +80,12 @@ export const createDockerExec = (logger: Logger) => {
         hostName,
         host,
       }),
-    restartCompose: (hostName: string, host: string, composeFile: string) => {
-      let command = `docker compose -f "${composeFile}" down && docker compose -f "${composeFile}" up -d`;
+    restartCompose: (hostName: string, host: string, composeFile: string, pullFirst = false) => {
+      let command = '';
+      if (pullFirst) {
+        command = `docker compose -f "${composeFile}" pull && `;
+      }
+      command += `docker compose -f "${composeFile}" down && docker compose -f "${composeFile}" up -d`;
       if (composeFile.includes('containers-up')) {
         command = `nohup bash -c "${command}" >> /tmp/containers-up.log 2>&1 &`;
       }
