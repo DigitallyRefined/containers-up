@@ -1,5 +1,4 @@
-import { json } from 'zod';
-import { imageHash } from '../db/image-hash';
+import { imageHash } from '@/backend/db/image-hash';
 
 const DOCKER_USERNAME = process.env.DOCKER_USERNAME;
 const DOCKER_TOKEN = process.env.DOCKER_TOKEN;
@@ -139,7 +138,7 @@ export const findTagsMatchingImageDigest = async (image: string) => {
     foundTags = await findTagsByDigest(namespace, repository, targetSha);
 
     if (Array.isArray(foundTags)) {
-      imageHash.create({
+      await imageHash.create({
         image,
         tags: foundTags,
       });

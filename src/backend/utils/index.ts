@@ -56,3 +56,14 @@ export const isValidContainerIdOrName = (id: string) =>
 
 export const isComposeFilename = (filename: string) =>
   typeof filename === 'string' && /compose.y(?:a?)ml$/.test(filename);
+
+export const batchPromises = async (items, batchSize, fn) => {
+  const results = [];
+  let i = 0;
+  while (i < items.length) {
+    const batch = items.slice(i, i + batchSize).map(fn);
+    results.push(...(await Promise.all(batch)));
+    i += batchSize;
+  }
+  return results;
+};

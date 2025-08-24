@@ -137,7 +137,10 @@ export const getContainers = async (selectedHost: Host, sort: SortOptions = 'upd
   );
 
   return {
-    composedContainers: composedContainersByComposeFile,
+    composedContainers: composedContainersByComposeFile as Record<
+      string,
+      { services: Array<{ Name: string; Image: string; Config: { Image: string } }> }
+    >,
     otherComposedContainers: Object.fromEntries(otherComposedContainersByComposeFileMap),
     separateContainers: nonComposedContainers,
     images,

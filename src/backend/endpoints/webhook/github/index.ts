@@ -157,7 +157,7 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, hos
   [getLogs(event), containersCleanupLogs]
     .filter(Boolean)
     .flat()
-    .forEach((log) => {
-      logDb.create({ jobId, hostId: hostConfig.id, ...log });
+    .forEach(async (log) => {
+      await logDb.create({ jobId, hostId: hostConfig.id, ...log });
     });
 };

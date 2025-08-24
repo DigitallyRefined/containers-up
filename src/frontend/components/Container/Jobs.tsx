@@ -97,7 +97,7 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
   };
 
   let prUrl = '';
-  const prUrlMatch = job.repoPr.match(/^([^\/]+\/[^#]+)#(\d+)$/);
+  const prUrlMatch = job.repoPr?.match(/^([^\/]+\/[^#]+)#(\d+)$/);
   if (prUrlMatch) {
     const [, repo, prId] = prUrlMatch;
     prUrl = `https://github.com/${repo}/pull/${prId}`;
@@ -122,13 +122,15 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
           {JobStatus[job.status]}
         </span>
         <div className='my-2'>
-          <h5 className='font-medium text-sm text-center w-full'>
-            <Link href={prUrl}>{job.title}</Link>
+          <h5 className='font-medium text-sm text-center w-full break-words'>
+            {prUrl ? <Link href={prUrl}>{job.title}</Link> : job.title}
           </h5>
         </div>
-        <p className='text-xs  mb-2'>
-          PR: <RepoPrLink repoPr={job.repoPr} url={prUrl} status={job.status} />
-        </p>
+        {job.repoPr && (
+          <p className='text-xs  mb-2'>
+            PR: <RepoPrLink repoPr={job.repoPr} url={prUrl} status={job.status} />
+          </p>
+        )}
         <p className='text-xs '>{getRelativeTime(`${job.updated}Z`)}</p>
         <div className='mt-3 w-full flex items-center justify-center gap-2'>
           {job.logs.length > 0 && (
@@ -171,28 +173,30 @@ export const Jobs = ({ job }: { job: JobWithLogs }) => {
             </StreamingDialog>
           )}
 
-          <Tooltip content='Restart Job'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={
-                job.status === JobStatus.open
-                  ? () => {
-                      window.open(
-                        `https://github.com/${job.repoPr.split('/')[0]}/${
-                          job.repoPr.split('/')[1].split('#')[0]
-                        }/settings/hooks`,
-                        '_blank'
-                      );
-                    }
-                  : handleRestart
-              }
-              disabled={restarting}
-              aria-label='Restart Job'
-            >
-              <RotateCcw className='size-4' />
-            </Button>
-          </Tooltip>
+          {job.repoPr && (
+            <Tooltip content='Restart Job'>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={
+                  job.status === JobStatus.open
+                    ? () => {
+                        window.open(
+                          `https://github.com/${job.repoPr.split('/')[0]}/${
+                            job.repoPr.split('/')[1].split('#')[0]
+                          }/settings/hooks`,
+                          '_blank'
+                        );
+                      }
+                    : handleRestart
+                }
+                disabled={restarting}
+                aria-label='Restart Job'
+              >
+                <RotateCcw className='size-4' />
+              </Button>
+            </Tooltip>
+          )}
 
           {job.status === JobStatus.running && (
             <StreamingDialog

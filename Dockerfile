@@ -3,7 +3,8 @@ FROM oven/bun:1.2.20-alpine AS base
 RUN apk add --no-cache \
     openssh-client \
     docker-cli \
-    docker-cli-compose
+    docker-cli-compose \
+    docker-cli-buildx
 
 FROM base AS builder
 
@@ -34,4 +35,4 @@ EXPOSE 3000
 EXPOSE 3001
 
 ENV NODE_ENV=production
-CMD ["bun", "."]
+CMD ["crond", "-l", "8", "&&", "bun", "."]

@@ -17,9 +17,9 @@ export const job = {
     db.query(jobCreateTableSql).run();
 
     const data = { hostId, repoPr, folder, title, status, updated: getDatetime() };
-    await upsert({ table: 'job', data, conflictKey: 'repoPr' });
+    await upsert({ table: 'job', data, conflictKey: 'title' });
 
-    const row = db.query('SELECT id FROM job WHERE repoPr = $repoPr').as(Job).get({ repoPr });
+    const row = db.query('SELECT id FROM job WHERE title = $title').as(Job).get({ title });
     return row ? row.id : undefined;
   },
   get: async (id: string) => {

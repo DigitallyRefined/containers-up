@@ -15,6 +15,7 @@ import { createDockerExec } from '@/backend/utils/docker';
 import { mainLogger } from '@/backend/utils/logger';
 import { findComposeFiles } from '@/backend/endpoints/compose';
 import { findTagsMatchingImageDigest } from '@/backend/endpoints/docker-hub-tags';
+import { checkHostForImageUpdates } from './backend/endpoints/update-check';
 
 const dockerExec = createDockerExec(mainLogger);
 
@@ -199,7 +200,9 @@ const server = serve({
 
         let logs: string | any[] = 'Done';
         if (cleanupLogs.length) {
-          cleanupLogs.forEach((log) => logDb.create({ hostId: selectedHost.id, ...log }));
+          cleanupLogs.forEach(
+            async (log) => await logDb.create({ hostId: selectedHost.id, ...log })
+          );
           logs = cleanupLogs.map((log) => log.msg).join('\n');
         }
 
@@ -313,6 +316,17 @@ const server = serve({
         if (composeError) return composeError;
 
         return dockerExec.stopCompose(selectedHost.name, selectedHost.sshHost, composeFile);
+      },
+    },
+
+    '/api/host/:host/update': {
+      async POST(req) {
+        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+        if (error) return error;
+
+        checkHostForImageUpdates(selectedHost);
+
+        return new Response('Triggered update check');
       },
     },
 

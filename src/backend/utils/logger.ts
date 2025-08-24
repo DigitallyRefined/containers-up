@@ -22,13 +22,17 @@ const logStream = new Writable({
 // Pretty stream for terminal output
 const prettyStream = pretty({ colorize: true });
 
+// Set log level & terminal output based on NODE_ENV
+const isDevelopment = process.env.NODE_ENV === 'development';
+const logLevel = isDevelopment ? 'debug' : 'info';
+
 // Create a pino multistream to log to both terminal and memory
 const streams = [
-  ...(process.env.NODE_ENV !== 'production' ? [{ stream: prettyStream }] : []), // pretty terminal
-  { stream: logStream }, // in-memory
+  ...(isDevelopment ? [{ level: logLevel, stream: prettyStream }] : []), // terminal
+  { level: logLevel, stream: logStream }, // in-memory
 ];
 
-export const mainLogger = pino({}, pino.multistream(streams));
+export const mainLogger = pino({ level: logLevel }, pino.multistream(streams));
 
 export const getLogs = (event?: string) => {
   let matchingLogs: any[] = [];
