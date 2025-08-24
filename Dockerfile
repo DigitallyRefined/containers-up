@@ -17,10 +17,10 @@ COPY . .
 ENV NODE_ENV=production
 RUN bunx @tailwindcss/cli --minify -i ./src/frontend/index.css -o ./src/frontend/index-out.css
 RUN mv ./src/frontend/index-out.css ./src/frontend/index.css
-RUN bun build src/index.tsx --minify --target=bun --outdir=dist
+RUN bun build src/index.ts --minify --target=bun --outdir=dist
 
 ENV NODE_ENV=development
-CMD ["bun", "dev"]
+CMD ["sh", "-c", "crond -l 8 && bun dev"]
 
 FROM base AS production
 
@@ -35,4 +35,4 @@ EXPOSE 3000
 EXPOSE 3001
 
 ENV NODE_ENV=production
-CMD ["crond", "-l", "8", "&&", "bun", "."]
+CMD ["sh", "-c", "crond -l 8 && bun ."]

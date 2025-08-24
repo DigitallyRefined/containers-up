@@ -3,11 +3,11 @@
   "version": "0.0.6",
   "private": true,
   "type": "module",
-  "main": "src/index.tsx",
-  "module": "src/index.tsx",
+  "main": "src/index.ts",
+  "module": "src/index.ts",
   "scripts": {
-    "dev": "bun --hot src/index.tsx",
-    "start": "NODE_ENV=production bun src/index.tsx",
+    "dev": "bun --hot src",
+    "start": "NODE_ENV=production bun src",
     "build": "bun run build.ts",
     "update-dependencies": "bunx npm-check-updates --target minor --upgrade && bun i && bunx npm-check-updates"
   },

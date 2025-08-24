@@ -88,359 +88,361 @@ const serverOptions: Partial<Serve> = {
   },
 };
 
-const server = serve({
-  routes: {
-    // Serve index.html for all unmatched routes.
-    '/*': index,
+export const startServer = () => {
+  const server = serve({
+    routes: {
+      // Serve index.html for all unmatched routes.
+      '/*': index,
 
-    '/icons/:name': async (req) => {
-      const iconName = req.params.name;
+      '/icons/:name': async (req) => {
+        const iconName = req.params.name;
 
-      // Validate filename to prevent directory traversal
-      if (
-        !iconName ||
-        iconName.includes('..') ||
-        iconName.includes('/') ||
-        iconName.includes('\\')
-      ) {
-        return new Response('File not found', { status: 404 });
-      }
-
-      // Only allow specific file extensions
-      const allowedExtensions = ['.webp'];
-      const hasValidExtension = allowedExtensions.some((ext) =>
-        iconName.toLowerCase().endsWith(ext)
-      );
-      if (!hasValidExtension) {
-        return new Response('File not found', { status: 404 });
-      }
-
-      // Use absolute path and restrict to icons directory
-      const filePath = `/storage/icons/${iconName}`;
-
-      try {
-        const file = Bun.file(filePath);
-        const exists = await file.exists();
-        if (!exists) {
+        // Validate filename to prevent directory traversal
+        if (
+          !iconName ||
+          iconName.includes('..') ||
+          iconName.includes('/') ||
+          iconName.includes('\\')
+        ) {
           return new Response('File not found', { status: 404 });
         }
-        return new Response(file);
-      } catch (error) {
-        return new Response('Error serving file', { status: 500 });
-      }
-    },
 
-    '/api/host': {
-      async GET(req) {
-        const auth = requireAuthKey(req);
-        if (auth) return auth;
-
-        return Response.json(
-          (await getHosts()).map((host) => ({ ...host, webhookSecret: undefined }))
+        // Only allow specific file extensions
+        const allowedExtensions = ['.webp'];
+        const hasValidExtension = allowedExtensions.some((ext) =>
+          iconName.toLowerCase().endsWith(ext)
         );
-      },
-    },
+        if (!hasValidExtension) {
+          return new Response('File not found', { status: 404 });
+        }
 
-    '/api/host/:host': {
-      async POST(req, server) {
-        server.timeout(req, 10);
-        const auth = requireAuthKey(req);
-        if (auth) return auth;
+        // Use absolute path and restrict to icons directory
+        const filePath = `/storage/icons/${iconName}`;
 
-        return Response.json(await postHost({ name: req.params.host, ...(await req.json()) }));
-      },
-
-      async PUT(req, server) {
-        server.timeout(req, 10);
-        const auth = requireAuthKey(req);
-        if (auth) return auth;
-
-        return Response.json(await putHost({ name: req.params.host, ...(await req.json()) }));
-      },
-
-      async DELETE(req) {
-        const auth = requireAuthKey(req);
-        if (auth) return auth;
-
-        return Response.json(await deleteHost({ name: req.params.host } as Host));
-      },
-    },
-
-    '/api/host/:host/logs': {
-      async GET(req) {
-        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
-        if (error) return error;
-
-        return Response.json(await logDb.getByHostId(selectedHost.id));
-      },
-    },
-
-    '/api/host/:host/jobs': {
-      async GET(req) {
-        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
-        if (error) return error;
-
-        return Response.json(await jobDb.getJobsWithLogs(selectedHost.id));
-      },
-    },
-
-    '/api/host/:host/containers': {
-      async GET(req) {
-        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
-        if (error) return error;
-
-        const sort = (new URL(req.url).searchParams.get('sort') ?? 'updates') as SortOptions;
-        return Response.json(await getContainers(selectedHost, sort));
+        try {
+          const file = Bun.file(filePath);
+          const exists = await file.exists();
+          if (!exists) {
+            return new Response('File not found', { status: 404 });
+          }
+          return new Response(file);
+        } catch (error) {
+          return new Response('Error serving file', { status: 500 });
+        }
       },
 
-      async DELETE(req) {
-        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
-        if (error) return error;
+      '/api/host': {
+        async GET(req) {
+          const auth = requireAuthKey(req);
+          if (auth) return auth;
 
-        const cleanupLogs = await containersCleanup(selectedHost.name);
-
-        let logs: string | any[] = 'Done';
-        if (cleanupLogs.length) {
-          cleanupLogs.forEach(
-            async (log) => await logDb.create({ hostId: selectedHost.id, ...log })
+          return Response.json(
+            (await getHosts()).map((host) => ({ ...host, webhookSecret: undefined }))
           );
-          logs = cleanupLogs.map((log) => log.msg).join('\n');
-        }
-
-        return new Response(logs);
-      },
-    },
-
-    '/api/host/:host/container/:containerId': {
-      async POST(req) {
-        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
-        if (error) return error;
-
-        const containerId = req.params.containerId;
-        if (!isValidContainerIdOrName(containerId)) {
-          return new Response('Invalid container ID or name', { status: 400 });
-        }
-
-        return dockerExec.restartOrStopContainer(selectedHost.name, containerId, 'restart');
+        },
       },
 
-      async PUT(req) {
-        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
-        if (error) return error;
+      '/api/host/:host': {
+        async POST(req, server) {
+          server.timeout(req, 10);
+          const auth = requireAuthKey(req);
+          if (auth) return auth;
 
-        const containerId = req.params.containerId;
-        if (!isValidContainerIdOrName(containerId)) {
-          return new Response('Invalid container ID or name', { status: 400 });
-        }
+          return Response.json(await postHost({ name: req.params.host, ...(await req.json()) }));
+        },
 
-        return dockerExec.restartOrStopContainer(selectedHost.name, containerId, 'stop');
+        async PUT(req, server) {
+          server.timeout(req, 10);
+          const auth = requireAuthKey(req);
+          if (auth) return auth;
+
+          return Response.json(await putHost({ name: req.params.host, ...(await req.json()) }));
+        },
+
+        async DELETE(req) {
+          const auth = requireAuthKey(req);
+          if (auth) return auth;
+
+          return Response.json(await deleteHost({ name: req.params.host } as Host));
+        },
       },
 
-      async DELETE(req) {
-        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
-        if (error) return error;
+      '/api/host/:host/logs': {
+        async GET(req) {
+          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          if (error) return error;
 
-        const containerId = req.params.containerId;
-        if (!isValidContainerIdOrName(containerId)) {
-          return new Response('Invalid container ID or name', { status: 400 });
-        }
-
-        return dockerExec.restartOrStopContainer(selectedHost.name, containerId, 'remove');
+          return Response.json(await logDb.getByHostId(selectedHost.id));
+        },
       },
-    },
 
-    '/api/host/:host/image/:imageId': {
-      async DELETE(req) {
-        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
-        if (error) return error;
+      '/api/host/:host/jobs': {
+        async GET(req) {
+          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          if (error) return error;
 
-        const imageId = req.params.imageId;
-        if (!isValidContainerIdOrName(imageId)) {
-          return new Response('Invalid image ID or name', { status: 400 });
-        }
-
-        return dockerExec.removeImage(selectedHost.name, imageId);
+          return Response.json(await jobDb.getJobsWithLogs(selectedHost.id));
+        },
       },
-    },
 
-    '/api/host/:host/compose': {
-      async GET(req) {
-        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
-        if (error) return error;
+      '/api/host/:host/containers': {
+        async GET(req) {
+          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          if (error) return error;
 
-        return Response.json(
-          await findComposeFiles(
+          const sort = (new URL(req.url).searchParams.get('sort') ?? 'updates') as SortOptions;
+          return Response.json(await getContainers(selectedHost, sort));
+        },
+
+        async DELETE(req) {
+          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          if (error) return error;
+
+          const cleanupLogs = await containersCleanup(selectedHost.name);
+
+          let logs: string | any[] = 'Done';
+          if (cleanupLogs.length) {
+            cleanupLogs.forEach(
+              async (log) => await logDb.create({ hostId: selectedHost.id, ...log })
+            );
+            logs = cleanupLogs.map((log) => log.msg).join('\n');
+          }
+
+          return new Response(logs);
+        },
+      },
+
+      '/api/host/:host/container/:containerId': {
+        async POST(req) {
+          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          if (error) return error;
+
+          const containerId = req.params.containerId;
+          if (!isValidContainerIdOrName(containerId)) {
+            return new Response('Invalid container ID or name', { status: 400 });
+          }
+
+          return dockerExec.restartOrStopContainer(selectedHost.name, containerId, 'restart');
+        },
+
+        async PUT(req) {
+          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          if (error) return error;
+
+          const containerId = req.params.containerId;
+          if (!isValidContainerIdOrName(containerId)) {
+            return new Response('Invalid container ID or name', { status: 400 });
+          }
+
+          return dockerExec.restartOrStopContainer(selectedHost.name, containerId, 'stop');
+        },
+
+        async DELETE(req) {
+          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          if (error) return error;
+
+          const containerId = req.params.containerId;
+          if (!isValidContainerIdOrName(containerId)) {
+            return new Response('Invalid container ID or name', { status: 400 });
+          }
+
+          return dockerExec.restartOrStopContainer(selectedHost.name, containerId, 'remove');
+        },
+      },
+
+      '/api/host/:host/image/:imageId': {
+        async DELETE(req) {
+          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          if (error) return error;
+
+          const imageId = req.params.imageId;
+          if (!isValidContainerIdOrName(imageId)) {
+            return new Response('Invalid image ID or name', { status: 400 });
+          }
+
+          return dockerExec.removeImage(selectedHost.name, imageId);
+        },
+      },
+
+      '/api/host/:host/compose': {
+        async GET(req) {
+          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          if (error) return error;
+
+          return Response.json(
+            await findComposeFiles(
+              selectedHost.name,
+              selectedHost.sshHost,
+              selectedHost.workingFolder
+            )
+          );
+        },
+
+        async POST(req) {
+          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          if (error) return error;
+
+          const data = await req.json();
+          const { composeError, composeFile } = await resolveAndValidateComposeFile(
+            selectedHost,
+            data
+          );
+          if (composeError) return composeError;
+
+          return dockerExec.startCompose(selectedHost.name, selectedHost.sshHost, composeFile);
+        },
+
+        async PUT(req) {
+          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          if (error) return error;
+
+          const data = await req.json();
+          const { composeError, composeFile } = await resolveAndValidateComposeFile(
+            selectedHost,
+            data
+          );
+          if (composeError) return composeError;
+
+          return dockerExec.restartCompose(
             selectedHost.name,
             selectedHost.sshHost,
-            selectedHost.workingFolder
-          )
-        );
+            composeFile,
+            Boolean(data.pullFirst)
+          );
+        },
+
+        async DELETE(req) {
+          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          if (error) return error;
+
+          const data = await req.json();
+          const { composeError, composeFile } = await resolveAndValidateComposeFile(
+            selectedHost,
+            data
+          );
+          if (composeError) return composeError;
+
+          return dockerExec.stopCompose(selectedHost.name, selectedHost.sshHost, composeFile);
+        },
       },
 
-      async POST(req) {
-        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
-        if (error) return error;
+      '/api/host/:host/update': {
+        async POST(req) {
+          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          if (error) return error;
 
-        const data = await req.json();
-        const { composeError, composeFile } = await resolveAndValidateComposeFile(
-          selectedHost,
-          data
-        );
-        if (composeError) return composeError;
+          const data = await req.json();
+          console.log(data.checkService);
+          checkHostForImageUpdates(selectedHost, data.checkService);
 
-        return dockerExec.startCompose(selectedHost.name, selectedHost.sshHost, composeFile);
+          return new Response('Triggered update check');
+        },
       },
 
-      async PUT(req) {
-        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
-        if (error) return error;
+      '/api/job/:id': {
+        async POST(req) {
+          const auth = requireAuthKey(req);
+          if (auth) return auth;
 
-        const data = await req.json();
-        const { composeError, composeFile } = await resolveAndValidateComposeFile(
-          selectedHost,
-          data
-        );
-        if (composeError) return composeError;
+          restartJob(req.params.id);
 
-        return dockerExec.restartCompose(
-          selectedHost.name,
-          selectedHost.sshHost,
-          composeFile,
-          Boolean(data.pullFirst)
-        );
+          return Response.json({ message: 'job restarted' });
+        },
+
+        async PATCH(req) {
+          const auth = requireAuthKey(req);
+          if (auth) return auth;
+
+          await jobDb.markJobAsComplete(req.params.id);
+
+          return new Response('Marked as complete');
+        },
       },
 
-      async DELETE(req) {
-        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
-        if (error) return error;
+      '/api/docker-hub/tags': {
+        async POST(req) {
+          const { image } = await req.json();
+          if (!image) {
+            return new Response('Image not specified', { status: 400 });
+          }
 
-        const data = await req.json();
-        const { composeError, composeFile } = await resolveAndValidateComposeFile(
-          selectedHost,
-          data
-        );
-        if (composeError) return composeError;
-
-        return dockerExec.stopCompose(selectedHost.name, selectedHost.sshHost, composeFile);
-      },
-    },
-
-    '/api/host/:host/update': {
-      async POST(req) {
-        const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
-        if (error) return error;
-
-        const data = await req.json();
-        console.log(data.checkService);
-        checkHostForImageUpdates(selectedHost, data.checkService);
-
-        return new Response('Triggered update check');
-      },
-    },
-
-    '/api/job/:id': {
-      async POST(req) {
-        const auth = requireAuthKey(req);
-        if (auth) return auth;
-
-        restartJob(req.params.id);
-
-        return Response.json({ message: 'job restarted' });
-      },
-
-      async PATCH(req) {
-        const auth = requireAuthKey(req);
-        if (auth) return auth;
-
-        await jobDb.markJobAsComplete(req.params.id);
-
-        return new Response('Marked as complete');
+          return Response.json(await findTagsMatchingImageDigest(image));
+        },
       },
     },
 
-    '/api/docker-hub/tags': {
-      async POST(req) {
-        const { image } = await req.json();
-        if (!image) {
-          return new Response('Image not specified', { status: 400 });
-        }
+    ...serverOptions,
+  });
 
-        return Response.json(await findTagsMatchingImageDigest(image));
+  console.log(`🚀 Server running at ${server.url}`);
+
+  const webhookServer = serve({
+    port: 3001,
+    routes: {
+      '/api/webhook/github/host/:host': {
+        async POST(req) {
+          const selectedHost = await host.getByName(req.params.host);
+          if (!selectedHost) {
+            return new Response('Not Found', { status: 404 });
+          }
+
+          const signature = req.headers.get('x-hub-signature-256');
+          if (!signature) {
+            return new Response('Unauthorized (no signature)', { status: 401 });
+          }
+
+          const bodyBuffer = new Uint8Array(await req.arrayBuffer());
+          const key = await crypto.subtle.importKey(
+            'raw',
+            new TextEncoder().encode(selectedHost.webhookSecret),
+            { name: 'HMAC', hash: 'SHA-256' },
+            false,
+            ['sign']
+          );
+          const signatureBuffer = await crypto.subtle.sign('HMAC', key, bodyBuffer);
+          const hash = Array.from(new Uint8Array(signatureBuffer))
+            .map((b) => b.toString(16).padStart(2, '0'))
+            .join('');
+          const expectedSignature = `sha256=${hash}`;
+
+          if (signature !== expectedSignature) {
+            return new Response('Unauthorized (bad signature)', { status: 401 });
+          }
+
+          const webhookData = JSON.parse(new TextDecoder().decode(bodyBuffer));
+
+          const isDockerComposePr = webhookData.pull_request?.labels?.some(
+            (label: { name: string }) => label.name === 'docker_compose'
+          );
+          if (!isDockerComposePr) {
+            return Response.json({ message: 'Not a Docker Compose PR' });
+          }
+
+          const webhookEvent: GitHubWebhookEvent = {
+            sender: webhookData.sender?.login,
+            repo: webhookData.repository.full_name,
+            number: webhookData.pull_request?.number,
+            action: webhookData.action,
+            merged: webhookData.pull_request?.merged,
+            title: webhookData.pull_request?.title,
+          };
+
+          const foundHosts = await host.getAllByRepo(webhookEvent.repo);
+          if (!foundHosts?.length) {
+            return new Response('Host not found', { status: 404 });
+          }
+
+          for (const foundHost of foundHosts) {
+            githubWebhookHandler(webhookEvent, foundHost);
+          }
+
+          return Response.json({ message: 'webhook received' });
+        },
       },
     },
-  },
 
-  ...serverOptions,
-});
+    ...serverOptions,
+  });
 
-console.log(`🚀 Server running at ${server.url}`);
-
-const webhookServer = serve({
-  port: 3001,
-  routes: {
-    '/api/webhook/github/host/:host': {
-      async POST(req) {
-        const selectedHost = await host.getByName(req.params.host);
-        if (!selectedHost) {
-          return new Response('Not Found', { status: 404 });
-        }
-
-        const signature = req.headers.get('x-hub-signature-256');
-        if (!signature) {
-          return new Response('Unauthorized (no signature)', { status: 401 });
-        }
-
-        const bodyBuffer = new Uint8Array(await req.arrayBuffer());
-        const key = await crypto.subtle.importKey(
-          'raw',
-          new TextEncoder().encode(selectedHost.webhookSecret),
-          { name: 'HMAC', hash: 'SHA-256' },
-          false,
-          ['sign']
-        );
-        const signatureBuffer = await crypto.subtle.sign('HMAC', key, bodyBuffer);
-        const hash = Array.from(new Uint8Array(signatureBuffer))
-          .map((b) => b.toString(16).padStart(2, '0'))
-          .join('');
-        const expectedSignature = `sha256=${hash}`;
-
-        if (signature !== expectedSignature) {
-          return new Response('Unauthorized (bad signature)', { status: 401 });
-        }
-
-        const webhookData = JSON.parse(new TextDecoder().decode(bodyBuffer));
-
-        const isDockerComposePr = webhookData.pull_request?.labels?.some(
-          (label: { name: string }) => label.name === 'docker_compose'
-        );
-        if (!isDockerComposePr) {
-          return Response.json({ message: 'Not a Docker Compose PR' });
-        }
-
-        const webhookEvent: GitHubWebhookEvent = {
-          sender: webhookData.sender?.login,
-          repo: webhookData.repository.full_name,
-          number: webhookData.pull_request?.number,
-          action: webhookData.action,
-          merged: webhookData.pull_request?.merged,
-          title: webhookData.pull_request?.title,
-        };
-
-        const foundHosts = await host.getAllByRepo(webhookEvent.repo);
-        if (!foundHosts?.length) {
-          return new Response('Host not found', { status: 404 });
-        }
-
-        for (const foundHost of foundHosts) {
-          githubWebhookHandler(webhookEvent, foundHost);
-        }
-
-        return Response.json({ message: 'webhook received' });
-      },
-    },
-  },
-
-  ...serverOptions,
-});
-
-console.log(`⤷ webhook server running at ${webhookServer.url}`);
+  console.log(`⤷ webhook server running at ${webhookServer.url}`);
+};

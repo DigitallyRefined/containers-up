@@ -66,7 +66,7 @@ export const checkHostForImageUpdates = async (
 
   const digests = await batchPromises(
     Array.from(imagesToCheck),
-    3,
+    2,
     async ([localDigest, imageName]) => {
       let remoteDigest = localDigest;
       try {
