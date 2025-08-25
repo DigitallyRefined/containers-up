@@ -94,7 +94,7 @@ export function App() {
           </h2>
         </div>
         <div className='flex flex-col sm:flex-row gap-2 px-0 mx-0 w-full px-2 sm:px-4 md:px-6'>
-          <div className='flex items-center gap-2 w-1/2 md:w-1/3 min-w-70 sm:min-w-50 md:min-w-80'>
+          <div className='flex items-center gap-2 w-1/2 md:w-1/3 min-w-75 sm:min-w-50 md:min-w-80'>
             <HostSelector
               selected={selectedHost}
               setSelected={(value) => {
@@ -119,10 +119,10 @@ export function App() {
             </Tooltip>
           </div>
           {hasSelectedHost && (
-            <div className='flex items-center gap-2 w-1/2 md:w-2/3 md:justify-end min-w-60'>
+            <div className='flex items-center gap-2 w-1/2 md:w-2/3 md:justify-end'>
               <Select value={selectedSort || ''} onValueChange={setSelectedSort}>
                 <Tooltip content='Sort by'>
-                  <SelectTrigger className='min-w-25 max-w-30'>
+                  <SelectTrigger className='min-w-30 max-w-30'>
                     <SelectValue placeholder='Sort by...' />
                   </SelectTrigger>
                 </Tooltip>
