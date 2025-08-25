@@ -9,6 +9,7 @@ export class Host {
   webhookSecret?: string;
   workingFolder?: string;
   excludeFolders?: string;
+  cron?: string;
   created?: string;
 }
 
@@ -21,6 +22,7 @@ export const hostCreateTableSql = `
     webhookSecret TEXT,
     workingFolder TEXT,
     excludeFolders TEXT,
+    cron TEXT,
     created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   )
 `;
@@ -53,4 +55,5 @@ export const hostSchema = z.object({
   webhookSecret: z.string().optional(),
   workingFolder: z.string().optional(),
   excludeFolders: z.string().optional(),
+  cron: z.string().optional(),
 });

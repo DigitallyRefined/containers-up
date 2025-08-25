@@ -126,11 +126,6 @@ async function getImageDigest(options: RegistryOptions): Promise<string | null> 
   }
 
   try {
-    // console.log(url, {
-    //   method: 'HEAD',
-    //   headers,
-    // });
-
     const res = await fetch(url, {
       method: 'HEAD',
       headers,

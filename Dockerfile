@@ -29,6 +29,7 @@ ARG TARGETPLATFORM
 LABEL org.opencontainers.image.source=https://github.com/DigitallyRefined/containers-up
 LABEL org.opencontainers.image.description="containers-up ${TARGETPLATFORM}"
 
+COPY --from=builder /home/bun/app/src/backend/db/migrations/*.sql .
 COPY --from=builder /home/bun/app/dist .
 
 EXPOSE 3000

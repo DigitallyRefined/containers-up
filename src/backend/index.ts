@@ -342,7 +342,6 @@ export const startServer = () => {
           if (error) return error;
 
           const data = await req.json();
-          console.log(data.checkService);
           checkHostForImageUpdates(selectedHost, data.checkService);
 
           return new Response('Triggered update check');

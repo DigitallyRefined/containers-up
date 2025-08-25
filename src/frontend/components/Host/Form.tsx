@@ -188,6 +188,26 @@ export const HostForm = ({
         disabled={isSubmitting}
         {...register('webhookSecret')}
       />
+      <LabeledInput
+        label={
+          <span className='inline-flex items-center gap-1'>
+            Check for updates schedule (cronjob)
+            <a
+              href='https://it-tools.tech/crontab-generator'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='ml-1 align-middle'
+            >
+              <Info className='size-4' />
+            </a>
+          </span>
+        }
+        id='cron'
+        type='text'
+        placeholder='e.g. 0 1 * * 6 (every Saturday at 1am)'
+        disabled={isSubmitting}
+        {...register('cron')}
+      />
       <Button type='submit' className='w-full font-semibold mt-4' disabled={isSubmitting}>
         {isSubmitting ? 'Testing connection...' : 'Save Host'}
       </Button>

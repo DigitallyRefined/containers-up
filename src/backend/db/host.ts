@@ -36,6 +36,7 @@ export const host = {
     webhookSecret,
     workingFolder,
     excludeFolders,
+    cron,
   }: Host) => {
     const data = {
       id,
@@ -45,6 +46,7 @@ export const host = {
       webhookSecret,
       workingFolder,
       excludeFolders: excludeFolders || '',
+      cron,
     };
 
     return upsert({ table: 'host', data, conflictKey: 'id' });

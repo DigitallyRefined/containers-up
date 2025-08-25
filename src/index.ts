@@ -2,6 +2,7 @@ import { startServer } from '@/backend';
 import { host } from '@/backend/db/host';
 import { checkHostForImageUpdates } from './backend/endpoints/update-check';
 import { checkIfDatabaseNeedsUpdating } from './backend/db/migrations';
+import { setCrontab } from './backend/endpoints/host';
 
 if (process.argv.includes('--check-for-updates')) {
   const argIndex = process.argv.indexOf('--check-for-updates');
@@ -17,6 +18,7 @@ if (process.argv.includes('--check-for-updates')) {
   console.log('Checking for updates...');
   await checkHostForImageUpdates(selectedHost);
 } else {
-    await checkIfDatabaseNeedsUpdating();
-    startServer();
+  await checkIfDatabaseNeedsUpdating();
+  await setCrontab();
+  startServer();
 }

@@ -15,4 +15,22 @@ INSERT INTO `job_tmp` (`id`, `hostId`, `repoPr`, `folder`, `title`, `status`, `c
 DROP TABLE `job`;
 ALTER TABLE `job_tmp` RENAME TO `job`;
 COMMIT;
+
+BEGIN;
+CREATE TABLE `host_tmp` (
+	"id"							INTEGER NOT NULL,
+	"name"						TEXT NOT NULL UNIQUE,
+	"sshHost"					TEXT NOT NULL,
+	"repo"						TEXT UNIQUE,
+	"webhookSecret"		TEXT,
+	"workingFolder"		TEXT,
+	"excludeFolders"	TEXT,
+	"cron"						TEXT,
+	"created"					DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+INSERT INTO `host_tmp` (`id`, `name`, `sshHost`, `repo`, `webhookSecret`, `workingFolder`, `excludeFolders`, `created`) SELECT `id`, `name`, `sshHost`, `repo`, `webhookSecret`, `workingFolder`, `excludeFolders`, `created` FROM `host`;
+DROP TABLE `host`;
+ALTER TABLE `host_tmp` RENAME TO `host`;
+COMMIT;
 PRAGMA foreign_keys = ON;

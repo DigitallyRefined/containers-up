@@ -57,6 +57,8 @@ export const postHost = async (host: Host) => {
 
   await hostDb.upsert(host);
 
+  await setCrontab();
+
   return { message: 'ok' };
 };
 
@@ -114,6 +116,19 @@ const deleteFiles = async (host: Host) => {
   } catch (error) {
     logger.error({ error }, 'Failed to delete files for host');
   }
+};
+
+export const setCrontab = async () => {
+  const hosts = await getHosts();
+
+  let crontab = '';
+  for (const host of hosts) {
+    if (!host.cron) continue;
+    crontab += `${host.cron} bun /home/bun/app/index.js --check-for-updates ${host.name}\n`;
+  }
+
+  await fs.writeFile('/tmp/crontab', crontab);
+  await exec.run(`crontab /tmp/crontab`);
 };
 
 export const putHost = async (host: Host) => {
