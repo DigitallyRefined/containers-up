@@ -3,8 +3,7 @@ FROM oven/bun:1.2.20-alpine AS base
 RUN apk add --no-cache \
     openssh-client \
     docker-cli \
-    docker-cli-compose \
-    docker-cli-buildx
+    docker-cli-compose
 
 FROM base AS builder
 
