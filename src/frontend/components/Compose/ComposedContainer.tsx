@@ -91,7 +91,7 @@ export const ComposedContainer = ({
                     onError={(e) => (e.currentTarget.style.display = 'none')}
                   />
                   <div className='absolute top-2 right-2 flex gap-1 z-10'>
-                    <Tooltip content='Check for updates'>
+                    <Tooltip content='Check for image tag updates'>
                       <Button
                         variant='outline'
                         size='sm'
@@ -106,13 +106,13 @@ export const ComposedContainer = ({
                           if (!res.ok) {
                             const data = await res.json().catch(() => ({}));
                             (window as any).showToast(
-                              data.error || 'Failed to trigger update check'
+                              data.error || 'Failed to trigger image tag update check'
                             );
                           } else {
-                            (window as any).showToast('Checking for updates, see logs');
+                            (window as any).showToast('Checking for image tag updates, see logs');
                           }
                         }}
-                        aria-label='Check for updates'
+                        aria-label='Check for image tag updates'
                       >
                         <WifiSync className='size-4' />
                       </Button>

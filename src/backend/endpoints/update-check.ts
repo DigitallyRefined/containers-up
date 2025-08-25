@@ -88,7 +88,7 @@ export const checkHostForImageUpdates = async (
         } catch (err) {
           logger.error(
             err,
-            `Failed to retrieve remote digest and check for updates for "${imageName}" via \`docker buildx\`. Make sure DOCKER/GHCR_USERNAME/TOKEN are set, see \`.env.default\``
+            `Failed to retrieve remote digest and check for image tag updates for "${imageName}" via \`docker buildx\`. Make sure DOCKER/GHCR_USERNAME/TOKEN are set, see \`.env.default\``
           );
         }
       }

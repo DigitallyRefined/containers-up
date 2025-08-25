@@ -191,7 +191,7 @@ export const HostForm = ({
       <LabeledInput
         label={
           <span className='inline-flex items-center gap-1'>
-            Check for updates schedule (cronjob)
+            Check for image tag updates schedule (cronjob)
             <a
               href='https://it-tools.tech/crontab-generator'
               target='_blank'

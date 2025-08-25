@@ -147,7 +147,7 @@ export function App() {
                   <BrushCleaning className='size-4' />
                 </Button>
               </StreamingDialog>
-              <Tooltip content='Check all containers for updates'>
+              <Tooltip content='Check all image tags for updates'>
                 <Button
                   variant='outline'
                   size='sm'
@@ -158,12 +158,14 @@ export function App() {
                     });
                     if (!res.ok) {
                       const data = await res.json().catch(() => ({}));
-                      (window as any).showToast(data.error || 'Failed to trigger update check');
+                      (window as any).showToast(
+                        data.error || 'Failed to trigger image tag update check'
+                      );
                     } else {
-                      (window as any).showToast('Checking for updates, see logs');
+                      (window as any).showToast('Checking for image tag updates, see logs');
                     }
                   }}
-                  aria-label='Check all containers for updates'
+                  aria-label='Check all image tags for updates'
                 >
                   <WifiSync className='size-4' />
                 </Button>
