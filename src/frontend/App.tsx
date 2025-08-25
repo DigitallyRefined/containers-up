@@ -21,9 +21,9 @@ import {
   SelectValue,
 } from '@/frontend/components/ui/Select';
 
-import './index.css';
-import './img/icon-containers-up.svg';
-import './img/icon-containers-up.webp';
+import '@/frontend/index.css';
+import '@/frontend/img/icon-containers-up.svg';
+import '@/frontend/img/icon-containers-up.webp';
 
 export function App() {
   const [selectedHost, setSelectedHost] = useLocalStorage<string | undefined>(
@@ -152,7 +152,10 @@ export function App() {
                   variant='outline'
                   size='sm'
                   onClick={async () => {
-                    const res = await fetch(`/api/host/${selectedHost}/update`, { method: 'POST' });
+                    const res = await fetch(`/api/host/${selectedHost}/update`, {
+                      method: 'POST',
+                      body: JSON.stringify({}),
+                    });
                     if (!res.ok) {
                       const data = await res.json().catch(() => ({}));
                       (window as any).showToast(data.error || 'Failed to trigger update check');

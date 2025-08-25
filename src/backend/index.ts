@@ -16,6 +16,7 @@ import { mainLogger } from '@/backend/utils/logger';
 import { findComposeFiles } from '@/backend/endpoints/compose';
 import { findTagsMatchingImageDigest } from '@/backend/endpoints/docker-hub-tags';
 import { checkHostForImageUpdates } from '@/backend/endpoints/update-check';
+import { JobStatus } from '@/backend/db/schema/job';
 
 const dockerExec = createDockerExec(mainLogger);
 
@@ -302,6 +303,15 @@ export const startServer = () => {
             data
           );
           if (composeError) return composeError;
+
+          if (data.jobTitle && data.jobFolder) {
+            jobDb.upsert({
+              hostId: selectedHost.id,
+              folder: data.jobFolder,
+              title: data.jobTitle,
+              status: JobStatus.completed,
+            });
+          }
 
           return dockerExec.restartCompose(
             selectedHost.name,

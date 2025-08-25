@@ -23,7 +23,7 @@ import { getRelativeTime } from '@/frontend/lib/utils';
 import { Link } from '@/frontend/components/ui/Link';
 import { Logs } from '@/frontend/components/Container/Logs';
 import { Tooltip } from '@/frontend/components/ui/Tooltip';
-import { StreamingDialog } from '../ui/StreamingDialog';
+import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 
 export const RepoPrLink = ({
   repoPr,
@@ -146,7 +146,7 @@ export const Jobs = ({
             <StreamingDialog
               url={`/api/host/${hostName}/compose`}
               method='PUT'
-              body={{ composeFile, pullFirst: true }}
+              body={{ composeFile, pullFirst: true, jobTitle: job.title, jobFolder: job.folder }}
               dialogTitle='Pull image & restart'
               tooltipText='Pull image & restart'
             >

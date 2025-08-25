@@ -6,6 +6,7 @@ import { log as logDb } from '@/backend/db/log';
 import { job as jobDb } from '@/backend/db/job';
 import { JobStatus } from '@/backend/db/schema/job';
 import { batchPromises } from '@/backend/utils';
+import { getImageDigestFromRef } from '@/backend/utils/docker/remote-image-digest';
 
 const event = 'update-check';
 const logger = mainLogger.child({ event });
@@ -50,8 +51,11 @@ export const checkHostForImageUpdates = async (
   selectedHost: Host,
   checkService?: string | undefined
 ) => {
+  logger.info(`Checking images for updates on "${selectedHost.name}"...`);
+  let updateCount = 0;
+
   if (isRunning[selectedHost.name]) {
-    logger.info(`Update check already in progress for ${selectedHost.name}, skipping this run.`);
+    logger.info(`Update check already in progress for "${selectedHost.name}", skipping this run.`);
     return;
   }
   isRunning[selectedHost.name] = true;
@@ -70,9 +74,23 @@ export const checkHostForImageUpdates = async (
     async ([localDigest, imageName]) => {
       let remoteDigest = localDigest;
       try {
-        remoteDigest = await dockerExec.getRemoteImageDigest(selectedHost, imageName);
+        remoteDigest = await getImageDigestFromRef(imageName);
       } catch (err) {
-        // already logged
+        try {
+          logger.warn(
+            err,
+            `Getting remote digest for "${imageName}" via API failed. Trying \`docker buildx\`...`
+          );
+          remoteDigest = await dockerExec.getRemoteImageDigest(selectedHost, imageName);
+          logger.info(
+            `Successfully retrieved remote digest for "${imageName}" via \`docker buildx\``
+          );
+        } catch (err) {
+          logger.error(
+            err,
+            `Failed to retrieve remote digest and check for updates for "${imageName}" via \`docker buildx\`. Make sure DOCKER/GHCR_USERNAME/TOKEN are set, see \`.env.default\``
+          );
+        }
       }
       return { imageName, localDigest, remoteDigest };
     }
@@ -81,7 +99,7 @@ export const checkHostForImageUpdates = async (
   const imagesToUpdate = [];
   digests.forEach(({ imageName, localDigest, remoteDigest }) => {
     if (!localDigest || !remoteDigest) {
-      logger.error('Could not retrieve both local and remote digests');
+      logger.error(`Could not retrieve both local and remote digests for "${imageName}"`);
       return;
     }
 
@@ -91,8 +109,11 @@ export const checkHostForImageUpdates = async (
         localDigest,
         remoteDigest,
       };
-      logger.debug(updateData, `Update available for image "${imageName}"`);
+      logger.info(updateData, `Update available for image "${imageName}"`);
       imagesToUpdate.push(updateData);
+      updateCount++;
+    } else {
+      logger.info(`No update available for image "${imageName}"`);
     }
   });
 
@@ -114,6 +135,10 @@ export const checkHostForImageUpdates = async (
       }
     }
   }
+
+  logger.info(
+    `Update check finished. Found ${updateCount} images to update on "${selectedHost.name}"`
+  );
 
   // save logs
   getLogs(event).forEach(async (log) => await logDb.create({ hostId: selectedHost.id, ...log }));
