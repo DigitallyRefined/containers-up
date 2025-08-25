@@ -97,15 +97,19 @@ const isFromDockerHub = (image: string): boolean => {
   // Check for sha256 hash in the image and remove it if present
   const imageWithoutHash = image.includes('@sha256:') ? image.split('@sha256:')[0] : image;
 
-  const firstPart = imageWithoutHash.split('/')[0];
+  let firstPart = imageWithoutHash.split('/')[0];
 
   // Check for explicit docker.io domain
   if (firstPart === 'docker.io') {
     return true;
   }
 
-  // If the first part has '.' or ':', it's a domain → not Docker Hub
-  const hasDomain = firstPart.includes('.') || firstPart.includes(':');
+  if (firstPart.includes(':')) {
+    firstPart = firstPart.split(':')[0];
+  }
+
+  // If the first part has '.', it's a domain → not Docker Hub
+  const hasDomain = firstPart.includes('.');
 
   // If no domain prefix, it's from Docker Hub
   return !hasDomain;
@@ -127,6 +131,10 @@ export const findTagsMatchingImageDigest = async (image: string) => {
   } else {
     namespace = 'library';
     [repository, targetSha] = image.split('@');
+  }
+
+  if (repository.includes(':')) {
+    repository = repository.split(':')[0];
   }
 
   if (!namespace || !repository || !targetSha || !targetSha.startsWith('sha256:')) {
