@@ -17,6 +17,7 @@ import { findComposeFiles } from '@/backend/endpoints/compose';
 import { findTagsMatchingImageDigest } from '@/backend/endpoints/docker-hub-tags';
 import { checkHostForImageUpdates } from '@/backend/endpoints/update-check';
 import { JobStatus } from '@/backend/db/schema/job';
+import { sendNotification } from './utils/notification';
 
 const dockerExec = createDockerExec(mainLogger);
 
@@ -348,6 +349,22 @@ export const startServer = () => {
         },
       },
 
+      '/api/host/:host/notification/test': {
+        async POST(req) {
+          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          if (error) return error;
+
+          return Response.json(
+            await sendNotification({
+              hostName: selectedHost.name,
+              subject: 'Test notification',
+              message:
+                'This is a test notification from Containers Up! to make sure everything is working correctly.',
+            })
+          );
+        },
+      },
+
       '/api/job/:id': {
         async POST(req) {
           const auth = requireAuthKey(req);
@@ -434,6 +451,7 @@ export const startServer = () => {
             action: webhookData.action,
             merged: webhookData.pull_request?.merged,
             title: webhookData.pull_request?.title,
+            body: webhookData.pull_request?.body,
           };
 
           const foundHosts = await host.getAllByRepo(webhookEvent.repo);

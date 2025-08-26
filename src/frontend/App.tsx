@@ -45,11 +45,15 @@ export function App() {
         if (data.length === 0) {
           openAddDialog();
         } else {
-          if (selectedHost && data.some((host) => host.name === selectedHost)) {
-            setSelectedHost(selectedHost);
-          } else if (data.length > 0) {
-            setSelectedHost(String(data[0].name));
-          }
+            const params = new URLSearchParams(window.location.search);
+            const hostFromUrl = params.get('host');
+            if (hostFromUrl && data.some((host: Host) => host.name === hostFromUrl)) {
+              setSelectedHost(hostFromUrl);
+            } else if (selectedHost && data.some((host: Host) => host.name === selectedHost)) {
+              setSelectedHost(selectedHost);
+            } else if (data.length > 0) {
+              setSelectedHost(String(data[0].name));
+            }
         }
       })
       .catch(() => {

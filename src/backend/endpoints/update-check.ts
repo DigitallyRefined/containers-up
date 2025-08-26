@@ -7,6 +7,7 @@ import { job as jobDb } from '@/backend/db/job';
 import { JobStatus } from '@/backend/db/schema/job';
 import { batchPromises } from '@/backend/utils';
 import { getImageDigestFromRef } from '@/backend/utils/docker/remote-image-digest';
+import { sendNotification } from '../utils/notification';
 
 const event = 'update-check';
 const logger = mainLogger.child({ event });
@@ -123,13 +124,20 @@ export const checkHostForImageUpdates = async (
       for (const [composeFile, containers] of composedContainers) {
         if (containers.some((c) => c.image === imageToUpdate.imageName)) {
           const folder = `/${composeFile.split('/').slice(0, -1).join('/')}`;
+          const title = `Bump ${imageToUpdate.imageName} from \`${getSmallHash(
+            imageToUpdate.localDigest
+          )}\` to \`${getSmallHash(imageToUpdate.remoteDigest)}\` in ${folder}`;
           await jobDb.upsert({
             hostId: selectedHost.id,
             folder,
-            title: `Bump ${imageToUpdate.imageName} from \`${getSmallHash(
-              imageToUpdate.localDigest
-            )}\` to \`${getSmallHash(imageToUpdate.remoteDigest)}\` in ${folder}`,
+            title,
             status: JobStatus.open,
+          });
+
+          sendNotification({
+            hostName: selectedHost.name,
+            subject: `${imageToUpdate.imageName} update available on ${selectedHost.name}`,
+            message: `A new image update is available for "${imageToUpdate.imageName}" on ${selectedHost.name}.\n\n${title}`,
           });
         }
       }

@@ -12,7 +12,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/frontend/components/ui/Dialog';
-import { Info } from 'lucide-react';
+import { Info, MailQuestionMark, Save, Trash2 } from 'lucide-react';
+import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 
 export const HostForm = ({
   onSuccess,
@@ -209,18 +210,37 @@ export const HostForm = ({
         {...register('cron')}
       />
       <Button type='submit' className='w-full font-semibold mt-4' disabled={isSubmitting}>
-        {isSubmitting ? 'Testing connection...' : 'Save Host'}
+        <Save className='size-4' />
+        {isSubmitting ? 'Testing connection...' : 'Save host'}
       </Button>
       {initialValues && (
-        <Button
-          variant='outline'
-          className='w-full font-semibold text-destructive'
-          disabled={isSubmitting}
-          onClick={onDelete}
-          type='button'
-        >
-          Delete Host
-        </Button>
+        <>
+          <StreamingDialog
+            url={`/api/host/${initialValues.name}/notification/test`}
+            method='POST'
+            dialogTitle='Test notification output'
+          >
+            <Button
+              variant='outline'
+              className='w-full font-semibold'
+              disabled={isSubmitting}
+              type='button'
+            >
+              <MailQuestionMark className='size-4' />
+              Send test notification
+            </Button>
+          </StreamingDialog>
+          <Button
+            variant='outline'
+            className='w-full font-semibold text-destructive'
+            disabled={isSubmitting}
+            onClick={onDelete}
+            type='button'
+          >
+            <Trash2 className='size-4' />
+            Delete host
+          </Button>
+        </>
       )}
     </form>
   );

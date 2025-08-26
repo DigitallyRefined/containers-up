@@ -9,6 +9,7 @@ import { log as logDb } from '@/backend/db/log';
 import { job as jobDb } from '@/backend/db/job';
 import { isComposeFilename, waitASecond } from '@/backend/utils';
 import { JobStatus } from '@/backend/db/schema/job';
+import { sendNotification } from '@/backend/utils/notification';
 
 export const baseEvent = 'github-webhook';
 const composeFilename = process.env.COMPOSE_FILENAME || 'compose.yml';
@@ -19,6 +20,7 @@ export type GitHubWebhookEvent = {
   action: string;
   merged: string;
   title: string;
+  body: string;
   sender: string;
 };
 
@@ -89,7 +91,7 @@ const pullRestartUpdatedContainers = async (folder: string, repoConfig: Host, lo
 };
 
 export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, hostConfig: Host) => {
-  const { action, merged, title, number, sender } = webhookEvent;
+  const { action, merged, title, number, sender, body } = webhookEvent;
 
   // Extract folder from title (like sed -E 's/.* in (.*)/\1/')
   const folderMatch = title.match(/ in (.*)/);
@@ -104,6 +106,11 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, hos
     folder,
     title,
   };
+
+  logger.info(
+    jobData,
+    `Received GitHub webhook: action='${action}' merged='${merged}' title='${title}'`
+  );
 
   let runningJobs = await jobDb.getRunningJobs(hostConfig.id);
   if (runningJobs.length > 0) {
@@ -131,9 +138,16 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, hos
   let containersCleanupLogs;
   let jobId: number;
   if (!hostConfig.workingFolder || action !== 'closed' || !title) {
-    if (sender === 'dependabot[bot]') {
+    if (sender === 'dependabot[bot]' && action === 'opened') {
       jobId = await jobDb.upsert({ ...jobData, status: JobStatus.open });
+
+      sendNotification({
+        hostName: hostConfig.name,
+        subject: `${title} on ${hostConfig.name}`,
+        message: body,
+      });
     }
+
     logger.info(
       `No action required for workingFolder: '${hostConfig.workingFolder}' action: '${action}' merged: '${merged}' title: '${title}'`
     );
