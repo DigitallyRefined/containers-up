@@ -17,7 +17,7 @@ It provides a unified interface for managing containerized applications, and aut
   - 🖼️ Container image management
   - 🗑️ Cleanup of unused images
 - 🔄 **Automated Updates**: Container updates via GitHub webhooks (via Dependabot pull requests) & image tag updates via a schedule
-- 📩 **Notifications**: When a new Dependabot PR is created or a new container image is available
+- 📩 **Notifications**: When a new Dependabot PR is created or a new container image is available (via [Apprise](https://github.com/caronc/apprise#supported-notifications))
 - 🌐 **Service Discovery**: Display web app icons and URLs (via existing Traefik labels)
 - 🧹 **Resource Management**: Cleanup of older images
 - 🏷️ **Tag Lookup**: Updates for images using SHA hashes can be reverse looked up to find their associated tags
@@ -38,7 +38,7 @@ The app can be started using the following `compose.yml`:
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:0.0.8
+    image: ghcr.io/digitallyrefined/containers-up:0.0.9
     restart: always
     ports:
       - 3000:3000
@@ -62,7 +62,7 @@ Optional system wide configuration can be changed by copying `.env.default` to `
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:0.0.8
+    image: ghcr.io/digitallyrefined/containers-up:0.0.9
     restart: always
     volumes:
       - ./containers-up/storage:/storage
