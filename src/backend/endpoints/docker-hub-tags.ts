@@ -1,4 +1,5 @@
 import { imageHash } from '@/backend/db/image-hash';
+import { mainLogger } from '@/backend/utils/logger';
 
 const DOCKER_USERNAME = process.env.DOCKER_USERNAME;
 const DOCKER_TOKEN = process.env.DOCKER_TOKEN;
@@ -89,7 +90,7 @@ const findTagsByDigest = async (namespace: string, repository: string, targetSha
       return foundTags;
     }
   } catch (error) {
-    console.error('Error:', error.message);
+    mainLogger.error(error);
   }
 };
 

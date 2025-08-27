@@ -7,7 +7,7 @@ import { job as jobDb } from '@/backend/db/job';
 import { JobStatus } from '@/backend/db/schema/job';
 import { batchPromises } from '@/backend/utils';
 import { getImageDigestFromRef } from '@/backend/utils/docker/remote-image-digest';
-import { sendNotification } from '../utils/notification';
+import { sendNotification } from '@/backend/utils/notification';
 
 const event = 'update-check';
 const logger = mainLogger.child({ event });

@@ -1,8 +1,9 @@
-import { getDb, upsert } from '@/backend/db/connection';
-import { Setting, settingCreateTableSql } from '@/backend/db/schema/setting';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { readFile } from 'fs/promises';
+import { getDb, upsert } from '@/backend/db/connection';
+import { Setting, settingCreateTableSql } from '@/backend/db/schema/setting';
+import { mainLogger } from '@/backend/utils/logger';
 
 const migrations = [
   {
@@ -29,15 +30,15 @@ export const checkIfDatabaseNeedsUpdating = async () => {
   const __dirname = dirname(__filename);
 
   if (dbVersion !== version) {
-    console.log(
+    mainLogger.info(
       `Database version (${dbVersion}) is different from app version (${version}), running migrations...`
     );
     const migrationPath = join(__dirname, file);
     const migrationSql = await readFile(migrationPath, 'utf-8');
     await db.exec(migrationSql);
-    console.log('Migrated to version', version);
+    mainLogger.info(`Migrated to version ${version}`);
 
-    console.log('Database migrations completed successfully');
+    mainLogger.info('Database migrations completed successfully');
 
     return upsert({
       table: 'setting',
@@ -46,5 +47,5 @@ export const checkIfDatabaseNeedsUpdating = async () => {
     });
   }
 
-  console.log('Database is up to date', version);
+  mainLogger.info(`Database is up to date ${version}`);
 };

@@ -1,5 +1,5 @@
 import { getDb } from '@/backend/db/connection';
-import { ImageHash, imageHashCreateTableSql } from './schema/image-hash';
+import { ImageHash, imageHashCreateTableSql } from '@/backend/db/schema/image-hash';
 
 export const imageHash = {
   create: async ({ image, tags }: ImageHash) => {

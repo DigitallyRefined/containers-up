@@ -163,7 +163,7 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, hos
   } else if (action === 'closed') {
     jobId = await jobDb.upsert({ ...jobData, status: JobStatus.closed });
   } else {
-    console.error('Unknown webhook event', jobData, { action, merged });
+    logger.error({ action, merged, jobData }, 'Unknown webhook event');
     return;
   }
 

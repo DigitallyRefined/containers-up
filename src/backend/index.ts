@@ -17,7 +17,7 @@ import { findComposeFiles } from '@/backend/endpoints/compose';
 import { findTagsMatchingImageDigest } from '@/backend/endpoints/docker-hub-tags';
 import { checkHostForImageUpdates } from '@/backend/endpoints/update-check';
 import { JobStatus } from '@/backend/db/schema/job';
-import { sendNotification } from './utils/notification';
+import { sendNotification } from '@/backend/utils/notification';
 
 const dockerExec = createDockerExec(mainLogger);
 

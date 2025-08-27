@@ -1,9 +1,41 @@
-FROM oven/bun:1.2.20-alpine AS base
+# @TODO Remove this stage bun to upgrades to Alpine Linux 3.22
+FROM alpine:3.22 AS bun-alpine
+
+# Disable the runtime transpiler cache by default inside Docker containers.
+# On ephemeral containers, the cache is not useful
+ARG BUN_RUNTIME_TRANSPILER_CACHE_PATH=0
+ENV BUN_RUNTIME_TRANSPILER_CACHE_PATH=${BUN_RUNTIME_TRANSPILER_CACHE_PATH}
+
+# Ensure `bun install -g` works
+ARG BUN_INSTALL_BIN=/usr/local/bin
+ENV BUN_INSTALL_BIN=${BUN_INSTALL_BIN}
+
+COPY --from=oven/bun:1.2.21-alpine /usr/local/bin/bun /usr/local/bin/
+COPY --from=oven/bun:1.2.21-alpine /usr/local/bin/docker-entrypoint.sh /usr/local/bin/
+RUN mkdir -p /usr/local/bun-node-fallback-bin && ln -s /usr/local/bin/bun /usr/local/bun-node-fallback-bin/node
+ENV PATH "${PATH}:/usr/local/bun-node-fallback-bin"
+
+# Temporarily use the `build`-stage /tmp folder to access the glibc APKs:
+RUN --mount=type=bind,from=oven/bun:1.2.21-alpine,source=/tmp,target=/tmp \
+    addgroup -g 1000 bun \
+    && adduser -u 1000 -G bun -s /bin/sh -D bun \
+    && ln -s /usr/local/bin/bun /usr/local/bin/bunx \
+    && apk add libgcc libstdc++ \
+    && which bun \
+    && which bunx \
+    && bun --version
+
+WORKDIR /home/bun/app
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["/usr/local/bin/bun"]
+
+FROM bun-alpine AS base
 
 RUN apk add --no-cache \
     openssh-client \
     docker-cli \
-    docker-cli-compose
+    docker-cli-compose \
+    apprise
 
 FROM base AS builder
 
