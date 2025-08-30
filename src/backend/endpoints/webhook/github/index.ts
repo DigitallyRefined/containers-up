@@ -22,6 +22,7 @@ export type GitHubWebhookEvent = {
   title: string;
   body: string;
   sender: string;
+  url: string;
 };
 
 const fileExcluded = (file: string, excludeFolders: string | null): boolean => {
@@ -144,7 +145,7 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, hos
       sendNotification({
         hostName: hostConfig.name,
         subject: `${title} on ${hostConfig.name}`,
-        message: body,
+        message: `${body}\n\n${webhookEvent.url}`,
       });
     }
 

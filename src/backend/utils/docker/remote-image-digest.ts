@@ -12,11 +12,13 @@ interface RegistryOptions {
 /**
  * Parse Docker image reference string into registry host, repository, image, tag, and full repo string.
  */
-function parseImageReference(ref: string): {
+const parseImageReference = (
+  ref: string
+): {
   registryHost: string;
   repository: string;
   tag: string;
-} {
+} => {
   let tag = 'latest';
   let name = ref;
 
@@ -65,12 +67,12 @@ function parseImageReference(ref: string): {
   const fullRepo = repository ? `${repository}/${image}` : image;
 
   return { registryHost, repository: fullRepo, tag };
-}
+};
 
 /**
  * Get authentication header string for the registry.
  */
-async function getAuthHeader(options: RegistryOptions): Promise<string | null> {
+const getAuthHeader = async (options: RegistryOptions): Promise<string | null> => {
   const { registry, registryHost, repository, username, token } = options;
 
   const encodedAuth =
@@ -101,12 +103,12 @@ async function getAuthHeader(options: RegistryOptions): Promise<string | null> {
   }
 
   return `Bearer ${data.token}`;
-}
+};
 
 /**
  * Fetch the image manifest digest with a HEAD request.
  */
-async function getImageDigest(options: RegistryOptions): Promise<string | null> {
+const getImageDigest = async (options: RegistryOptions): Promise<string | null> => {
   const { registry, registryHost, repository, tag } = options;
 
   const authHeader = await getAuthHeader(options);
@@ -144,13 +146,13 @@ async function getImageDigest(options: RegistryOptions): Promise<string | null> 
   } catch (err) {
     throw new Error('Error fetching manifest digest', { cause: err });
   }
-}
+};
 
 /**
  * Main function: parse image ref, determine registry, pick token from env,
  * and fetch digest.
  */
-export async function getImageDigestFromRef(imageRef: string): Promise<string | null> {
+export const getImageDigestFromRef = async (imageRef: string): Promise<string | null> => {
   const { registryHost, repository, tag } = parseImageReference(imageRef);
 
   const registry: Registry =
@@ -185,4 +187,4 @@ export async function getImageDigestFromRef(imageRef: string): Promise<string | 
   };
 
   return getImageDigest(options);
-}
+};

@@ -45,7 +45,10 @@ const getAuthorizedHost = async (
   return { selectedHost };
 };
 
-async function resolveAndValidateComposeFile(selectedHost: Host, data: { composeFile?: string }) {
+const resolveAndValidateComposeFile = async (
+  selectedHost: Host,
+  data: { composeFile?: string }
+) => {
   if (!data.composeFile) throw new Error('composeFile is required');
   const composeFile = data.composeFile.startsWith('/')
     ? data.composeFile
@@ -56,7 +59,7 @@ async function resolveAndValidateComposeFile(selectedHost: Host, data: { compose
     };
   }
   return { composeFile };
-}
+};
 
 const serverOptions: Partial<Serve> = {
   idleTimeout: 30,
@@ -452,6 +455,7 @@ export const startServer = () => {
             merged: webhookData.pull_request?.merged,
             title: webhookData.pull_request?.title,
             body: webhookData.pull_request?.body,
+            url: webhookData.pull_request?.html_url,
           };
 
           const foundHosts = await host.getAllByRepo(webhookEvent.repo);
