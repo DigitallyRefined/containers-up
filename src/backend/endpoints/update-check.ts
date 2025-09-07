@@ -6,7 +6,7 @@ import { log as logDb } from '@/backend/db/log';
 import { job as jobDb } from '@/backend/db/job';
 import { JobStatus } from '@/backend/db/schema/job';
 import { batchPromises } from '@/backend/utils';
-import { getImageDigestFromRef } from '@/backend/utils/docker/remote-image-digest';
+import { getRemoteConfigDigestFromRef } from '@/backend/utils/docker/remote-image-digest';
 import { sendNotification } from '@/backend/utils/notification';
 
 const event = 'update-check';
@@ -33,7 +33,7 @@ const getImagesToCheck = async (
     const containers = [];
     for (const service of services) {
       if (checkService && checkService !== service.Config.Image) continue;
-      const digest = await dockerExec.getLocalImageDigest(selectedHostname, service.Image);
+      const digest = service.Image;
       if (digest) {
         imagesToCheck.set(digest, service.Config.Image);
       } else {
@@ -69,42 +69,39 @@ export const checkHostForImageUpdates = async (
     checkService
   );
 
+  const { os, arch } = await dockerExec.getServerPlatform(selectedHost.name);
+
   const digests = await batchPromises(
     Array.from(imagesToCheck),
     2,
     async ([localDigest, imageName]) => {
       let remoteDigest = localDigest;
       try {
-        remoteDigest = await getImageDigestFromRef(imageName);
+        remoteDigest = await getRemoteConfigDigestFromRef(imageName, os, arch);
       } catch (err) {
-        try {
-          logger.warn(
-            err,
-            `Getting remote digest for "${imageName}" via API failed. Trying \`docker buildx\`...`
-          );
-          remoteDigest = await dockerExec.getRemoteImageDigest(selectedHost, imageName);
-          logger.info(
-            `Successfully retrieved remote digest for "${imageName}" via \`docker buildx\``
-          );
-        } catch (err) {
-          logger.error(
-            err,
-            `Failed to retrieve remote digest and check for image tag updates for "${imageName}" via \`docker buildx\`. Make sure DOCKER/GHCR_USERNAME/TOKEN are set, see \`.env.default\``
-          );
-        }
+        logger.error(
+          err,
+          `Failed to retrieve remote digest and check for image tag updates for "${imageName}". Make sure DOCKER/GHCR_USERNAME/TOKEN are set, see \`.env.default\``
+        );
       }
+
       return { imageName, localDigest, remoteDigest };
     }
   );
 
   const imagesToUpdate = [];
-  digests.forEach(({ imageName, localDigest, remoteDigest }) => {
+  digests.forEach(async ({ imageName, localDigest, remoteDigest }) => {
     if (!localDigest || !remoteDigest) {
       logger.error(`Could not retrieve both local and remote digests for "${imageName}"`);
       return;
     }
 
-    if (!localDigest.endsWith(remoteDigest)) {
+    logger.debug(
+      { localDigest, remoteDigest },
+      `Checking if update is available for "${imageName}" (config digest)`
+    );
+
+    if (localDigest !== remoteDigest) {
       const updateData = {
         imageName,
         localDigest,

@@ -3,16 +3,22 @@ import type { Logger } from 'pino';
 import { createExec } from '@/backend/utils/exec';
 import type { Host } from '@/backend/db/schema/host';
 
-const parseDockerStdout = (stdout: string) =>
-  stdout
-    .split('\n')
-    .filter(Boolean)
-    .map((line) => JSON.parse(line));
-
 export const getDockerCmd = (context: string) => `docker --context "${context}"`;
 
 export const createDockerExec = (logger: Logger) => {
   const exec = createExec(logger);
+
+  const parseDockerStdout = (stdout: string) => {
+    try {
+      return stdout
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => JSON.parse(line));
+    } catch (err) {
+      logger.error({ stdout, err }, 'Failed to parse docker stdout');
+      throw err;
+    }
+  };
 
   const runParsedDockerCommand = async (command: string) => {
     const { stdout } = await exec.run(command);
@@ -99,16 +105,96 @@ export const createDockerExec = (logger: Logger) => {
         `${getDockerCmd(context)} image inspect --format="{{index .RepoDigests 0}}" "${image}"`,
         false
       );
-      return code === 0 ? stdout.trim() : null;
+
+      if (code !== 0) {
+        logger.error({ code, stdout }, `Failed to get local image digest for "${image}"`);
+        return '';
+      }
+
+      const digest = stdout.trim();
+
+      logger.debug({ digest }, `Local image digest for "${image}"`);
+
+      // Extract manifest digest from local repository digest
+      // Local digest format: registry.com/repo@sha256:abc123...
+      // Remote digest format: sha256:abc123...
+      return digest.includes('@') ? digest.split('@')[1] : digest;
+    },
+    getLocalImageConfigDigest: async (context: string, image: string) => {
+      // Prefer .Id which equals the digest of the image's config JSON (image ID)
+      let result = await exec.run(
+        `${getDockerCmd(context)} image inspect --format='{{.Id}}' "${image}"`,
+        false
+      );
+
+      if (result.code !== 0 || !result.stdout.trim()) {
+        // Fallback to .Config.Image if available on this docker version
+        result = await exec.run(
+          `${getDockerCmd(context)} image inspect --format='{{.Config.Image}}' "${image}"`,
+          false
+        );
+      }
+
+      if (result.code !== 0 || !result.stdout.trim()) {
+        logger.error(
+          { code: result.code, stdout: result.stdout },
+          `Failed to get local image config digest for "${image}"`
+        );
+        return '';
+      }
+
+      const configDigest = result.stdout.trim();
+      logger.debug({ configDigest }, `Local image config digest for "${image}"`);
+      return configDigest;
+    },
+    getServerPlatform: async (context: string) => {
+      const { stdout, code } = await exec.run(
+        `${getDockerCmd(context)} version --format '{{json .Server}}'`,
+        false
+      );
+
+      if (code !== 0) {
+        logger.warn(
+          { code, stdout },
+          `Failed to get Docker server platform for context "${context}"`
+        );
+        return { os: 'linux', arch: 'amd64' };
+      }
+
+      try {
+        const server = JSON.parse(stdout.trim());
+        const os = server?.Os || server?.os;
+        const arch = server?.Arch || server?.arch;
+        if (!os || !arch) {
+          logger.warn({ server }, `Unexpected Docker server JSON for platform`);
+          return { os: 'linux', arch: 'amd64' };
+        }
+        return { os, arch };
+      } catch (err) {
+        logger.warn({ err, stdout }, `Failed to parse Docker server JSON`);
+        return { os: 'linux', arch: 'amd64' };
+      }
     },
     getRemoteImageDigest: async (selectedHost: Host, image: string) => {
-      const { stdout } = await exec.sshRun(
+      const { stdout, code } = await exec.sshRun(
         selectedHost.name,
         selectedHost.sshHost,
         `docker buildx imagetools inspect --format "{{json .Manifest.Digest}}" "${image}"`
       );
 
-      return parseDockerStdout(stdout)[0];
+      if (code !== 0) {
+        logger.error(
+          { code, stdout },
+          `Failed to get remote image digest for "${image}" on "${selectedHost.name}"`
+        );
+        return '';
+      }
+
+      const digest = parseDockerStdout(stdout)[0];
+
+      logger.debug({ digest }, `Remote image digest for "${image}"`);
+
+      return digest;
     },
   };
 };
