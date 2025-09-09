@@ -116,7 +116,7 @@ export const getContainers = async (selectedHost: Host, sort: SortOptions = 'upd
         composeFileFolder.pop();
 
         const folder = path.join('/', composeFileFolder.join('/'));
-        const jobs = await jobDb.getJobsWithLogs(selectedHost.id, folder !== '/' ? folder : '');
+        const jobs = await jobDb.getJobsWithLogs(selectedHost.id, folder);
         return [
           composeFile,
           {

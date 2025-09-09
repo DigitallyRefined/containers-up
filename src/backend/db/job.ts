@@ -16,7 +16,14 @@ export const job = {
 
     db.query(jobCreateTableSql).run();
 
-    const data = { hostId, repoPr, folder, title, status, updated: getDatetime() };
+    const data = {
+      hostId,
+      repoPr,
+      folder: folder !== '/' ? folder : '',
+      title,
+      status,
+      updated: getDatetime(),
+    };
     await upsert({ table: 'job', data, conflictKey: 'title' });
 
     const row = db.query('SELECT id FROM job WHERE title = $title').as(Job).get({ title });
@@ -39,7 +46,7 @@ export const job = {
         } ORDER BY updated DESC LIMIT 6`
       )
       .as(JobWithLogs)
-      .all({ hostId, ...(hasFolder ? { folder } : {}) });
+      .all({ hostId, ...(hasFolder ? { folder: folder !== '/' ? folder : '' } : {}) });
 
     return addLogsToJobs(jobs);
   },
