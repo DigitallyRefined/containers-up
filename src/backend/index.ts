@@ -251,7 +251,7 @@ export const startServer = () => {
             return new Response('Invalid container ID or name', { status: 400 });
           }
 
-          return dockerExec.restartOrStopContainer(selectedHost.name, containerId, 'remove');
+          return dockerExec.restartOrStopContainer(selectedHost.name, containerId, 'rm');
         },
       },
 

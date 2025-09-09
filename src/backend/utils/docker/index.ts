@@ -67,7 +67,7 @@ export const createDockerExec = (logger: Logger) => {
     restartOrStopContainer: (
       context: string,
       containerId: string,
-      action: 'restart' | 'stop' | 'start' | 'remove'
+      action: 'restart' | 'stop' | 'start' | 'rm'
     ) => runStreamedCommand(`${getDockerCmd(context)} ${action} "${containerId}"`),
     removeImage: (context: string, imageId: string) =>
       runStreamedCommand(`${getDockerCmd(context)} rmi "${imageId}"`),
