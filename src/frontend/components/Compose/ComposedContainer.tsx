@@ -11,6 +11,7 @@ import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 import { getContainerStatusColor } from '@/frontend/lib/utils';
 import { Tooltip } from '@/frontend/components/ui/Tooltip';
 import type { Host } from '@/backend/db/schema/host';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '../ui/Accordion';
 
 interface ComposedContainerProps {
   cardTitle: string;
@@ -18,6 +19,8 @@ interface ComposedContainerProps {
   jobs?: JobWithLogs[];
   host: Host;
   hideViewDependabot?: boolean;
+  openAccordionItems?: string[];
+  onAccordionChange?: (value: string[]) => void;
 }
 
 export const ComposedContainer = ({
@@ -26,6 +29,8 @@ export const ComposedContainer = ({
   jobs,
   host,
   hideViewDependabot = false,
+  openAccordionItems = [],
+  onAccordionChange,
 }: ComposedContainerProps) => {
   const hostName = host.name;
   return (
@@ -154,14 +159,18 @@ export const ComposedContainer = ({
         </div>
 
         {jobs && jobs.length > 0 && (
-          <div>
-            <h4 className='text-lg font-medium mb-3 text-left'>Updates</h4>
-            <div className='grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3'>
-              {jobs.map((job) => (
-                <Jobs key={job.id} job={job} hostName={hostName} composeFile={cardTitle} />
-              ))}
-            </div>
-          </div>
+          <Accordion type='multiple' value={openAccordionItems} onValueChange={onAccordionChange}>
+            <AccordionItem value='updates'>
+              <AccordionTrigger className='text-lg font-medium text-left'>Updates</AccordionTrigger>
+              <AccordionContent>
+                <div className='grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3'>
+                  {jobs.map((job) => (
+                    <Jobs key={job.id} job={job} hostName={hostName} composeFile={cardTitle} />
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         )}
       </CardContent>
     </Card>

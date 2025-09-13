@@ -82,7 +82,13 @@ export const ContainerLayout = ({
   const [openAccordionItems, setOpenAccordionItems] = useLocalStorage<string[]>(
     'openAccordionItems',
     'global',
-    ['previousRunningComposedFiles', 'otherComposedContainers', 'separateContainers'],
+    [
+      'updates',
+      'previousRunningComposedFiles',
+      'otherComposedContainers',
+      'separateContainers',
+      'unusedDockerImages',
+    ],
     'replace'
   );
 
@@ -175,6 +181,8 @@ export const ContainerLayout = ({
               services={containerData.services}
               jobs={containerData.jobs}
               host={selectedHost}
+              openAccordionItems={openAccordionItems}
+              onAccordionChange={handleAccordionChange}
             />
           ))}
         </div>
@@ -210,6 +218,8 @@ export const ContainerLayout = ({
                     services={services}
                     host={selectedHost}
                     hideViewDependabot
+                    openAccordionItems={openAccordionItems}
+                    onAccordionChange={handleAccordionChange}
                   />
                 ))}
               </div>
