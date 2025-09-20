@@ -12,7 +12,7 @@
     "update-dependencies": "bunx npm-check-updates --target minor --upgrade && bun i && bunx npm-check-updates"
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.2.1",
+    "@hookform/resolvers": "^5.2.2",
     "@js-temporal/polyfill": "^0.5.1",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-dialog": "^1.1.15",
