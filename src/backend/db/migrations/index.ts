@@ -10,6 +10,10 @@ const migrations = [
     version: 1,
     file: '0.0.7.sql',
   },
+  {
+    version: 2,
+    file: '0.0.15.sql',
+  },
 ];
 
 export const checkIfDatabaseNeedsUpdating = async () => {

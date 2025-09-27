@@ -3,7 +3,7 @@ import { LabeledInput } from '@/frontend/components/ui/Input';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { hostSchema } from '@/backend/db/schema/host';
+import { hostSchema, hostEditSchema } from '@/backend/db/schema/host';
 import { useEffect, useRef } from 'react';
 import {
   Dialog,
@@ -27,6 +27,7 @@ export const HostForm = ({
   onDeleteConfirm?: (confirm: { open: boolean; name: string }) => void;
 }) => {
   type HostForm = z.infer<typeof hostSchema>;
+  type HostEditForm = z.infer<typeof hostEditSchema>;
 
   function normalizeNulls<T extends object>(obj?: T): T {
     if (!obj) return {} as T;
@@ -37,7 +38,7 @@ export const HostForm = ({
 
   const lastSuccess = useRef(false);
 
-  const onSubmit = async (data: HostForm) => {
+  const onSubmit = async (data: HostForm | HostEditForm) => {
     try {
       const res = await fetch(`/api/host/${encodeURIComponent(data.name)}`, {
         method: initialValues ? 'PUT' : 'POST',
@@ -80,8 +81,8 @@ export const HostForm = ({
     formState: { errors, isSubmitting },
     reset,
     watch,
-  } = useForm<HostForm>({
-    resolver: zodResolver(hostSchema),
+  } = useForm<HostForm | HostEditForm>({
+    resolver: zodResolver(initialValues ? hostEditSchema : hostSchema),
     defaultValues: normalizedInitialValues,
   });
 
@@ -120,7 +121,6 @@ export const HostForm = ({
         label='SSH Private Key'
         id='sshKey'
         type='textarea'
-        required
         placeholder='Paste your SSH private key here'
         error={errors.sshKey?.message}
         disabled={isSubmitting}
@@ -184,7 +184,7 @@ export const HostForm = ({
         }
         id='webhookSecret'
         type='text'
-        placeholder='Copy from GitHub Webhook settings page'
+        placeholder='Shared GitHub webhook secret from settings page'
         error={errors.webhookSecret?.message}
         disabled={isSubmitting}
         {...register('webhookSecret')}
@@ -208,6 +208,15 @@ export const HostForm = ({
         placeholder='e.g. 0 1 * * 6 (every Saturday at 1am)'
         disabled={isSubmitting}
         {...register('cron')}
+      />
+      <LabeledInput
+        label='Sort Order'
+        id='sortOrder'
+        type='number'
+        placeholder='e.g. 1 (lower numbers appear first)'
+        error={errors.sortOrder?.message}
+        disabled={isSubmitting}
+        {...register('sortOrder', { valueAsNumber: true })}
       />
       <Button type='submit' className='w-full font-semibold mt-4' disabled={isSubmitting}>
         <Save className='size-4' />

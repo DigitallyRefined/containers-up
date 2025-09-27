@@ -29,7 +29,7 @@ export const ContainerImage = ({ image, hostName }: ContainerImageProps) => {
         <h5 className='font-semibold text-sm mb-2 break-all'>
           {image.Repository}:{image.Tag}
         </h5>
-        <p className='text-xs'>ID: {imageId}</p>
+        <p className='text-xs'>ID: <code>{imageId}</code></p>
         <p className='text-xs'>Size: {image.Size} MB</p>
         <p className='text-xs'>Created: {getRelativeTime(image.CreatedAt)}</p>
       </CardContent>

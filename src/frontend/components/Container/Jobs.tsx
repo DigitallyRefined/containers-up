@@ -118,6 +118,13 @@ export const Jobs = ({
     imageSha = `${shaUpdate[1]}@sha256:${shaUpdate[2]}`;
   }
 
+  const renderTitleWithCode = (title: string) => {
+    const parts = title.split(/`([^`]+)`/);
+    return parts.map((part, index) => 
+      index % 2 === 1 ? <code key={index}>{part}</code> : part
+    );
+  };
+
   return (
     <Card key={job.id}>
       <CardContent className='p-2 sm:p-3 md:p-4 relative'>
@@ -132,7 +139,11 @@ export const Jobs = ({
         </span>
         <div className='my-2'>
           <h5 className='font-medium text-sm text-center w-full break-all'>
-            {prUrl ? <Link href={prUrl}>{job.title}</Link> : job.title}
+            {prUrl ? (
+              <Link href={prUrl}>{renderTitleWithCode(job.title)}</Link>
+            ) : (
+              renderTitleWithCode(job.title)
+            )}
           </h5>
         </div>
         {job.repoPr && (

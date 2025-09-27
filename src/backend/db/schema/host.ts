@@ -10,6 +10,7 @@ export class Host {
   workingFolder?: string;
   excludeFolders?: string;
   cron?: string;
+  sortOrder?: number;
   created?: string;
 }
 
@@ -23,6 +24,7 @@ export const hostCreateTableSql = `
     workingFolder TEXT,
     excludeFolders TEXT,
     cron TEXT,
+    sortOrder INTEGER,
     created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   )
 `;
@@ -56,4 +58,22 @@ export const hostSchema = z.object({
   workingFolder: z.string().optional(),
   excludeFolders: z.string().optional(),
   cron: z.string().optional(),
+  sortOrder: z.number().optional(),
+});
+
+export const hostEditSchema = hostSchema.extend({
+  sshKey: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val || val.trim() === '') return true; // Allow empty for editing
+        return /^-----BEGIN [A-Z ]+ PRIVATE KEY-----[\s\S]+-----END [A-Z ]+ PRIVATE KEY-----\s*$/m.test(
+          val.trim()
+        );
+      },
+      {
+        message: 'Invalid SSH private key format',
+      }
+    ),
 });

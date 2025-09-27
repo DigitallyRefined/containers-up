@@ -308,7 +308,7 @@ export const startServer = () => {
           );
           if (composeError) return composeError;
 
-          if (data.jobTitle && data.jobFolder) {
+          if (data.jobTitle) {
             jobDb.upsert({
               hostId: selectedHost.id,
               folder: data.jobFolder,
@@ -438,13 +438,26 @@ export const startServer = () => {
             return new Response('Unauthorized (bad signature)', { status: 401 });
           }
 
-          const webhookData = JSON.parse(new TextDecoder().decode(bodyBuffer));
+          const json = new TextDecoder().decode(bodyBuffer);
+          let webhookData: Record<string, any> | undefined;
+          if (!json) {
+            return Response.json({ message: 'JSON payload is empty' }, { status: 400 });
+          }
+          try {
+            webhookData = JSON.parse(json);
+          } catch (error) {
+            if (json.includes('Speak+like+a+human')) {
+              mainLogger.info(`GitHub webhook ping received for host: ${selectedHost.name}`);
+              return Response.json({ message: 'webhook ping received' });
+            }
+            return Response.json({ message: 'Invalid JSON payload', json }, { status: 400 });
+          }
 
           const isDockerComposePr = webhookData.pull_request?.labels?.some(
             (label: { name: string }) => label.name === 'docker_compose'
           );
           if (!isDockerComposePr) {
-            return Response.json({ message: 'Not a Docker Compose PR' });
+            return Response.json({ message: 'Not a Docker Compose PR' }, { status: 400 });
           }
 
           const webhookEvent: GitHubWebhookEvent = {

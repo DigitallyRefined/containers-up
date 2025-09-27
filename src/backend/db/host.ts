@@ -1,17 +1,19 @@
 import { getDb, upsert } from '@/backend/db/connection';
 import { Host, hostCreateTableSql } from '@/backend/db/schema/host';
 
+const defaultSortOrder = 'ORDER BY sortOrder ASC NULLS LAST, name ASC';
+
 export const host = {
   get: async (id: number) => {
     const db = await getDb();
 
-    return db.query(`SELECT * FROM host WHERE id=$id`).as(Host).get({ id });
+    return db.query(`SELECT * FROM host WHERE id=$id ${defaultSortOrder}`).as(Host).get({ id });
   },
   getAll: async () => {
     const db = await getDb();
 
     try {
-      return db.query(`SELECT * FROM host`).as(Host).all();
+      return db.query(`SELECT * FROM host ${defaultSortOrder}`).as(Host).all();
     } catch (error) {
       return [];
     }
@@ -21,12 +23,18 @@ export const host = {
 
     db.query(hostCreateTableSql).run();
 
-    return db.query(`SELECT * FROM host WHERE name=$name`).as(Host).get({ name });
+    return db
+      .query(`SELECT * FROM host WHERE name=$name ${defaultSortOrder}`)
+      .as(Host)
+      .get({ name });
   },
   getAllByRepo: async (repo: string) => {
     const db = await getDb();
 
-    return db.query(`SELECT * FROM host WHERE repo=$repo`).as(Host).all({ repo });
+    return db
+      .query(`SELECT * FROM host WHERE repo=$repo ${defaultSortOrder}`)
+      .as(Host)
+      .all({ repo });
   },
   upsert: async ({
     id,
@@ -37,6 +45,7 @@ export const host = {
     workingFolder,
     excludeFolders,
     cron,
+    sortOrder,
   }: Host) => {
     const data = {
       id,
@@ -47,7 +56,12 @@ export const host = {
       workingFolder,
       excludeFolders: excludeFolders || '',
       cron,
+      sortOrder,
     };
+
+    if (!webhookSecret) {
+      delete data.webhookSecret;
+    }
 
     return upsert({ table: 'host', data, conflictKey: 'id' });
   },
