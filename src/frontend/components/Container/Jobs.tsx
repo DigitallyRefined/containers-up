@@ -8,6 +8,7 @@ import {
   Check,
   CloudDownload,
 } from 'lucide-react';
+import { useRestartJob, useUpdateJob } from '@/frontend/hooks/useApi';
 
 import { Card, CardContent } from '@/frontend/components/ui/Card';
 import {
@@ -63,13 +64,14 @@ export const Jobs = ({
   composeFile: string;
 }) => {
   const [openJobId, setOpenJobId] = useState<number | null>(null);
-  const [restarting, setRestarting] = useState(false);
+  const restartJobMutation = useRestartJob();
+  const updateJobMutation = useUpdateJob();
 
   useEffect(() => {
     if (job.title.includes('containers-up') && job.status === JobStatus.running) {
-      fetch(`/api/job/${job.id}`, { method: 'PATCH' });
+      updateJobMutation.mutate(job.id);
     }
-  }, [job.id, job.status, job.title]);
+  }, [job.id, job.status, job.title, updateJobMutation]);
 
   const getStatusColor = (status: JobStatus) => {
     switch (status) {
@@ -88,21 +90,15 @@ export const Jobs = ({
     }
   };
 
-  const handleRestart = async () => {
-    setRestarting(true);
-    try {
-      const res = await fetch(`/api/job/${job.id}`, { method: 'POST' });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        (window as any).showToast(data.error || 'Failed to restart job');
-      } else {
+  const handleRestart = () => {
+    restartJobMutation.mutate(job.id, {
+      onSuccess: () => {
         (window as any).showToast('Job restart requested!');
-      }
-    } catch (err) {
-      (window as any).showToast('Error: ' + (err instanceof Error ? err.message : 'Unknown error'));
-    } finally {
-      setRestarting(false);
-    }
+      },
+      onError: (error) => {
+        (window as any).showToast(error.message || 'Failed to restart job');
+      },
+    });
   };
 
   let prUrl = '';
@@ -120,9 +116,7 @@ export const Jobs = ({
 
   const renderTitleWithCode = (title: string) => {
     const parts = title.split(/`([^`]+)`/);
-    return parts.map((part, index) => 
-      index % 2 === 1 ? <code key={index}>{part}</code> : part
-    );
+    return parts.map((part, index) => (index % 2 === 1 ? <code key={index}>{part}</code> : part));
   };
 
   return (
@@ -224,7 +218,7 @@ export const Jobs = ({
                       }
                     : handleRestart
                 }
-                disabled={restarting}
+                disabled={restartJobMutation.isPending}
                 aria-label='Restart Job'
               >
                 <RotateCcw className='size-4' />

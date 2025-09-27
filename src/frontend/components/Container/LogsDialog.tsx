@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 import {
   Dialog,
@@ -11,6 +11,7 @@ import { Button } from '@/frontend/components/ui/Button';
 import { Logs } from '@/frontend/components/Container/Logs';
 import { LogsIcon } from 'lucide-react';
 import { Tooltip } from '@/frontend/components/ui/Tooltip';
+import { useLogs } from '@/frontend/hooks/useApi';
 
 interface LogsDialogProps {
   selectedHost: string | undefined;
@@ -18,21 +19,9 @@ interface LogsDialogProps {
 
 export const LogsDialog: React.FC<LogsDialogProps> = ({ selectedHost }) => {
   const [open, setOpen] = useState(false);
-  const [logs, setLogs] = useState<any[] | 'error' | 'loading'>();
 
-  useEffect(() => {
-    if (open && selectedHost) {
-      setLogs('loading');
-      fetch(`/api/host/${selectedHost}/logs`)
-        .then((res) => res.json())
-        .then((data) => {
-          setLogs(data);
-        })
-        .catch(() => {
-          setLogs('error');
-        });
-    }
-  }, [open, selectedHost]);
+  // Use React Query to fetch logs
+  const { data: logs = [], isLoading, error, isError } = useLogs(selectedHost || '', open);
 
   if (!selectedHost) return null;
   return (
@@ -49,9 +38,9 @@ export const LogsDialog: React.FC<LogsDialogProps> = ({ selectedHost }) => {
           <DialogTitle>Logs for {selectedHost}</DialogTitle>
         </DialogHeader>
         <div className='space-y-2 max-h-[80vh] overflow-y-auto'>
-          {logs === 'loading' ? (
+          {isLoading ? (
             <div className='text-muted-foreground'>Loading logs...</div>
-          ) : logs === 'error' ? (
+          ) : isError ? (
             <div className='text-muted-foreground'>Failed to fetch logs.</div>
           ) : Array.isArray(logs) && logs.length === 0 ? (
             <div className='text-muted-foreground'>No logs to display.</div>

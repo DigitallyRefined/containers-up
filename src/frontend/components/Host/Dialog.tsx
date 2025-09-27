@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { hostSchema } from '@/backend/db/schema/host';
 import { useState, useRef } from 'react';
 import { Button } from '@/frontend/components/ui/Button';
+import { useDeleteHost } from '@/frontend/hooks/useApi';
 
 interface HostDialogProps {
   open: boolean;
@@ -36,6 +37,7 @@ export const HostDialog = ({
   });
 
   const lastSuccess = useRef(false);
+  const deleteHostMutation = useDeleteHost();
 
   const handleAlert = (alertData: {
     open: boolean;
@@ -52,34 +54,23 @@ export const HostDialog = ({
     setDeleteConfirm(confirmData);
   };
 
-  const confirmDelete = async () => {
-    try {
-      const res = await fetch(`/api/host/${encodeURIComponent(deleteConfirm.name)}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const result = await res.json();
-      if (!res.ok) {
+  const confirmDelete = () => {
+    deleteHostMutation.mutate(deleteConfirm.name, {
+      onSuccess: () => {
+        setAlert({ open: true, message: 'Host deleted!', type: 'success' });
+        lastSuccess.current = true;
+        setDeleteConfirm({ open: false, name: '' });
+      },
+      onError: (error) => {
         setAlert({
           open: true,
-          message: result.error || 'Failed to delete host',
+          message: error.message || 'Failed to delete host',
           type: 'error',
         });
         lastSuccess.current = false;
-        return;
-      }
-
-      setAlert({ open: true, message: 'Host deleted!', type: 'success' });
-      lastSuccess.current = true;
-    } catch (err) {
-      setAlert({ open: true, message: 'Error deleting host: ' + err, type: 'error' });
-      lastSuccess.current = false;
-    } finally {
-      setDeleteConfirm({ open: false, name: '' });
-    }
+        setDeleteConfirm({ open: false, name: '' });
+      },
+    });
   };
 
   return (
@@ -146,8 +137,12 @@ export const HostDialog = ({
               <Button variant='outline' onClick={() => setDeleteConfirm({ open: false, name: '' })}>
                 Cancel
               </Button>
-              <Button variant='destructive' onClick={confirmDelete}>
-                Delete
+              <Button
+                variant='destructive'
+                onClick={confirmDelete}
+                disabled={deleteHostMutation.isPending}
+              >
+                {deleteHostMutation.isPending ? 'Deleting...' : 'Delete'}
               </Button>
             </div>
           </div>

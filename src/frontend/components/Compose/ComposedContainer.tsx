@@ -1,4 +1,5 @@
 import { RotateCcw, PowerOff, Bot, WifiSync } from 'lucide-react';
+import { useTriggerImageUpdate } from '@/frontend/hooks/useApi';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/Card';
 import type { Service } from '@/frontend/components/Layout';
@@ -33,6 +34,7 @@ export const ComposedContainer = ({
   onAccordionChange,
 }: ComposedContainerProps) => {
   const hostName = host.name;
+  const triggerImageUpdateMutation = useTriggerImageUpdate();
   return (
     <Card key={cardTitle} className='my-2'>
       <CardHeader className='flex flex-row items-center justify-between'>
@@ -100,23 +102,24 @@ export const ComposedContainer = ({
                       <Button
                         variant='outline'
                         size='sm'
-                        onClick={async () => {
-                          const res = await fetch(`/api/host/${hostName}/update`, {
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ checkService: service.Config.Image }),
-                          });
-                          if (!res.ok) {
-                            const data = await res.json().catch(() => ({}));
-                            (window as any).showToast(
-                              data.error || 'Failed to trigger image tag update check'
-                            );
-                          } else {
-                            (window as any).showToast('Checking for image tag updates, see logs');
-                          }
+                        onClick={() => {
+                          triggerImageUpdateMutation.mutate(
+                            { hostName, checkService: service.Config.Image },
+                            {
+                              onSuccess: () => {
+                                (window as any).showToast(
+                                  'Checking for image tag updates, see logs'
+                                );
+                              },
+                              onError: (error) => {
+                                (window as any).showToast(
+                                  error.message || 'Failed to trigger image tag update check'
+                                );
+                              },
+                            }
+                          );
                         }}
+                        disabled={triggerImageUpdateMutation.isPending}
                         aria-label='Check for image tag updates'
                       >
                         <WifiSync className='size-4' />

@@ -1,6 +1,6 @@
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 import { Play, BrushCleaning } from 'lucide-react';
-import { useLocalStorage } from '@/frontend/lib/useLocalStorage';
+import { useLocalStorage } from '@/frontend/hooks/useLocalStorage';
 import { useEffect } from 'react';
 import type { ContainersResponse } from '@/frontend/components/Layout';
 import {

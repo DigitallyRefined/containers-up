@@ -8,17 +8,32 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { TooltipProvider } from '@radix-ui/react-tooltip';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { App } from '@/frontend/App';
 import { ToastProvider } from '@/frontend/components/ui/Toast';
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 
 const elem = document.getElementById('root')!;
 const app = (
   <StrictMode>
-    <ToastProvider>
-      <TooltipProvider>
-        <App />
-      </TooltipProvider>
-    </ToastProvider>
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <TooltipProvider>
+          <App />
+        </TooltipProvider>
+      </ToastProvider>
+      {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
+    </QueryClientProvider>
   </StrictMode>
 );
 

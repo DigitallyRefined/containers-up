@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, Play } from 'lucide-react';
+import { useComposeFiles } from '@/frontend/hooks/useApi';
 
 import { Button } from '@/frontend/components/ui/Button';
 import { Tooltip } from '@/frontend/components/ui/Tooltip';
@@ -14,25 +15,9 @@ import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 
 export const ComposeFiles = ({ hostName }: { hostName: string }) => {
   const [open, setOpen] = useState(false);
-  const [files, setFiles] = useState<string[] | 'loading' | 'error' | 'noWorkingFolder'>();
 
-  useEffect(() => {
-    if (open && hostName) {
-      setFiles('loading');
-      fetch(`/api/host/${hostName}/compose`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.error && data.cause === 'NO_WORKING_FOLDER') {
-            setFiles('noWorkingFolder');
-            return;
-          }
-          setFiles(Array.isArray(data) ? data : []);
-        })
-        .catch(() => {
-          setFiles('error');
-        });
-    }
-  }, [open, hostName]);
+  // Use React Query to fetch compose files
+  const { data: files = [], isLoading, error, isError } = useComposeFiles(hostName, open);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -48,13 +33,13 @@ export const ComposeFiles = ({ hostName }: { hostName: string }) => {
           <DialogTitle>Compose Files</DialogTitle>
         </DialogHeader>
         <div className='space-y-2 max-h-[80vh] overflow-y-auto'>
-          {files === 'loading' ? (
+          {isLoading ? (
             <div className='text-muted-foreground'>Loading...</div>
-          ) : files === 'error' ? (
-            <div className='text-muted-foreground'>Failed to fetch compose files.</div>
-          ) : files === 'noWorkingFolder' ? (
+          ) : isError ? (
             <div className='text-muted-foreground'>
-              Working folder is not configured. Please set it in the host settings.
+              {error?.message === 'Working folder is not configured'
+                ? 'Working folder is not configured. Please set it in the host settings.'
+                : 'Failed to fetch compose files.'}
             </div>
           ) : files && files.length > 0 ? (
             <ul>

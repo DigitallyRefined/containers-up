@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { hostSchema, hostEditSchema } from '@/backend/db/schema/host';
 import { useEffect, useRef } from 'react';
+import { useCreateHost, useUpdateHost } from '@/frontend/hooks/useApi';
 import {
   Dialog,
   DialogContent,
@@ -37,35 +38,28 @@ export const HostForm = ({
   const normalizedInitialValues = normalizeNulls(initialValues);
 
   const lastSuccess = useRef(false);
+  const createHostMutation = useCreateHost();
+  const updateHostMutation = useUpdateHost();
 
   const onSubmit = async (data: HostForm | HostEditForm) => {
-    try {
-      const res = await fetch(`/api/host/${encodeURIComponent(data.name)}`, {
-        method: initialValues ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
+    const mutation = initialValues ? updateHostMutation : createHostMutation;
 
-      const result = await res.json();
-      if (!res.ok) {
+    mutation.mutate(data, {
+      onSuccess: () => {
+        reset();
+        onAlert?.({ open: true, message: 'Host saved!', type: 'success' });
+        onSuccess?.();
+        lastSuccess.current = true;
+      },
+      onError: (error) => {
         onAlert?.({
           open: true,
-          message: result.error || 'Failed to save host',
+          message: error.message || 'Failed to save host',
           type: 'error',
         });
         lastSuccess.current = false;
-        return;
-      }
-      reset();
-      onAlert?.({ open: true, message: 'Host saved!', type: 'success' });
-      onSuccess?.();
-      lastSuccess.current = true;
-    } catch (err) {
-      onAlert?.({ open: true, message: 'Error saving host: ' + err, type: 'error' });
-      lastSuccess.current = false;
-    }
+      },
+    });
   };
 
   const onDelete = async () => {
@@ -78,13 +72,15 @@ export const HostForm = ({
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
     reset,
     watch,
   } = useForm<HostForm | HostEditForm>({
     resolver: zodResolver(initialValues ? hostEditSchema : hostSchema),
     defaultValues: normalizedInitialValues,
   });
+
+  const isSubmitting = createHostMutation.isPending || updateHostMutation.isPending;
 
   useEffect(() => {
     if (initialValues) {

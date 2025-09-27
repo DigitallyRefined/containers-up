@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useContainerRefresh } from '@/frontend/components/Container/ContainerRefreshContext';
 import { Info, RefreshCw } from 'lucide-react';
+import { useContainers } from '@/frontend/hooks/useApi';
 
 import { ComposedContainer } from '@/frontend/components/Compose/ComposedContainer';
 import { JobEnriched } from '@/backend/db/schema/job';
@@ -15,7 +16,7 @@ import { ContainerImage } from '@/frontend/components/Container/Image';
 import { Jobs } from '@/frontend/components/Container/Jobs';
 import { Card, CardContent } from '@/frontend/components/ui/Card';
 import { PreviousRunningComposeFiles } from '@/frontend/components/Compose/PreviousRunningComposeFiles';
-import { useLocalStorage } from '@/frontend/lib/useLocalStorage';
+import { useLocalStorage } from '@/frontend/hooks/useLocalStorage';
 import { Tooltip } from '@/frontend/components/ui/Tooltip';
 import { Button } from '@/frontend/components/ui/Button';
 import type { Host } from '@/backend/db/schema/host';
@@ -74,10 +75,15 @@ export const ContainerLayout = ({
   selectedSort: string;
 }) => {
   const { refreshKey } = useContainerRefresh();
-  const [containersData, setContainersData] = useState<ContainersResponse>({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const selectedHostName = selectedHost?.name;
+
+  // Use React Query to fetch containers data
+  const {
+    data: containersData = {},
+    isLoading: loading,
+    error,
+    refetch,
+  } = useContainers(selectedHostName || '', selectedSort);
 
   const [openAccordionItems, setOpenAccordionItems] = useLocalStorage<string[]>(
     'openAccordionItems',
@@ -96,50 +102,22 @@ export const ContainerLayout = ({
     setOpenAccordionItems(values);
   };
 
+  // Refetch when refreshKey changes (for manual refresh)
   useEffect(() => {
-    const fetchContainers = async () => {
-      if (!selectedHostName) return;
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(
-          `/api/host/${selectedHostName}/containers${selectedSort ? `?sort=${selectedSort}` : ''}`
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch containers${response.statusText ? `: ${response.statusText}` : ''}`
-          );
-        }
-
-        const data: ContainersResponse = await response.json();
-        setContainersData(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch containers');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchContainers();
-  }, [selectedHostName, refreshKey, selectedSort]);
+    if (selectedHostName) {
+      refetch();
+    }
+  }, [refreshKey, selectedHostName, refetch]);
 
   if (error) {
     return (
       <div className='container mx-auto p-8 text-center relative flex items-center justify-center gap-2'>
         <Tooltip content='Refresh'>
-          <Button
-            variant='outline'
-            size='sm'
-            aria-label='Refresh'
-            onClick={() => window.location.reload()}
-          >
+          <Button variant='outline' size='sm' aria-label='Refresh' onClick={() => refetch()}>
             <RefreshCw className='w-5 h-5' />
           </Button>
         </Tooltip>
-        <span className='text-red-500'>Error: {error}</span>
+        <span className='text-red-500'>Error: {error.message}</span>
       </div>
     );
   }

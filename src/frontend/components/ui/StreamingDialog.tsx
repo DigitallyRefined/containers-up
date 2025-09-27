@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useContainerRefresh } from '@/frontend/components/Container/ContainerRefreshContext';
+import { useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
 import {
@@ -36,6 +37,7 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
   const [status, setStatus] = useState<'idle' | 'loading' | 'error' | 'done'>('idle');
   const abortRef = useRef<AbortController | null>(null);
   const { refresh } = useContainerRefresh();
+  const queryClient = useQueryClient();
   const logsEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -86,7 +88,14 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
       }
     } else if (!isOpen && abortRef.current) {
       abortRef.current.abort();
-      if (shouldRefreshOnClose) refresh();
+      if (shouldRefreshOnClose) {
+        // Invalidate React Query cache for containers and hosts
+        queryClient.invalidateQueries({ queryKey: ['containers'], exact: false });
+        queryClient.invalidateQueries({ queryKey: ['hosts'], exact: false });
+        queryClient.invalidateQueries({ queryKey: ['composeFiles'], exact: false });
+        // Also call the legacy refresh for backward compatibility
+        refresh();
+      }
     }
   };
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrushCleaning, PencilIcon, SortDesc, Wifi, WifiSync } from 'lucide-react';
+import { useHosts, useTriggerImageUpdate } from '@/frontend/hooks/useApi';
 
 import { version } from '@/../package.json';
 import { Button } from '@/frontend/components/ui/Button';
@@ -7,7 +8,7 @@ import { HostSelector } from '@/frontend/components/Host/Selector';
 import { HostDialog } from '@/frontend/components/Host/Dialog';
 import { ContainerLayout } from '@/frontend/components/Layout';
 import { ContainerRefreshProvider } from '@/frontend/components/Container/ContainerRefreshContext';
-import { useLocalStorage } from '@/frontend/lib/useLocalStorage';
+import { useLocalStorage } from '@/frontend/hooks/useLocalStorage';
 import { Tooltip } from '@/frontend/components/ui/Tooltip';
 import { LogsDialog } from '@/frontend/components/Container/LogsDialog';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
@@ -30,40 +31,33 @@ export function App() {
     'selectedHost',
     'global'
   );
-  const [hosts, setHosts] = useState<Host[]>([]);
-
   const [selectedSort, setSelectedSort] = useLocalStorage<string | undefined>(
     'selectedSort',
     'global'
   );
 
-  const refreshHosts = () => {
-    fetch('/api/host')
-      .then((res) => res.json())
-      .then((data) => {
-        setHosts(data);
-        if (data.length === 0) {
-          openAddDialog();
-        } else {
-            const params = new URLSearchParams(window.location.search);
-            const hostFromUrl = params.get('host');
-            if (hostFromUrl && data.some((host: Host) => host.name === hostFromUrl)) {
-              setSelectedHost(hostFromUrl);
-            } else if (selectedHost && data.some((host: Host) => host.name === selectedHost)) {
-              setSelectedHost(selectedHost);
-            } else if (data.length > 0) {
-              setSelectedHost(String(data[0].name));
-            }
-        }
-      })
-      .catch(() => {
-        setSelectedHost('add');
-      });
-  };
+  // Use React Query to fetch hosts
+  const { data: hosts = [], isLoading: hostsLoading, error: hostsError } = useHosts();
+  const triggerImageUpdateMutation = useTriggerImageUpdate();
 
+  // Handle host selection logic when hosts data changes
   useEffect(() => {
-    refreshHosts();
-  }, []);
+    if (hostsLoading || hostsError) return;
+
+    if (hosts.length === 0) {
+      openAddDialog();
+    } else {
+      const params = new URLSearchParams(window.location.search);
+      const hostFromUrl = params.get('host');
+      if (hostFromUrl && hosts.some((host: Host) => host.name === hostFromUrl)) {
+        setSelectedHost(hostFromUrl);
+      } else if (selectedHost && hosts.some((host: Host) => host.name === selectedHost)) {
+        setSelectedHost(selectedHost);
+      } else if (hosts.length > 0) {
+        setSelectedHost(String(hosts[0].name));
+      }
+    }
+  }, [hosts, hostsLoading, hostsError, selectedHost]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
@@ -155,20 +149,22 @@ export function App() {
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={async () => {
-                    const res = await fetch(`/api/host/${selectedHost}/update`, {
-                      method: 'POST',
-                      body: JSON.stringify({}),
-                    });
-                    if (!res.ok) {
-                      const data = await res.json().catch(() => ({}));
-                      (window as any).showToast(
-                        data.error || 'Failed to trigger image tag update check'
-                      );
-                    } else {
-                      (window as any).showToast('Checking for image tag updates, see logs');
-                    }
+                  onClick={() => {
+                    triggerImageUpdateMutation.mutate(
+                      { hostName: selectedHost },
+                      {
+                        onSuccess: () => {
+                          (window as any).showToast('Checking for image tag updates, see logs');
+                        },
+                        onError: (error) => {
+                          (window as any).showToast(
+                            error.message || 'Failed to trigger image tag update check'
+                          );
+                        },
+                      }
+                    );
                   }}
+                  disabled={triggerImageUpdateMutation.isPending}
                   aria-label='Check all image tags for updates'
                 >
                   <WifiSync className='size-4' />
@@ -189,7 +185,6 @@ export function App() {
           initialValues={dialogMode === 'edit' ? selectedHostObj : undefined}
           onSuccess={() => {
             handleCloseDialog();
-            refreshHosts();
           }}
         />
 
