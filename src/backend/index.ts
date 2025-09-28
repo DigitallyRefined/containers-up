@@ -447,7 +447,15 @@ export const startServer = () => {
             webhookData = JSON.parse(json);
           } catch (error) {
             if (json.includes('Speak+like+a+human')) {
-              mainLogger.info(`GitHub webhook ping received for host: ${selectedHost.name}`);
+              const msg = `GitHub webhook ping received for host: ${selectedHost.name}`;
+              mainLogger.info(msg);
+              logDb.create({
+                hostId: selectedHost.id,
+                level: 30,
+                time: Date.now(),
+                event: 'GitHub webhook ping',
+                msg,
+              });
               return Response.json({ message: 'webhook ping received' });
             }
             return Response.json({ message: 'Invalid JSON payload', json }, { status: 400 });

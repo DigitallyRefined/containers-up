@@ -3,7 +3,14 @@ import { getDatetime } from '@/backend/utils';
 import { Log, logCreateTableSql } from '@/backend/db/schema/log';
 
 export const log = {
-  create: async ({ jobId, hostId, level, time, event, msg }: Log) => {
+  create: async ({
+    jobId,
+    hostId,
+    level,
+    time,
+    event,
+    msg,
+  }: Omit<Log, 'time'> & { time: number }) => {
     const db = await getDb();
 
     db.query(logCreateTableSql).run();
