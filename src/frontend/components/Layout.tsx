@@ -113,7 +113,12 @@ export const ContainerLayout = ({
     return (
       <div className='container mx-auto p-8 text-center relative flex items-center justify-center gap-2'>
         <Tooltip content='Refresh'>
-          <Button variant='outline' size='sm' aria-label='Refresh' onClick={() => refetch()}>
+          <Button
+            variant='outline'
+            size='sm'
+            aria-label='Refresh'
+            onClick={() => window.location.reload()}
+          >
             <RefreshCw className='w-5 h-5' />
           </Button>
         </Tooltip>
