@@ -12,7 +12,8 @@ export function useLocalStorage<T>(
   mode: 'append' | 'replace' = 'replace'
 ) {
   const fullKey = `${key}:${keySuffix}`;
-  const [storedValue, setStoredValue] = useState<T>(() => {
+
+  const readValueFromStorage = () => {
     if (typeof window === 'undefined') {
       return initialValue;
     }
@@ -20,13 +21,22 @@ export function useLocalStorage<T>(
       const item = window.localStorage.getItem(fullKey);
       return item ? (JSON.parse(item) as T) : initialValue;
     } catch (error) {
+      console.warn(`Error reading localStorage key "${fullKey}":`, error);
       return initialValue;
     }
-  });
+  };
+
+  const [storedValue, setStoredValue] = useState<T>(readValueFromStorage);
 
   useEffect(() => {
-    window.localStorage.setItem(fullKey, JSON.stringify(storedValue));
-  }, [storedValue]);
+    setStoredValue(readValueFromStorage());
+  }, [fullKey]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(fullKey, JSON.stringify(storedValue));
+    }
+  }, [storedValue, fullKey]);
 
   const setValue = (value: T | ((val: T) => T)) => {
     if (!key || !keySuffix) return;
