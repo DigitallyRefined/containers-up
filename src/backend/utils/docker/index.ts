@@ -26,15 +26,41 @@ export const createDockerExec = (logger: Logger) => {
   };
 
   const runStreamedCommand = (command: string, options?: { hostName: string; host: string }) => {
+    const encoder = new TextEncoder();
+
+    let closed = false; // shared between start and cancel
+
     const stream = new ReadableStream({
       start(controller) {
+        const safeEnqueue = (data) => {
+          if (closed) return;
+          try {
+            const chunk = typeof data === 'string' ? encoder.encode(data) : new Uint8Array(data);
+            controller.enqueue(chunk);
+          } catch (err) {
+            logger.warn(`Failed to enqueue data: ${err.message}`);
+            closed = true;
+          }
+        };
+
+        const safeClose = () => {
+          if (!closed) {
+            closed = true;
+            try {
+              controller.close();
+            } catch (err) {
+              logger.warn(`Failed to close controller: ${err.message}`);
+            }
+          }
+        };
+
         const handlers = {
-          onStdout: (data) => controller.enqueue(data),
-          onStderr: (data) => controller.enqueue(data),
-          onClose: () => controller.close(),
-          onError: (err) => {
-            controller.enqueue(Buffer.from(`Error: ${err.message}\n`));
-            controller.close();
+          onStdout: (data) => safeEnqueue(data),
+          onStderr: (data) => safeEnqueue(data),
+          onClose: () => safeClose(),
+          onError: (err: Error) => {
+            safeEnqueue(`Error: ${err.message}\n`);
+            safeClose();
           },
         };
 
@@ -43,6 +69,11 @@ export const createDockerExec = (logger: Logger) => {
         } else {
           exec.stream(command, handlers);
         }
+      },
+
+      cancel() {
+        closed = true; // prevent any further enqueues
+        // No cleanup — but we do stop safeEnqueue from acting
       },
     });
 
