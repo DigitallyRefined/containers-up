@@ -48,7 +48,9 @@ export const postHost = async (host: Host, options: { createSshKey?: boolean } =
     }
 
     throw new Error(
-      'Failed to connect to host. Please check your SSH key is correct and Docker is running',
+      `Failed to connect to host. Please check your SSH key is correct and Docker is running${
+        error.stderr ? `: ${error.stderr}` : ''
+      }`,
       {
         cause: error,
       }
@@ -77,6 +79,7 @@ const createFiles = async (host: Host, options: { createSshKey?: boolean } = {})
     )
     .join('\n\n');
 
+  await fs.unlink(sshConfigPath).catch(() => null);
   await fs.writeFile(
     sshConfigPath,
     `Host *

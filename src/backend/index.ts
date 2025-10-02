@@ -64,14 +64,13 @@ const resolveAndValidateComposeFile = async (
 const serverOptions: Partial<Serve> = {
   idleTimeout: 30,
 
-  error(error: ErrorLike) {
-    console.error('Unhandled error in route handler:', error);
+  error(error: ErrorLike & { stderr?: string }) {
     return Response.json(
       {
         error: error.message || 'Internal server error',
         ...(process.env.NODE_ENV !== 'production' && {
           stack: error.stack,
-          details: error.toString(),
+          details: error.stderr,
         }),
         ...(error.cause && { cause: error.cause }),
       },

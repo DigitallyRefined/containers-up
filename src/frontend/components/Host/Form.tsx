@@ -35,8 +35,6 @@ export const HostForm = ({
     return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, v === null ? '' : v])) as T;
   }
 
-  const normalizedInitialValues = normalizeNulls(initialValues);
-
   const lastSuccess = useRef(false);
   const createHostMutation = useCreateHost();
   const updateHostMutation = useUpdateHost();
@@ -77,7 +75,7 @@ export const HostForm = ({
     watch,
   } = useForm<HostForm | HostEditForm>({
     resolver: zodResolver(initialValues ? hostEditSchema : hostSchema),
-    defaultValues: normalizedInitialValues,
+    defaultValues: normalizeNulls(initialValues),
   });
 
   const isSubmitting = createHostMutation.isPending || updateHostMutation.isPending;
@@ -136,7 +134,7 @@ export const HostForm = ({
         id='excludeFolders'
         type='text'
         placeholder='e.g. (manual|test)'
-        error={undefined}
+        error={errors.excludeFolders?.message}
         disabled={isSubmitting}
         {...register('excludeFolders')}
       />
@@ -202,6 +200,7 @@ export const HostForm = ({
         id='cron'
         type='text'
         placeholder='e.g. 0 1 * * 6 (every Saturday at 1am)'
+        error={errors.cron?.message}
         disabled={isSubmitting}
         {...register('cron')}
       />
@@ -212,7 +211,9 @@ export const HostForm = ({
         placeholder='e.g. 1 (lower numbers appear first)'
         error={errors.sortOrder?.message}
         disabled={isSubmitting}
-        {...register('sortOrder', { valueAsNumber: true })}
+        {...register('sortOrder', {
+          setValueAs: (v: string) => (!v ? undefined : parseInt(v)),
+        })}
       />
       <Button type='submit' className='w-full font-semibold mt-4' disabled={isSubmitting}>
         <Save className='size-4' />

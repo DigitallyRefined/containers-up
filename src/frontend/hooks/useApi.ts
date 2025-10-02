@@ -26,7 +26,8 @@ const api = {
     const url = `/api/host/${hostName}/containers${sort ? `?sort=${sort}` : ''}`;
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Failed to fetch containers: ${response.statusText}`);
+      const error = await response.json().catch(() => null);
+      throw new Error(`Failed to fetch containers ${response.statusText} ${error?.details}`);
     }
     return response.json();
   },

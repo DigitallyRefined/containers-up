@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrushCleaning, PencilIcon, SortDesc, Wifi, WifiSync } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useHosts, useTriggerImageUpdate } from '@/frontend/hooks/useApi';
 
 import { version } from '@/../package.json';
@@ -39,6 +40,7 @@ export function App() {
   // Use React Query to fetch hosts
   const { data: hosts = [], isLoading: hostsLoading, error: hostsError } = useHosts();
   const triggerImageUpdateMutation = useTriggerImageUpdate();
+  const queryClient = useQueryClient();
 
   // Handle host selection logic when hosts data changes
   useEffect(() => {
@@ -185,6 +187,7 @@ export function App() {
           initialValues={dialogMode === 'edit' ? selectedHostObj : undefined}
           onSuccess={() => {
             handleCloseDialog();
+            queryClient.invalidateQueries();
           }}
         />
 
