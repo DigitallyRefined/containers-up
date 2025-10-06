@@ -85,7 +85,7 @@ const createFiles = async (host: Host, options: { createSshKey?: boolean } = {})
     `Host *
     StrictHostKeyChecking no
     ControlMaster auto
-    ControlPersist 20m
+    ControlPersist ${process.env.SSH_CONTROL_PERSIST || '20m'}
     ForwardAgent yes
     
 ${hostSshConfig}`,
