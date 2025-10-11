@@ -102,6 +102,15 @@ export function App() {
                   openAddDialog();
                 } else {
                   setSelectedHost(value);
+                  const params = new URLSearchParams(window.location.search);
+                  if (params.has('host')) {
+                    params.delete('host');
+                    window.history.replaceState(
+                      {},
+                      '',
+                      `${window.location.pathname}?${params.toString()}`,
+                    );
+                  }
                 }
               }}
               hosts={hosts}
