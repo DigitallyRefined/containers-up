@@ -59,7 +59,9 @@ export const createExec = (logger: Logger) => {
       if [ -n "$SSH_AUTH_SOCK" ]; then
         export SSH_AGENT_PID=$(echo "$SSH_AUTH_SOCK" | grep -oE 'agent\.[0-9]+' | grep -oE '[0-9]+')
       fi
-      ssh-add ~/.ssh/id_ed25519-${hostName} > /dev/null 2>&1
+      if ! ssh-add ~/.ssh/id_ed25519-${hostName} > /dev/null 2>&1; then
+        killall bun
+      fi
       ssh ${host} '${command}'`;
 
   const sshRun = async (hostName: string, host: string, command: string, throwOnError = true) =>

@@ -1,4 +1,4 @@
-import { serve, type ErrorLike, type Serve } from 'bun';
+import { serve, type ErrorLike } from 'bun';
 import index from '@/index.html';
 
 import { getContainers, type SortOptions } from '@/backend/endpoints/containers';
@@ -61,7 +61,7 @@ const resolveAndValidateComposeFile = async (
   return { composeFile };
 };
 
-const serverOptions: Partial<Serve> = {
+const serverOptions = {
   idleTimeout: 30,
 
   error(error: ErrorLike & { stderr?: string }) {

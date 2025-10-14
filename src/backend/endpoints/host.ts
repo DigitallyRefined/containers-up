@@ -94,7 +94,8 @@ ${hostSshConfig}`,
 
   // Only create SSH key file if requested and we have a valid key
   if (createSshKey && host.sshKey && host.sshKey.trim() !== '') {
-    await fs.writeFile(`${sshPath}/id_ed25519-${host.name}`, host.sshKey, { mode: 0o600 });
+    const sshKey = host.sshKey.endsWith('\n') ? host.sshKey : host.sshKey + '\n';
+    await fs.writeFile(`${sshPath}/id_ed25519-${host.name}`, sshKey, { mode: 0o600 });
   }
 
   const { stdout: dockerContext } = await exec.run('docker context ls --format "{{.Name}}"');

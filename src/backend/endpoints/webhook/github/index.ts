@@ -20,9 +20,9 @@ export type GitHubWebhookEvent = {
   action: string;
   merged: string;
   title: string;
-  body: string;
+  body?: string;
   sender: string;
-  url: string;
+  url?: string;
 };
 
 const fileExcluded = (file: string, excludeFolders: string | null): boolean => {

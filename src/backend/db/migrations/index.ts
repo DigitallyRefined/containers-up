@@ -21,7 +21,7 @@ export const checkIfDatabaseNeedsUpdating = async () => {
 
   db.query(settingCreateTableSql).run();
 
-  const setting = await db
+  const setting = db
     .query(`SELECT * FROM setting WHERE key=$key`)
     .as(Setting)
     .get({ key: 'db_version' });
@@ -33,13 +33,21 @@ export const checkIfDatabaseNeedsUpdating = async () => {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = dirname(__filename);
 
+  if (!dbVersion) {
+    return upsert({
+      table: 'setting',
+      data: { key: 'db_version', value: version },
+      conflictKey: 'key',
+    });
+  }
+
   if (dbVersion !== version) {
     mainLogger.info(
       `Database version (${dbVersion}) is different from app version (${version}), running migrations...`
     );
     const migrationPath = join(__dirname, file);
     const migrationSql = await readFile(migrationPath, 'utf-8');
-    await db.exec(migrationSql);
+    db.run(migrationSql);
     mainLogger.info(`Migrated to version ${version}`);
 
     mainLogger.info('Database migrations completed successfully');
