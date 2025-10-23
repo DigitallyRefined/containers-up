@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { authFetch } from '@/frontend/auth/oidc';
 import type { Host } from '@/backend/db/schema/host';
 import type { ContainersResponse } from '@/frontend/components/Layout';
-import type { JobWithLogs } from '@/backend/db/schema/job';
 
 // Query Keys
 export const queryKeys = {
@@ -15,7 +15,7 @@ export const queryKeys = {
 // API Functions
 const api = {
   fetchHosts: async (): Promise<Host[]> => {
-    const response = await fetch('/api/host');
+    const response = await authFetch('/api/host');
     if (!response.ok) {
       throw new Error('Failed to fetch hosts');
     }
@@ -24,7 +24,7 @@ const api = {
 
   fetchContainers: async (hostName: string, sort?: string): Promise<ContainersResponse> => {
     const url = `/api/host/${hostName}/containers${sort ? `?sort=${sort}` : ''}`;
-    const response = await fetch(url);
+    const response = await authFetch(url);
     if (!response.ok) {
       const error = await response.json().catch(() => null);
       throw new Error(`Failed to fetch containers ${response.statusText} ${error?.details}`);
@@ -33,7 +33,7 @@ const api = {
   },
 
   fetchComposeFiles: async (hostName: string): Promise<string[]> => {
-    const response = await fetch(`/api/host/${hostName}/compose`);
+    const response = await authFetch(`/api/host/${hostName}/compose`);
     if (!response.ok) {
       throw new Error('Failed to fetch compose files');
     }
@@ -45,7 +45,7 @@ const api = {
   },
 
   fetchLogs: async (hostName: string): Promise<any[]> => {
-    const response = await fetch(`/api/host/${hostName}/logs`);
+    const response = await authFetch(`/api/host/${hostName}/logs`);
     if (!response.ok) {
       throw new Error('Failed to fetch logs');
     }
@@ -53,7 +53,7 @@ const api = {
   },
 
   createHost: async (hostData: any): Promise<Host> => {
-    const response = await fetch(`/api/host/${encodeURIComponent(hostData.name)}`, {
+    const response = await authFetch(`/api/host/${encodeURIComponent(hostData.name)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(hostData),
@@ -66,7 +66,7 @@ const api = {
   },
 
   updateHost: async (hostData: any): Promise<Host> => {
-    const response = await fetch(`/api/host/${encodeURIComponent(hostData.name)}`, {
+    const response = await authFetch(`/api/host/${encodeURIComponent(hostData.name)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(hostData),
@@ -79,7 +79,7 @@ const api = {
   },
 
   deleteHost: async (hostName: string): Promise<void> => {
-    const response = await fetch(`/api/host/${encodeURIComponent(hostName)}`, {
+    const response = await authFetch(`/api/host/${encodeURIComponent(hostName)}`, {
       method: 'DELETE',
     });
     if (!response.ok) {
@@ -89,7 +89,7 @@ const api = {
   },
 
   triggerImageUpdate: async (hostName: string, checkService?: string): Promise<void> => {
-    const response = await fetch(`/api/host/${hostName}/update`, {
+    const response = await authFetch(`/api/host/${hostName}/update`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -103,7 +103,7 @@ const api = {
   },
 
   restartJob: async (jobId: number): Promise<void> => {
-    const response = await fetch(`/api/job/${jobId}`, { method: 'POST' });
+    const response = await authFetch(`/api/job/${jobId}`, { method: 'POST' });
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to restart job');
@@ -111,7 +111,7 @@ const api = {
   },
 
   updateJob: async (jobId: number): Promise<void> => {
-    const response = await fetch(`/api/job/${jobId}`, { method: 'PATCH' });
+    const response = await authFetch(`/api/job/${jobId}`, { method: 'PATCH' });
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to update job');

@@ -11,7 +11,7 @@ It provides a unified interface for managing containerized applications, and aut
 ## Key Features
 
 - 🖥️ **Multi-Host Management**: Manage containers on multiple hosts via SSH connections
-- 🎛️ **Granular Control**: 
+- 🎛️ **Granular Control**:
   - 📦 Control stacks/services via compose files
   - 🐳 Manage individual containers
   - 🖼️ Container image management
@@ -24,7 +24,7 @@ It provides a unified interface for managing containerized applications, and aut
 - 📱 **Responsive Design**: Works seamlessly on desktop and mobile devices
 - 🌓 **Modern UX**: Automatic light and dark mode (based on system settings)
 - 📊 **Job Tracking**: Monitor update jobs with detailed logs and retry capabilities
-- 🔐 **Security**: Secure SSH connections and webhook signature verification
+- 🔐 **Security**: Secure SSH connections, webhook signature verification and OIDC authentication
 
 ## Screenshot
 
@@ -38,7 +38,7 @@ The app can be started using the following `compose.yml`:
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:0.0.20
+    image: ghcr.io/digitallyrefined/containers-up:0.0.21
     restart: always
     ports:
       - 3000:3000
@@ -54,7 +54,7 @@ Open `http://localhost:3000` to set up a new host. Set a name, SSH host and priv
 Optional system wide configuration can be changed by copying `.env.default` to `.env` and adding `env_file: ./.env` to the compose file.
 
 <details>
-<summary>compose.yml example with HTTPS & authentication (via Pocket ID & Traefik)</summary>
+<summary>compose.yml example with HTTPS & OIDC authentication (via Pocket ID & Traefik)</summary>
 
 1. See [Simple HTTPS Traefik Tutorial](https://www.youtube.com/watch?v=-hfejNXqOzA) and [Pocket ID walkthrough](https://www.youtube.com/watch?v=GKyMXguNcos)
 
@@ -62,7 +62,7 @@ Optional system wide configuration can be changed by copying `.env.default` to `
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:0.0.20
+    image: ghcr.io/digitallyrefined/containers-up:0.0.21
     restart: always
     volumes:
       - ./containers-up/storage:/storage
@@ -81,8 +81,6 @@ services:
       traefik.http.routers.containers-up.tls.certresolver: production-cloudflare-dns
       traefik.http.routers.containers-up.service: containers-up
       traefik.http.services.containers-up.loadbalancer.server.port: 3000
-      traefik.http.middlewares.containers-up-headers.headers.customrequestheaders.X-Proxy-Key: ${API_PROXY_KEY}
-      traefik.http.routers.containers-up.middlewares: oidc-auth-admin-only@file,containers-up-headers@docker
 
       traefik.http.routers.containers-up-webhook.entrypoints: websecure
       traefik.http.routers.containers-up-webhook.rule: Host(`containers-up.example.com`) && PathPrefix(`/api/webhook`) # < Update this
@@ -93,7 +91,7 @@ services:
 
   pocket-id:
     # https://github.com/pocket-id/pocket-id/releases
-    image: ghcr.io/pocket-id/pocket-id:v1.6.4
+    image: ghcr.io/pocket-id/pocket-id:v1.13.1
     restart: always
     volumes:
       - './pocket-id/data:/app/data'
@@ -130,35 +128,15 @@ networks:
 ```
 
 2. Create the network `docker network create traefik` and start the services `docker compose up -d`
-3. Once Traefik and Pocket ID are up and running, set up a new user via Pocket ID and add it to an admin group.
-4. Create a new OIDC client and set up the callback URL as `https://containers-up.example.com/oidc/callback` and copy the ID and secret into the file below
-
-`traefik/config/oidc-auth-admin-only.yml`
-```yaml
-http:
-  middlewares:
-    oidc-auth-admin-only:
-      plugin:
-        traefik-oidc-auth:
-          Secret: "<create a random a-z-A-Z-0-9 secret>"
-          Provider:
-            Url: "https://id.example.com/"
-            ClientId: "<copy the ClientId from the provider>"
-            ClientSecret: "<copy the ClientSecret from the provider>"
-            TokenValidation: "IdToken"
-          Scopes: ["openid", "profile", "email", "groups"]
-          Authorization:
-            AssertClaims:
-              - Name: groups
-                AnyOf: ["admin"]
-```
-
-5. Accessing `https://containers-up.example.com` should now require you to login
+3. Once Traefik and Pocket ID are up and running, set up a [new user via Pocket ID](https://pocket-id.org/docs/setup/installation) and optionally add them to an admin group.
+4. In the Pocket ID admin account create a new OIDC client and set up the callback URL as `https://containers-up.example.com/auth-callback` and optionally only allow the admin group
+5. In the Containers Up! `.env` file (see `.env.default`) add the URI of Pocket ID (without any paths) then copy and paste the client ID, secret and JWKS certificate URL
+6. After restarting the app, accessing `https://containers-up.example.com` should now require you to login
 </details>
 
 ## Setting up automatic `compose.yml` updates via Dependabot
 
-1. Make sure that your Containers Up! instance is available online publicly via HTTPS,  sharing only the webhook port `3001`. E.g. via a [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) or a [Docker Wireguard Tunnel](https://github.com/DigitallyRefined/docker-wireguard-tunnel)
+1. Make sure that your Containers Up! instance is available online publicly via HTTPS, sharing only the webhook port `3001`. E.g. via a [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) or a [Docker Wireguard Tunnel](https://github.com/DigitallyRefined/docker-wireguard-tunnel)
 
 2. Create a GitHub repository with your container `compose.yml` files
 
@@ -172,11 +150,11 @@ http:
 version: 2
 enable-beta-ecosystems: true # Remove once docker-compose updates become stable
 updates:
-  - package-ecosystem: "docker-compose"
-    directory: "**/compose.yml" # change this based on if you call your files compose.yml or docker-compose.yml
+  - package-ecosystem: 'docker-compose'
+    directory: '**/compose.yml' # change this based on if you call your files compose.yml or docker-compose.yml
 
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
 ```
 
 6. Create a `.github/workflows/generate_dependabot.yml` file with the following content:
@@ -195,9 +173,8 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     steps:
-      
       - uses: actions/checkout@v5
-        
+
       - name: Generate dependabot.yml
         uses: Makeshift/generate-dependabot-glob-action@master
 
@@ -209,6 +186,6 @@ jobs:
 
 8. Next edit your host in Containers Up! and add the working folder where your repo is checked out on your server and add your GitHub repo URL `user/repo` (without `https://github.com/`), generate a random webhook secret and click the ℹ️ info icon copy the base URL to the webhook
 
-9. Back on GitHub, go to **Settings > Webhooks > Add webhook**, add your public webhook domain and base URL (listed on the Containers Up! edit webhook info screen). Use the same random webhook secret from your repo settings, choose **Let me select individual events > Pull requests** 
+9. Back on GitHub, go to **Settings > Webhooks > Add webhook**, add your public webhook domain and base URL (listed on the Containers Up! edit webhook info screen). Use the same random webhook secret from your repo settings, choose **Let me select individual events > Pull requests**
 
 If everything has been set up correctly the next time Dependabot creates a PR to update a `compose.yml` file an update will also appear on the Containers Up! dashboard.

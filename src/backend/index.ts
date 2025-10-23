@@ -18,24 +18,51 @@ import { findTagsMatchingImageDigest } from '@/backend/endpoints/docker-hub-tags
 import { checkHostForImageUpdates } from '@/backend/endpoints/update-check';
 import { JobStatus } from '@/backend/db/schema/job';
 import { sendNotification } from '@/backend/utils/notification';
+import { jwtVerify, createRemoteJWKSet } from 'jose';
 
 const dockerExec = createDockerExec(mainLogger);
 
-const API_PROXY_KEY = process.env.API_PROXY_KEY;
+const OIDC_ISSUER_URI = process.env.OIDC_ISSUER_URI;
+const OIDC_CLIENT_ID = process.env.OIDC_CLIENT_ID;
+const OIDC_CLIENT_SECRET = process.env.OIDC_CLIENT_SECRET;
+const OIDC_JWKS_URI = process.env.OIDC_JWKS_URI;
+const OIDC_ENABLED = Boolean(process.env.OIDC_ISSUER_URI);
 
-const requireAuthKey = (req: Request) => {
-  const key = req.headers.get(`x-proxy-key`);
-  if (API_PROXY_KEY && key !== API_PROXY_KEY) {
+let JWKS: ReturnType<typeof createRemoteJWKSet> | null = null;
+if (OIDC_ENABLED && OIDC_JWKS_URI) {
+  try {
+    JWKS = createRemoteJWKSet(new URL(OIDC_JWKS_URI));
+  } catch (err) {
+    mainLogger.error(err, 'Invalid OIDC_JWKS_URI');
+  }
+}
+
+const requireOidc = async (req: Request) => {
+  if (!OIDC_ENABLED) return null;
+  const authz = req.headers.get('authorization') || req.headers.get('Authorization');
+  if (!authz || !authz.toLowerCase().startsWith('bearer ')) {
     return new Response('Unauthorized', { status: 401 });
   }
-  return null;
+  const token = authz.slice(7).trim();
+  try {
+    if (!JWKS) {
+      mainLogger.error('JWKS not configured');
+      return new Response('Server OIDC JWKS not configured', { status: 500 });
+    }
+    await jwtVerify(token, JWKS, { issuer: OIDC_ISSUER_URI, audience: OIDC_CLIENT_ID });
+    // Optional: restrict by email/domain/groups in the future
+    return null;
+  } catch (err) {
+    mainLogger.error(err, 'Invalid OIDC token');
+    return new Response('Unauthorized', { status: 401 });
+  }
 };
 
 const getAuthorizedHost = async (
   req: Request,
   repoHost: string
 ): Promise<{ error?: Response; selectedHost?: Host }> => {
-  const auth = requireAuthKey(req);
+  const auth = await requireOidc(req);
   if (auth) return { error: auth };
 
   const selectedHost = await host.getByName(repoHost);
@@ -137,7 +164,7 @@ export const startServer = () => {
 
       '/api/host': {
         async GET(req) {
-          const auth = requireAuthKey(req);
+          const auth = await requireOidc(req);
           if (auth) return auth;
 
           return Response.json(
@@ -149,7 +176,7 @@ export const startServer = () => {
       '/api/host/:host': {
         async POST(req, server) {
           server.timeout(req, 10);
-          const auth = requireAuthKey(req);
+          const auth = await requireOidc(req);
           if (auth) return auth;
 
           return Response.json(await postHost({ name: req.params.host, ...(await req.json()) }));
@@ -157,14 +184,14 @@ export const startServer = () => {
 
         async PUT(req, server) {
           server.timeout(req, 10);
-          const auth = requireAuthKey(req);
+          const auth = await requireOidc(req);
           if (auth) return auth;
 
           return Response.json(await putHost({ name: req.params.host, ...(await req.json()) }));
         },
 
         async DELETE(req) {
-          const auth = requireAuthKey(req);
+          const auth = await requireOidc(req);
           if (auth) return auth;
 
           return Response.json(await deleteHost({ name: req.params.host } as Host));
@@ -369,7 +396,7 @@ export const startServer = () => {
 
       '/api/job/:id': {
         async POST(req) {
-          const auth = requireAuthKey(req);
+          const auth = await requireOidc(req);
           if (auth) return auth;
 
           restartJob(req.params.id);
@@ -378,7 +405,7 @@ export const startServer = () => {
         },
 
         async PATCH(req) {
-          const auth = requireAuthKey(req);
+          const auth = await requireOidc(req);
           if (auth) return auth;
 
           await jobDb.markJobAsComplete(req.params.id);
@@ -395,6 +422,147 @@ export const startServer = () => {
           }
 
           return Response.json(await findTagsMatchingImageDigest(image));
+        },
+      },
+      '/api/auth/token': {
+        async POST(req) {
+          if (!OIDC_ENABLED || !OIDC_ISSUER_URI || !OIDC_CLIENT_ID || !OIDC_CLIENT_SECRET) {
+            return Response.json({ error: 'OIDC not fully configured on server' }, { status: 400 });
+          }
+
+          const formData = await req.formData();
+
+          const data: any = {};
+          for (const [key, value] of formData.entries()) {
+            data[key] = value;
+          }
+
+          const { code, code_verifier, redirect_uri, client_id } = data;
+
+          if (!code || !code_verifier || !redirect_uri || !client_id) {
+            return Response.json({ error: 'Missing required parameters' }, { status: 400 });
+          }
+
+          try {
+            // Fetch OIDC metadata to get the token_endpoint
+            const metadataUrl = `${OIDC_ISSUER_URI.replace(
+              /\/$/,
+              ''
+            )}/.well-known/openid-configuration`;
+            const metadataRes = await fetch(metadataUrl);
+            if (!metadataRes.ok) {
+              mainLogger.error(`Failed to fetch OIDC metadata: ${metadataRes.statusText}`);
+              return Response.json({ error: `Failed to fetch OIDC metadata` }, { status: 500 });
+            }
+            const metadata = await metadataRes.json();
+            const tokenEndpoint = metadata.token_endpoint;
+
+            if (!tokenEndpoint) {
+              mainLogger.error('Token endpoint not found in OIDC metadata');
+              return Response.json(
+                { error: 'Token endpoint not found in OIDC metadata' },
+                { status: 500 }
+              );
+            }
+
+            const params = new URLSearchParams();
+            params.append('grant_type', 'authorization_code');
+            params.append('code', code);
+            params.append('redirect_uri', redirect_uri);
+            params.append('client_id', client_id);
+            params.append('code_verifier', code_verifier);
+            params.append('client_secret', OIDC_CLIENT_SECRET);
+
+            const tokenRes = await fetch(tokenEndpoint, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: params.toString(),
+            });
+
+            if (!tokenRes.ok) {
+              const errorBodyText = await tokenRes.text(); // Get text first
+              try {
+                const errorBody = JSON.parse(errorBodyText); // Try parsing as JSON
+                mainLogger.error(errorBody, 'OIDC token exchange failed (upstream error)');
+                return Response.json(
+                  { error: 'OIDC token exchange failed (upstream error)' },
+                  {
+                    status: tokenRes.status,
+                  }
+                );
+              } catch {
+                // If not JSON, return as plain text error
+                mainLogger.error(
+                  `OIDC token exchange failed (upstream non-JSON error): ${errorBodyText}`
+                );
+                return Response.json(
+                  { error: 'OIDC token exchange failed (upstream non-JSON error)' },
+                  {
+                    status: tokenRes.status,
+                  }
+                );
+              }
+            }
+
+            const tokenData = await tokenRes.json();
+            return Response.json(tokenData);
+          } catch (error) {
+            mainLogger.error(error, 'Error during OIDC token exchange');
+            return Response.json(
+              { error: 'Internal server error during token exchange' },
+              { status: 500 }
+            );
+          }
+        },
+      },
+      '/api/auth/config': {
+        async GET() {
+          return Response.json({
+            enabled: OIDC_ENABLED,
+            issuer: OIDC_ISSUER_URI,
+            clientId: OIDC_CLIENT_ID,
+          });
+        },
+      },
+      '/api/auth/metadata': {
+        async GET() {
+          if (!OIDC_ISSUER_URI) {
+            return Response.json({ error: 'OIDC not configured' }, { status: 400 });
+          }
+          try {
+            const url = `${OIDC_ISSUER_URI.replace(/\/$/, '')}/.well-known/openid-configuration`;
+            const upstream = await fetch(url);
+            if (!upstream.ok) {
+              mainLogger.error(
+                `Upstream OIDC metadata fetch failed: ${upstream.status} ${upstream.statusText}`
+              ); // Log upstream error
+              return Response.json({ error: `Upstream ${upstream.status}` }, { status: 502 });
+            }
+            const body = await upstream.json();
+            return Response.json(body);
+          } catch (error) {
+            mainLogger.error(error, 'Failed to fetch OIDC metadata'); // Log general error
+            return Response.json({ error: 'Failed to fetch OIDC metadata' }, { status: 502 });
+          }
+        },
+      },
+      '/api/auth/jwks': {
+        async GET() {
+          if (!OIDC_JWKS_URI) {
+            return Response.json({ error: 'JWKS not configured' }, { status: 400 });
+          }
+          try {
+            const upstream = await fetch(OIDC_JWKS_URI);
+            if (!upstream.ok) {
+              return Response.json({ error: `Upstream ${upstream.status}` }, { status: 502 });
+            }
+            const body = await upstream.json();
+            return Response.json(body);
+          } catch (error) {
+            return Response.json({ error: 'Failed to fetch JWKS' }, { status: 502 });
+          }
         },
       },
     },

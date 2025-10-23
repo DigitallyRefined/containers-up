@@ -108,7 +108,7 @@ export function App() {
                     window.history.replaceState(
                       {},
                       '',
-                      `${window.location.pathname}?${params.toString()}`,
+                      `${window.location.pathname}?${params.toString()}`
                     );
                   }
                 }

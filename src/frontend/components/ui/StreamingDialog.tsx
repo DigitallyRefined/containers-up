@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useContainerRefresh } from '@/frontend/components/Container/ContainerRefreshContext';
 import { useQueryClient } from '@tanstack/react-query';
+import { authFetch } from '@/frontend/auth/oidc';
 import type { ReactNode } from 'react';
 
 import {
@@ -61,7 +62,7 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
           fetchOptions.headers = { 'Content-Type': 'application/json' };
           fetchOptions.body = JSON.stringify(body);
         }
-        const res = await fetch(url, fetchOptions);
+        const res = await authFetch(url, fetchOptions);
         if (!res.body) {
           // Fallback: not streamable, just parse as JSON
           const data = await res.json();
