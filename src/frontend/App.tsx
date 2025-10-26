@@ -85,6 +85,16 @@ export function App() {
 
   const selectedHostObj = hosts.find((r) => r.name === selectedHost);
 
+  if (hostsError) {
+    return (
+      <div className='container mx-auto p-8 text-center relative'>
+        <p className='text-red-500'>
+          Error loading data. Check OIDC configuration: {String(hostsError.message)}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <ContainerRefreshProvider>
       <div className='p-4 sm:p-6 md:p-8 text-center relative'>

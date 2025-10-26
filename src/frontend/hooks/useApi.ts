@@ -17,7 +17,11 @@ const api = {
   fetchHosts: async (): Promise<Host[]> => {
     const response = await authFetch('/api/host');
     if (!response.ok) {
-      throw new Error('Failed to fetch hosts');
+      if (response.status === 500 || response.status === 502) {
+        throw new Error(await response.text(), { cause: response });
+      }
+
+      throw new Error('Failed to fetch hosts', { cause: response });
     }
     return response.json();
   },

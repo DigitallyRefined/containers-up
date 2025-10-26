@@ -6,6 +6,12 @@
     <title>Containers Up!</title>
     <link rel="icon" type="image/svg+xml" href="./frontend/img/icon-containers-up.svg" />
     <link rel="icon" type="image/webp" href="./frontend/img/icon-containers-up.webp" sizes="512x512" />
+    <script>
+      window.__APP_CONFIG__ = {
+        ENV_PUBLIC_OIDC_ISSUER_URI: "%ENV_PUBLIC_OIDC_ISSUER_URI%",
+        ENV_PUBLIC_OIDC_CLIENT_ID: "%ENV_PUBLIC_OIDC_CLIENT_ID%",
+      };
+    </script>
     <script type="module" src="./frontend/index.tsx" async></script>
   </head>
   <body>
