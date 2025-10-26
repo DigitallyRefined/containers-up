@@ -1,9 +1,9 @@
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:0.0.22
+    image: ghcr.io/digitallyrefined/containers-up:0.0.23
     container_name: containers-up
-    restart: always
+    restart: unless-stopped
     volumes:
       - ./storage:/storage
       - ./storage/.ssh:/root/.ssh

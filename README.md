@@ -15,6 +15,7 @@ It provides a unified interface for managing containerized applications, and aut
   - 📦 Control stacks/services via compose files
   - 🐳 Manage individual containers
   - 🖼️ Container image management
+  - 📑 Container log viewer
   - 🗑️ Cleanup of unused images
 - 🔄 **Automated Updates**: Container updates via GitHub webhooks (via Dependabot pull requests) & image tag updates via a schedule
 - 📩 **Notifications**: When a new Dependabot PR is created or a new container image is available (via [Apprise](https://github.com/caronc/apprise#supported-notifications))
@@ -38,8 +39,8 @@ The app can be started using the following `compose.yml`:
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:0.0.22
-    restart: always
+    image: ghcr.io/digitallyrefined/containers-up:0.0.23
+    restart: unless-stopped
     ports:
       - 3000:3000
       - 3001:3001
@@ -62,8 +63,8 @@ Optional system wide configuration can be changed by copying `.env.default` to `
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:0.0.22
-    restart: always
+    image: ghcr.io/digitallyrefined/containers-up:0.0.23
+    restart: unless-stopped
     volumes:
       - ./containers-up/storage:/storage
       - ./containers-up/storage/.ssh:/root/.ssh
@@ -92,7 +93,7 @@ services:
   pocket-id:
     # https://github.com/pocket-id/pocket-id/releases
     image: ghcr.io/pocket-id/pocket-id:v1.13.1
-    restart: always
+    restart: unless-stopped
     volumes:
       - './pocket-id/data:/app/data'
     environment:

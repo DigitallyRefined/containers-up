@@ -25,17 +25,25 @@ export const createDockerExec = (logger: Logger) => {
     return parseDockerStdout(stdout);
   };
 
+  // Regex that removes ANSI color/control codes (even if ESC is missing)
+  const stripAnsi = (input: string) => input.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '');
+
   const runStreamedCommand = (command: string, options?: { hostName: string; host: string }) => {
     const encoder = new TextEncoder();
-
-    let closed = false; // shared between start and cancel
+    const decoder = new TextDecoder();
+    let closed = false;
 
     const stream = new ReadableStream({
       start(controller) {
-        const safeEnqueue = (data) => {
+        const safeEnqueue = (data: string | Uint8Array) => {
           if (closed) return;
           try {
-            const chunk = typeof data === 'string' ? encoder.encode(data) : new Uint8Array(data);
+            // Always work with a string to strip color codes
+            const str = typeof data === 'string' ? data : decoder.decode(data);
+            const clean = stripAnsi(str);
+
+            // Encode back into Uint8Array for streaming
+            const chunk = encoder.encode(clean);
             controller.enqueue(chunk);
           } catch (err) {
             logger.warn(`Failed to enqueue data: ${err.message}`);
@@ -55,8 +63,8 @@ export const createDockerExec = (logger: Logger) => {
         };
 
         const handlers = {
-          onStdout: (data) => safeEnqueue(data),
-          onStderr: (data) => safeEnqueue(data),
+          onStdout: (data: string | Uint8Array) => safeEnqueue(data),
+          onStderr: (data: string | Uint8Array) => safeEnqueue(data),
           onClose: () => safeClose(),
           onError: (err: Error) => {
             safeEnqueue(`Error: ${err.message}\n`);
@@ -72,8 +80,7 @@ export const createDockerExec = (logger: Logger) => {
       },
 
       cancel() {
-        closed = true; // prevent any further enqueues
-        // No cleanup — but we do stop safeEnqueue from acting
+        closed = true; // prevent further enqueues
       },
     });
 
@@ -95,11 +102,13 @@ export const createDockerExec = (logger: Logger) => {
       ),
     listImages: async (context: string) =>
       runParsedDockerCommand(`${getDockerCmd(context)} images --no-trunc --format "{{json .}}"`),
-    restartOrStopContainer: (
+    restartStopOrDeleteContainer: (
       context: string,
       containerId: string,
       action: 'restart' | 'stop' | 'start' | 'rm'
     ) => runStreamedCommand(`${getDockerCmd(context)} ${action} "${containerId}"`),
+    streamContainerLogs: (context: string, containerId: string) =>
+      runStreamedCommand(`${getDockerCmd(context)} logs -n 500 -f "${containerId}"`),
     removeImage: (context: string, imageId: string) =>
       runStreamedCommand(`${getDockerCmd(context)} rmi "${imageId}"`),
     isInvalidComposeFile: async (host: Host, composeFile: string) =>

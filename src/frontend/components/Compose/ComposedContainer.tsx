@@ -1,4 +1,4 @@
-import { RotateCcw, PowerOff, Bot, WifiSync } from 'lucide-react';
+import { RotateCcw, PowerOff, Bot, WifiSync, Logs } from 'lucide-react';
 import { useTriggerImageUpdate } from '@/frontend/hooks/useApi';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/Card';
@@ -125,6 +125,18 @@ export const ComposedContainer = ({
                         <WifiSync className='size-4' />
                       </Button>
                     </Tooltip>
+                    <StreamingDialog
+                      url={`/api/host/${hostName}/container/${service.Name.replaceAll(
+                        '/',
+                        ''
+                      )}/logs`}
+                      dialogTitle={`Logs for: ${service.Config.Labels['com.docker.compose.service']}`}
+                      tooltipText='View container logs'
+                    >
+                      <Button variant='outline' size='sm' aria-label='View container logs'>
+                        <Logs className='size-4' />
+                      </Button>
+                    </StreamingDialog>
                   </div>
                   <h5 className='font-semibold text-sm mb-2'>
                     {service.Config.Labels['com.docker.compose.service']}

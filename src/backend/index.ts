@@ -291,7 +291,7 @@ export const startServer = () => {
             return new Response('Invalid container ID or name', { status: 400 });
           }
 
-          return dockerExec.restartOrStopContainer(selectedHost.name, containerId, 'restart');
+          return dockerExec.restartStopOrDeleteContainer(selectedHost.name, containerId, 'restart');
         },
 
         async PUT(req) {
@@ -303,7 +303,7 @@ export const startServer = () => {
             return new Response('Invalid container ID or name', { status: 400 });
           }
 
-          return dockerExec.restartOrStopContainer(selectedHost.name, containerId, 'stop');
+          return dockerExec.restartStopOrDeleteContainer(selectedHost.name, containerId, 'stop');
         },
 
         async DELETE(req) {
@@ -315,7 +315,21 @@ export const startServer = () => {
             return new Response('Invalid container ID or name', { status: 400 });
           }
 
-          return dockerExec.restartOrStopContainer(selectedHost.name, containerId, 'rm');
+          return dockerExec.restartStopOrDeleteContainer(selectedHost.name, containerId, 'rm');
+        },
+      },
+
+      '/api/host/:host/container/:containerId/logs': {
+        async GET(req) {
+          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          if (error) return error;
+
+          const containerId = req.params.containerId;
+          if (!isValidContainerIdOrName(containerId)) {
+            return new Response('Invalid container ID or name', { status: 400 });
+          }
+
+          return dockerExec.streamContainerLogs(selectedHost.name, containerId);
         },
       },
 
