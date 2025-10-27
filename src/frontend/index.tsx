@@ -30,7 +30,7 @@ const start = async () => {
   let MainContent = App;
 
   // Handle OIDC callback if present
-  if (isOidcEnabled()) {
+  if (isOidcEnabled) {
     try {
       await handleCallbackIfPresent();
     } catch (error) {

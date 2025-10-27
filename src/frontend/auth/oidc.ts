@@ -11,8 +11,7 @@ type OidcConfig = {
 let userManager: UserManager | null = null;
 let currentUser: User | null = null;
 
-export const isOidcEnabled = (): boolean =>
-  Boolean(config.get('OIDC_ISSUER_URI') && config.get('OIDC_CLIENT_ID'));
+export const isOidcEnabled = Boolean(config.get('OIDC_ISSUER_URI') && config.get('OIDC_CLIENT_ID'));
 
 export const getAccessToken = async (): Promise<string | null> => {
   if (!isOidcEnabled) return null;
@@ -89,8 +88,8 @@ export async function init() {
   // Explicitly fetch metadata from our backend proxy
   const metadataRes = await fetch('/api/auth/metadata');
   if (!metadataRes.ok) {
-    throw new Error('Could not reach the OpenID Connect provider', {
-      cause: `${metadataRes.status} ${await metadataRes.text()}`,
+    throw new Error(await metadataRes.text(), {
+      cause: metadataRes.status,
     });
   }
 
@@ -122,7 +121,7 @@ export async function init() {
 }
 
 export async function authFetch(input: RequestInfo | URL, initOpts: RequestInit = {}) {
-  if (!isOidcEnabled()) {
+  if (!isOidcEnabled) {
     return fetch(input, initOpts);
   }
 

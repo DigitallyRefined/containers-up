@@ -28,8 +28,10 @@ const logLevel = isDevelopment ? 'debug' : 'info';
 
 // Create a pino multistream to log to both terminal and memory
 const streams = [
-  ...(isDevelopment ? [{ level: logLevel, stream: prettyStream }] : []), // terminal
-  { level: logLevel, stream: logStream }, // in-memory
+  // stdout
+  { level: isDevelopment ? logLevel : 'error', stream: prettyStream },
+  // in-memory
+  { level: logLevel, stream: logStream },
 ];
 
 export const mainLogger = pino({ level: logLevel }, pino.multistream(streams));

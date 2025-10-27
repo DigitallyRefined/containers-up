@@ -10,6 +10,7 @@ const get = (key: string, defaultValue: string = ''): string => {
     }
   } catch {
     value = (window as any).__APP_CONFIG__?.[`ENV_PUBLIC_${key}`];
+    value = value === `%ENV_PUBLIC_${key}%` ? '' : value;
   }
 
   return value ?? defaultValue;

@@ -27,10 +27,11 @@ const dockerExec = createDockerExec(mainLogger);
 const ENV_PUBLIC_OIDC_ISSUER_URI = process.env.ENV_PUBLIC_OIDC_ISSUER_URI;
 const ENV_PUBLIC_OIDC_CLIENT_ID = process.env.ENV_PUBLIC_OIDC_CLIENT_ID;
 const OIDC_CLIENT_SECRET = process.env.OIDC_CLIENT_SECRET;
-const OIDC_JWKS_URI = process.env.OIDC_JWKS_URI;
+const OIDC_JWKS_URI =
+  process.env.OIDC_JWKS_URI ||
+  (ENV_PUBLIC_OIDC_ISSUER_URI && join(ENV_PUBLIC_OIDC_ISSUER_URI, '.well-known/jwks.json'));
 
-const isOidcEnabled = (): boolean =>
-  Boolean(ENV_PUBLIC_OIDC_ISSUER_URI && ENV_PUBLIC_OIDC_CLIENT_ID);
+const isOidcEnabled = Boolean(ENV_PUBLIC_OIDC_ISSUER_URI && ENV_PUBLIC_OIDC_CLIENT_ID);
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -153,8 +154,8 @@ export const startServer = () => {
 
               // Inject environment variables
               const html = (await htmlBundle.text())
-                .replace(/%ENV_PUBLIC_OIDC_ISSUER_URI%/g, `${ENV_PUBLIC_OIDC_ISSUER_URI}`)
-                .replace(/%ENV_PUBLIC_OIDC_CLIENT_ID%/g, `${ENV_PUBLIC_OIDC_CLIENT_ID}`);
+                .replace(/%ENV_PUBLIC_OIDC_ISSUER_URI%/g, `${ENV_PUBLIC_OIDC_ISSUER_URI || ''}`)
+                .replace(/%ENV_PUBLIC_OIDC_CLIENT_ID%/g, `${ENV_PUBLIC_OIDC_CLIENT_ID || ''}`);
 
               return new Response(html, {
                 headers: { 'Content-Type': 'text/html' },
@@ -565,7 +566,7 @@ export const startServer = () => {
       '/api/auth/metadata': {
         async GET() {
           if (!ENV_PUBLIC_OIDC_ISSUER_URI) {
-            return Response.json({ error: 'OIDC not configured' }, { status: 400 });
+            return new Response('OIDC not configured', { status: 400 });
           }
           try {
             const url = `${ENV_PUBLIC_OIDC_ISSUER_URI.replace(
@@ -577,13 +578,19 @@ export const startServer = () => {
               mainLogger.error(
                 `Upstream OIDC metadata fetch failed: ${upstream.status} ${upstream.statusText}`
               ); // Log upstream error
-              return Response.json({ error: `Upstream: ${upstream.status}` }, { status: 502 });
+              return new Response(
+                `Could not reach the OpenID Connect provider. Upstream: ${upstream.status}`,
+                { status: 502 }
+              );
             }
             const body = await upstream.json();
             return Response.json(body);
           } catch (error) {
             mainLogger.error(error, 'Failed to fetch OIDC metadata'); // Log general error
-            return Response.json({ error: 'Failed to fetch OIDC metadata' }, { status: 502 });
+            return new Response(
+              'Could not reach the OpenID Connect provider. Failed to fetch OIDC metadata',
+              { status: 502 }
+            );
           }
         },
       },
