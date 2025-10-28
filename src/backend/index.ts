@@ -16,7 +16,6 @@ import { isValidContainerIdOrName } from '@/backend/utils';
 import { createDockerExec } from '@/backend/utils/docker';
 import { mainLogger } from '@/backend/utils/logger';
 import { findComposeFiles } from '@/backend/endpoints/compose';
-import { findTagsMatchingImageDigest } from '@/backend/endpoints/docker-hub-tags';
 import { checkHostForImageUpdates } from '@/backend/endpoints/update-check';
 import { JobStatus } from '@/backend/db/schema/job';
 import { sendNotification } from '@/backend/utils/notification';
@@ -466,16 +465,6 @@ export const startServer = () => {
         },
       },
 
-      '/api/docker-hub/tags': {
-        async POST(req) {
-          const { image } = await req.json();
-          if (!image) {
-            return new Response('Image not specified', { status: 400 });
-          }
-
-          return Response.json(await findTagsMatchingImageDigest(image));
-        },
-      },
       '/api/auth/token': {
         async POST(req) {
           if (
@@ -577,6 +566,7 @@ export const startServer = () => {
           }
         },
       },
+      
       '/api/auth/metadata': {
         async GET() {
           if (!ENV_PUBLIC_OIDC_ISSUER_URI) {

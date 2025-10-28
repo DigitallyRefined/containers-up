@@ -77,7 +77,7 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
           const { value, done } = await reader.read();
           if (done) break;
           buffer += decoder.decode(value, { stream: true });
-          let lines = buffer.split('\n');
+          const lines = buffer.split('\n');
           buffer = lines.pop() || '';
           setLogs((prev) => [...prev, ...lines.filter(Boolean)]);
         }

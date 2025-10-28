@@ -159,7 +159,7 @@ const getImageDigest = async (options: RegistryOptions): Promise<string | null> 
   const authHeader = await getAuthHeader(options);
 
   // Docker Hub registry base URL
-  let baseURL = getRegistryBaseURL({ registry, registryHost });
+  const baseURL = getRegistryBaseURL({ registry, registryHost });
 
   const url = `${baseURL.replace(/\/$/, '')}/v2/${repository}/manifests/${tag}`;
 
@@ -205,7 +205,7 @@ export const getRemoteConfigDigest = async (
 
   const authHeader = await getAuthHeader(options);
 
-  let baseURL = getRegistryBaseURL({ registry, registryHost });
+  const baseURL = getRegistryBaseURL({ registry, registryHost });
   const url = `${baseURL.replace(/\/$/, '')}/v2/${repository}/manifests/${tag}`;
 
   const headers: Record<string, string> = {

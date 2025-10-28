@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrushCleaning, PencilIcon, SortDesc, Wifi, WifiSync } from 'lucide-react';
+import { BrushCleaning, PencilIcon, SortDesc, WifiSync } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useHosts, useTriggerImageUpdate } from '@/frontend/hooks/useApi';
 

@@ -4,7 +4,6 @@ import {
   GitPullRequest,
   RotateCcw,
   LogsIcon,
-  Tags,
   Check,
   CloudDownload,
 } from 'lucide-react';
@@ -108,12 +107,6 @@ export const Jobs = ({
     prUrl = `https://github.com/${repo}/pull/${prId}`;
   }
 
-  let shaUpdate = job.title.match(/Bump (.*) from .* to `(.*)`/);
-  let imageSha: string | undefined;
-  if (shaUpdate) {
-    imageSha = `${shaUpdate[1]}@sha256:${shaUpdate[2]}`;
-  }
-
   const renderTitleWithCode = (title: string) => {
     const parts = title.split(/`([^`]+)`/);
     return parts.map((part, index) => (index % 2 === 1 ? <code key={index}>{part}</code> : part));
@@ -184,21 +177,6 @@ export const Jobs = ({
                 </div>
               </DialogContent>
             </Dialog>
-          )}
-
-          {imageSha && (
-            <StreamingDialog
-              url='/api/docker-hub/tags'
-              method='POST'
-              body={{ image: imageSha }}
-              shouldRefreshOnClose={false}
-              dialogTitle='Find Docker tags'
-              tooltipText='Find Docker tags'
-            >
-              <Button variant='outline' size='sm' aria-label='Find Docker tags'>
-                <Tags className='size-4' />
-              </Button>
-            </StreamingDialog>
           )}
 
           {job.repoPr && (

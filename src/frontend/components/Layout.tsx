@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useContainerRefresh } from '@/frontend/components/Container/ContainerRefreshContext';
 import { Info, RefreshCw } from 'lucide-react';
 import { useContainers } from '@/frontend/hooks/useApi';
