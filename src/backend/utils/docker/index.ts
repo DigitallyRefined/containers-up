@@ -108,7 +108,9 @@ export const createDockerExec = (logger: Logger) => {
       action: 'restart' | 'stop' | 'start' | 'rm'
     ) => runStreamedCommand(`${getDockerCmd(context)} ${action} "${containerId}"`),
     streamContainerLogs: (context: string, containerId: string) =>
-      runStreamedCommand(`${getDockerCmd(context)} logs -n 500 -f "${containerId}"`),
+      runStreamedCommand(
+        `${getDockerCmd(context)} logs -n ${process.env.LOG_LINES || 500} -f "${containerId}"`
+      ),
     removeImage: (context: string, imageId: string) =>
       runStreamedCommand(`${getDockerCmd(context)} rmi "${imageId}"`),
     isInvalidComposeFile: async (host: Host, composeFile: string) =>
