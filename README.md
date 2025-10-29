@@ -131,7 +131,7 @@ networks:
 2. Create the network `docker network create traefik` and start the services `docker compose up -d`
 3. Once Traefik and Pocket ID are up and running, set up a [new user via Pocket ID](https://pocket-id.org/docs/setup/installation) and optionally add them to an admin group
 4. In the Pocket ID admin account create a new OIDC client and set up the callback URL as `https://containers-up.example.com/auth-callback` and optionally only allow the admin group
-5. In the Containers Up! `.env` file (see `.env.default`) uncomment the OIDC config section, add the URI of Pocket ID (without any trailing paths) then copy and paste the client ID and secret (JWKS certificate URL can be set manually if auto-discovery fails via `OIDC_JWKS_URI`)
+5. In the Containers Up! `.env` file (see `.env.default`) uncomment the OIDC config section, add the URI of Pocket ID (without any trailing paths) then copy and paste the client ID and secret (JWKS certificate URL can be set manually if auto-discovery fails via `OIDC_JWKS_URL`)
 6. After restarting the app, accessing `https://containers-up.example.com` should now require you to login
 </details>
 
@@ -190,3 +190,26 @@ jobs:
 9. Back on GitHub, go to **Settings > Webhooks > Add webhook**, add your public webhook domain and base URL (listed on the Containers Up! edit webhook info screen). Use the same random webhook secret from your repo settings, choose **Let me select individual events > Pull requests**
 
 If everything has been set up correctly the next time Dependabot creates a PR to update a `compose.yml` file an update will also appear on the Containers Up! dashboard.
+
+## Environment variables
+
+All environment variables are _optional_ and can be set in the `compose.yml` file via an `env_file: ./.env` or using the `environment:` array. Environment variables starting with `ENV_PUBLIC_` are also embedded in the public HTML output.
+
+| Key                           | Description                                                                                                                                                                                                                     | Default         |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| `COMPOSE_FILENAME`            | The default compose file to look for in the folder (usually `compose.yml` or `docker-compose.yml`)                                                                                                                              | `compose.yml`   |
+| `APP_URL`                     | App URL to used by links in notifications                                                                                                                                                                                       |                 |
+| `APPRISE_NOTIFICATION`        | Apprise is used for container update notifications. See Apprise syntax, see: [Apprise Supported Notifications syntax](https://github.com/caronc/apprise#supported-notifications)                                                |                 |
+| `SSH_CONTROL_PERSIST`         | How long SSH connections should persist after last request                                                                                                                                                                      | `20m`           |
+| `ENV_PUBLIC_OIDC_ISSUER_URI`  | OpenID Connect base URI                                                                                                                                                                                                         | Auth disabled   |
+| `ENV_PUBLIC_OIDC_CLIENT_ID`   | OpenID Connect client ID                                                                                                                                                                                                        |                 |
+| `OIDC_CLIENT_SECRET`          | OpenID Connect client secret                                                                                                                                                                                                    |                 |
+| `OIDC_JWKS_URL`               | _Optional_ OpenID Connect JSON Web Key Set (file URL)                                                                                                                                                                           | Auto discovered |
+| `MAX_QUEUE_TIME_MINS`         | Max time in minutes a queued update can wait for                                                                                                                                                                                | `10`            |
+| `LOG_LINES`                   | Number of previous log lines shown when viewing a containers logs                                                                                                                                                               | `500`           |
+| `DOCKER_USERNAME`             | [Docker Hub](https://hub.docker.com) username - used to check for image updates (use if [rate limited by Docker](https://docs.docker.com/docker-hub/usage/))                                                                    |                 |
+| `DOCKER_TOKEN`                | Docker Hub token                                                                                                                                                                                                                |                 |
+| `GHCR_USERNAME`               | [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) username - used to check for image updates on GHCR (use if rate limited by GitHub) |                 |
+| `GHCR_TOKEN`                  | GitHub Container Registry token                                                                                                                                                                                                 |                 |
+| `CONTAINER_REGISTRY_USERNAME` | Custom container image registry username                                                                                                                                                                                        |                 |
+| `CONTAINER_REGISTRY_TOKEN`    | Custom container image registry token                                                                                                                                                                                           |                 |

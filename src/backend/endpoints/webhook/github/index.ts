@@ -113,11 +113,12 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, hos
     `Received GitHub webhook: action='${action}' merged='${merged}' title='${title}'`
   );
 
+  const maxWaitTimeMinutes = parseInt(process.env.MAX_QUEUE_TIME_MINS || '10');
   let runningJobs = await jobDb.getRunningJobs(hostConfig.id);
   if (runningJobs.length > 0) {
-    logger.info(`Waiting up to 5 minutes for running jobs to complete`);
+    logger.info(`Waiting up to ${maxWaitTimeMinutes} minutes for running jobs to complete`);
     await jobDb.upsert({ ...jobData, status: JobStatus.queued });
-    const maxWaits = 60 * 5;
+    const maxWaits = 60 * maxWaitTimeMinutes;
     let waitCount = 0;
     while (waitCount < maxWaits) {
       await waitASecond();
@@ -130,7 +131,9 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, hos
     }
 
     if (runningJobs.length !== 0) {
-      logger.error(`Job cancelled: Waited 5 minutes for running jobs to complete`);
+      logger.error(
+        `Job cancelled: Waited ${maxWaitTimeMinutes} minutes for running jobs to complete`
+      );
       await jobDb.upsert({ ...jobData, status: JobStatus.failed });
       return;
     }

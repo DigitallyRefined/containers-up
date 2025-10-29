@@ -26,8 +26,8 @@ const dockerExec = createDockerExec(mainLogger);
 const ENV_PUBLIC_OIDC_ISSUER_URI = process.env.ENV_PUBLIC_OIDC_ISSUER_URI;
 const ENV_PUBLIC_OIDC_CLIENT_ID = process.env.ENV_PUBLIC_OIDC_CLIENT_ID;
 const OIDC_CLIENT_SECRET = process.env.OIDC_CLIENT_SECRET;
-const OIDC_JWKS_URI =
-  process.env.OIDC_JWKS_URI ||
+const OIDC_JWKS_URL =
+  process.env.OIDC_JWKS_URL ||
   (ENV_PUBLIC_OIDC_ISSUER_URI && join(ENV_PUBLIC_OIDC_ISSUER_URI, '.well-known/jwks.json'));
 
 const isOidcEnabled = Boolean(ENV_PUBLIC_OIDC_ISSUER_URI && ENV_PUBLIC_OIDC_CLIENT_ID);
@@ -35,11 +35,11 @@ const isOidcEnabled = Boolean(ENV_PUBLIC_OIDC_ISSUER_URI && ENV_PUBLIC_OIDC_CLIE
 const isDev = process.env.NODE_ENV !== 'production';
 
 let JWKS: ReturnType<typeof createRemoteJWKSet> | null = null;
-if (isOidcEnabled && OIDC_JWKS_URI) {
+if (isOidcEnabled && OIDC_JWKS_URL) {
   try {
-    JWKS = createRemoteJWKSet(new URL(OIDC_JWKS_URI));
+    JWKS = createRemoteJWKSet(new URL(OIDC_JWKS_URL));
   } catch (err) {
-    mainLogger.error(err, 'Invalid OIDC_JWKS_URI');
+    mainLogger.error(err, 'Invalid OIDC_JWKS_URL');
   }
 }
 
