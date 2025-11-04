@@ -38,8 +38,6 @@ services:
       traefik.http.routers.containers-up.tls.certresolver: production-cloudflare-dns
       traefik.http.routers.containers-up.service: containers-up
       traefik.http.services.containers-up.loadbalancer.server.port: 3000
-      traefik.http.middlewares.containers-up-headers.headers.customrequestheaders.X-Proxy-Key: ${API_PROXY_KEY}
-      traefik.http.routers.containers-up.middlewares: oidc-auth-admin-only@file,containers-up-headers@docker
 
       traefik.http.routers.containers-up-webhook.entrypoints: websecure
       traefik.http.routers.containers-up-webhook.rule: Host(`containers-up.example.com`) && PathPrefix(`/api/webhook`)

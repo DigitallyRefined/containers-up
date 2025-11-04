@@ -21,7 +21,6 @@ It provides a unified interface for managing containerized applications, and aut
 - 📩 **Notifications**: When a new Dependabot PR is created or a new container image is available (via [Apprise](https://github.com/caronc/apprise#supported-notifications))
 - 🌐 **Service Discovery**: Display web app icons and URLs (via existing Traefik labels)
 - 🧹 **Resource Management**: Cleanup of older images
-- 🏷️ **Tag Lookup**: Updates for images using SHA hashes can be reverse looked up to find their associated tags
 - 📱 **Responsive Design**: Works seamlessly on desktop and mobile devices
 - 🌓 **Modern UX**: Automatic light and dark mode (based on system settings)
 - 📊 **Job Tracking**: Monitor update jobs with detailed logs and retry capabilities
