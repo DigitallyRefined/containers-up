@@ -1,6 +1,6 @@
+import { Temporal } from '@js-temporal/polyfill';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { Temporal } from '@js-temporal/polyfill';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

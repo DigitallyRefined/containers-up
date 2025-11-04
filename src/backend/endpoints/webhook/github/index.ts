@@ -1,14 +1,13 @@
-import * as path from 'path';
-
-import { mainLogger, getLogs } from '@/backend/utils/logger';
-import { type Host } from '@/backend/db/schema/host';
-import { containersCleanup } from '@/backend/endpoints/containers-cleanup';
-import { createExec } from '@/backend/utils/exec';
+import * as path from 'node:path';
 import type { Logger } from 'pino';
-import { log as logDb } from '@/backend/db/log';
 import { job as jobDb } from '@/backend/db/job';
-import { isComposeFilename, waitASecond } from '@/backend/utils';
+import { log as logDb } from '@/backend/db/log';
+import type { Host } from '@/backend/db/schema/host';
 import { JobStatus } from '@/backend/db/schema/job';
+import { containersCleanup } from '@/backend/endpoints/containers-cleanup';
+import { isComposeFilename, waitASecond } from '@/backend/utils';
+import { createExec } from '@/backend/utils/exec';
+import { getLogs, mainLogger } from '@/backend/utils/logger';
 import { sendNotification } from '@/backend/utils/notification';
 
 export const baseEvent = 'github-webhook';
@@ -113,7 +112,7 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, hos
     `Received GitHub webhook: action='${action}' merged='${merged}' title='${title}'`
   );
 
-  const maxWaitTimeMinutes = parseInt(process.env.MAX_QUEUE_TIME_MINS || '10');
+  const maxWaitTimeMinutes = parseInt(process.env.MAX_QUEUE_TIME_MINS || '10', 10);
   let runningJobs = await jobDb.getRunningJobs(hostConfig.id);
   if (runningJobs.length > 0) {
     logger.info(`Waiting up to ${maxWaitTimeMinutes} minutes for running jobs to complete`);
@@ -161,7 +160,7 @@ export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, hos
       await pullRestartUpdatedContainers(folder, hostConfig, logger);
       containersCleanupLogs = await containersCleanup(hostConfig.name);
       jobId = await jobDb.upsert({ ...jobData, status: JobStatus.completed });
-    } catch (err: any) {
+    } catch {
       jobId = await jobDb.upsert({ ...jobData, status: JobStatus.failed });
     }
   } else if (action === 'closed') {

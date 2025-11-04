@@ -1,11 +1,11 @@
+import type { Host } from '@/backend/db/schema/host';
 import {
   Select,
-  SelectTrigger,
   SelectContent,
   SelectItem,
+  SelectTrigger,
   SelectValue,
 } from '@/frontend/components/ui/Select';
-import type { Host } from '@/backend/db/schema/host';
 
 interface HostSelectorProps {
   selected: string | undefined;
@@ -17,7 +17,7 @@ export const HostSelector = ({ selected, setSelected, hosts }: HostSelectorProps
   return (
     <Select value={selected || ''} onValueChange={setSelected}>
       <SelectTrigger>
-        <SelectValue placeholder='Select or add a host...' />
+        <SelectValue placeholder="Select or add a host..." />
       </SelectTrigger>
       <SelectContent>
         {hosts.map((host) => (
@@ -25,7 +25,7 @@ export const HostSelector = ({ selected, setSelected, hosts }: HostSelectorProps
             {host.name}
           </SelectItem>
         ))}
-        <SelectItem key='add' value='add'>
+        <SelectItem key="add" value="add">
           Add a new host...
         </SelectItem>
       </SelectContent>

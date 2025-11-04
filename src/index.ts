@@ -1,8 +1,8 @@
 import { startServer } from '@/backend';
 import { host } from '@/backend/db/host';
-import { checkHostForImageUpdates } from '@/backend/endpoints/update-check';
 import { checkIfDatabaseNeedsUpdating } from '@/backend/db/migrations';
 import { setCrontab } from '@/backend/endpoints/host';
+import { checkHostForImageUpdates } from '@/backend/endpoints/update-check';
 import { mainLogger } from '@/backend/utils/logger';
 
 if (process.argv.includes('--check-for-updates')) {

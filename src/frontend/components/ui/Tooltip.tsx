@@ -66,9 +66,9 @@ export function Tooltip({ content, children, ...rootProps }: TooltipProps) {
     >
       <RadixTooltip.Trigger asChild>{trigger}</RadixTooltip.Trigger>
       <RadixTooltip.Content
-        side='top'
-        align='center'
-        className='z-50 px-2 py-1 rounded bg-black text-white text-xs shadow'
+        side="top"
+        align="center"
+        className="z-50 px-2 py-1 rounded bg-black text-white text-xs shadow"
       >
         {content}
       </RadixTooltip.Content>

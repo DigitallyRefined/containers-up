@@ -1,25 +1,23 @@
-import { serve, type ErrorLike } from 'bun';
 import { join } from 'node:path';
-
-import index from '@/index.html';
-
+import { type ErrorLike, serve } from 'bun';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { host } from '@/backend/db/host';
+import { job as jobDb } from '@/backend/db/job';
+import { log as logDb } from '@/backend/db/log';
+import type { Host } from '@/backend/db/schema/host';
+import { JobStatus } from '@/backend/db/schema/job';
+import { findComposeFiles } from '@/backend/endpoints/compose';
 import { getContainers, type SortOptions } from '@/backend/endpoints/containers';
-import { githubWebhookHandler, type GitHubWebhookEvent } from '@/backend/endpoints/webhook/github';
 import { containersCleanup } from '@/backend/endpoints/containers-cleanup';
 import { deleteHost, getHosts, postHost, putHost } from '@/backend/endpoints/host';
-import { host } from '@/backend/db/host';
-import { log as logDb } from '@/backend/db/log';
 import { restartJob } from '@/backend/endpoints/jobs';
-import { job as jobDb } from '@/backend/db/job';
-import { Host } from '@/backend/db/schema/host';
+import { checkHostForImageUpdates } from '@/backend/endpoints/update-check';
+import { type GitHubWebhookEvent, githubWebhookHandler } from '@/backend/endpoints/webhook/github';
 import { isValidContainerIdOrName } from '@/backend/utils';
 import { createDockerExec } from '@/backend/utils/docker';
 import { mainLogger } from '@/backend/utils/logger';
-import { findComposeFiles } from '@/backend/endpoints/compose';
-import { checkHostForImageUpdates } from '@/backend/endpoints/update-check';
-import { JobStatus } from '@/backend/db/schema/job';
 import { sendNotification } from '@/backend/utils/notification';
-import { jwtVerify, createRemoteJWKSet } from 'jose';
+import index from '@/index.html';
 
 const dockerExec = createDockerExec(mainLogger);
 
@@ -566,7 +564,7 @@ export const startServer = () => {
           }
         },
       },
-      
+
       '/api/auth/metadata': {
         async GET() {
           if (!ENV_PUBLIC_OIDC_ISSUER_URI) {

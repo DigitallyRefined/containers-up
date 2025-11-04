@@ -1,6 +1,6 @@
 import { getDb } from '@/backend/db/connection';
-import { getDatetime } from '@/backend/utils';
 import { Log, logCreateTableSql } from '@/backend/db/schema/log';
+import { getDatetime } from '@/backend/utils';
 
 export const log = {
   create: async ({

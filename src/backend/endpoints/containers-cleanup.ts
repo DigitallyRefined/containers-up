@@ -1,7 +1,7 @@
-import { mainLogger, getLogs } from '@/backend/utils/logger';
-import { createExec } from '@/backend/utils/exec';
-import { getDockerCmd } from '@/backend/utils/docker';
 import { log as logDb } from '@/backend/db/log';
+import { getDockerCmd } from '@/backend/utils/docker';
+import { createExec } from '@/backend/utils/exec';
+import { getLogs, mainLogger } from '@/backend/utils/logger';
 
 export const containersCleanup = async (context: string) => {
   const event = `containers-cleanup ${context}`;

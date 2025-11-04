@@ -15,14 +15,14 @@ const getLogLevelInfo = (level: number) => {
 export const Logs = ({ log }: { log: Log }) => {
   const logLevelInfo = getLogLevelInfo(log.level);
   return (
-    <div className='text-xs p-2 rounded bg-muted'>
-      <div className='flex justify-between items-start mb-1'>
-        <span className='text-muted-foreground'>{new Date(`${log.time}Z`).toLocaleString()}</span>
+    <div className="text-xs p-2 rounded bg-muted">
+      <div className="flex justify-between items-start mb-1">
+        <span className="text-muted-foreground">{new Date(`${log.time}Z`).toLocaleString()}</span>
         <span className={`px-1 py-0.5 rounded text-xs ${logLevelInfo.color}`}>
           {logLevelInfo.label}
         </span>
       </div>
-      <pre className='whitespace-pre-wrap text-left break-all'>{log.msg}</pre>
+      <pre className="whitespace-pre-wrap text-left break-all">{log.msg}</pre>
     </div>
   );
 };

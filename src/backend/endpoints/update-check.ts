@@ -1,12 +1,12 @@
-import type { Host } from '@/backend/db/schema/host';
-import { getContainers } from '@/backend/endpoints/containers';
-import { createDockerExec } from '@/backend/utils/docker';
-import { getLogs, mainLogger } from '@/backend/utils/logger';
-import { log as logDb } from '@/backend/db/log';
 import { job as jobDb } from '@/backend/db/job';
+import { log as logDb } from '@/backend/db/log';
+import type { Host } from '@/backend/db/schema/host';
 import { JobStatus } from '@/backend/db/schema/job';
+import { getContainers } from '@/backend/endpoints/containers';
 import { batchPromises } from '@/backend/utils';
+import { createDockerExec } from '@/backend/utils/docker';
 import { getRemoteConfigDigestFromRef } from '@/backend/utils/docker/remote-image-digest';
+import { getLogs, mainLogger } from '@/backend/utils/logger';
 import { sendNotification } from '@/backend/utils/notification';
 
 const event = 'update-check';
@@ -19,7 +19,6 @@ const getSmallHash = (digest: string) => {
 };
 
 const getImagesToCheck = async (
-  selectedHostname: string,
   containers: Awaited<ReturnType<typeof getContainers>>,
   checkService?: string | undefined
 ) => {
@@ -63,11 +62,7 @@ export const checkHostForImageUpdates = async (
 
   const containers = await getContainers(selectedHost);
 
-  const { imagesToCheck, composedContainers } = await getImagesToCheck(
-    selectedHost.name,
-    containers,
-    checkService
-  );
+  const { imagesToCheck, composedContainers } = await getImagesToCheck(containers, checkService);
 
   const { os, arch } = await dockerExec.getServerPlatform(selectedHost.name);
 

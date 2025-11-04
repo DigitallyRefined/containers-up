@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useCallback, useState } from 'react';
+import type React from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
 
 type ContainerRefreshContextType = {
   refresh: () => void;

@@ -1,4 +1,4 @@
-import { Log } from '@/backend/db/schema/log';
+import type { Log } from '@/backend/db/schema/log';
 
 export enum JobStatus {
   running = 1,

@@ -1,12 +1,12 @@
-import { promises as fs } from 'fs';
-import os from 'os';
-import path from 'path';
+import { promises as fs } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 import { host as hostDb } from '@/backend/db/host';
-import { Host, hostSchema } from '@/backend/db/schema/host';
+import { type Host, hostSchema } from '@/backend/db/schema/host';
+import { getDockerCmd } from '@/backend/utils/docker';
 import { createExec } from '@/backend/utils/exec';
 import { mainLogger } from '@/backend/utils/logger';
-import { getDockerCmd } from '@/backend/utils/docker';
 
 const event = 'host';
 const logger = mainLogger.child({ event });
@@ -94,7 +94,7 @@ ${hostSshConfig}`,
 
   // Only create SSH key file if requested and we have a valid key
   if (createSshKey && host.sshKey && host.sshKey.trim() !== '') {
-    const sshKey = host.sshKey.endsWith('\n') ? host.sshKey : host.sshKey + '\n';
+    const sshKey = host.sshKey.endsWith('\n') ? host.sshKey : `${host.sshKey}\n`;
     await fs.writeFile(`${sshPath}/id_ed25519-${host.name}`, sshKey, { mode: 0o600 });
   }
 

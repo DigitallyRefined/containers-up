@@ -1,12 +1,11 @@
-import path from 'path';
-
-import { getIcon } from '@/backend/utils/icon';
-import { createDockerExec } from '@/backend/utils/docker';
-import type { Host } from '@/backend/db/schema/host';
-import { mainLogger } from '@/backend/utils/logger';
+import path from 'node:path';
 import { job as jobDb } from '@/backend/db/job';
-import { getTraefikUrl } from '@/backend/utils';
+import type { Host } from '@/backend/db/schema/host';
 import type { JobWithLogs } from '@/backend/db/schema/job';
+import { getTraefikUrl } from '@/backend/utils';
+import { createDockerExec } from '@/backend/utils/docker';
+import { getIcon } from '@/backend/utils/icon';
+import { mainLogger } from '@/backend/utils/logger';
 
 export type SortOptions = 'updates' | 'uptime' | 'name';
 
@@ -26,10 +25,7 @@ const getGroupedContainersRunning = async (context: string, sort: SortOptions) =
   const composedContainers = containers.filter(
     (container) =>
       container.Config.Labels &&
-      Object.prototype.hasOwnProperty.call(
-        container.Config.Labels,
-        'com.docker.compose.project.config_files'
-      )
+      Object.hasOwn(container.Config.Labels, 'com.docker.compose.project.config_files')
   );
 
   const composedIds = new Set(composedContainers.map((container) => container.Id));

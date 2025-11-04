@@ -1,5 +1,5 @@
-import { promisify } from 'util';
-import { exec, spawn } from 'child_process';
+import { exec, spawn } from 'node:child_process';
+import { promisify } from 'node:util';
 import type { Logger } from 'pino';
 
 const execAsync = promisify(exec);
@@ -57,7 +57,7 @@ export const createExec = (logger: Logger) => {
       fi
       export SSH_AUTH_SOCK=$(find /tmp -type s -name 'agent.*' 2>/dev/null | head -n1)
       if [ -n "$SSH_AUTH_SOCK" ]; then
-        export SSH_AGENT_PID=$(echo "$SSH_AUTH_SOCK" | grep -oE 'agent\.[0-9]+' | grep -oE '[0-9]+')
+        export SSH_AGENT_PID=$(echo "$SSH_AUTH_SOCK" | grep -oE 'agent.[0-9]+' | grep -oE '[0-9]+')
       fi
       if ! ssh-add ~/.ssh/id_ed25519-${hostName} > /dev/null 2>&1; then
         killall bun
@@ -77,7 +77,7 @@ export const createExec = (logger: Logger) => {
       try {
         await sshRun(hostName, host, `test -e "${path.replace(/"/g, '')}"`);
         return true;
-      } catch (error) {
+      } catch {
         return false;
       }
     },

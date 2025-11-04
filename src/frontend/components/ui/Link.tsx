@@ -13,8 +13,8 @@ export const Link = ({
   return (
     <a
       href={href}
-      target='_blank'
-      rel='noopener noreferrer'
+      target="_blank"
+      rel="noopener noreferrer"
       className={cn(
         'text-blue-500 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-100 underline inline-flex items-center gap-1',
         className

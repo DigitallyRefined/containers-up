@@ -1,7 +1,6 @@
 import type { Logger } from 'pino';
-
-import { createExec } from '@/backend/utils/exec';
 import type { Host } from '@/backend/db/schema/host';
+import { createExec } from '@/backend/utils/exec';
 
 export const getDockerCmd = (context: string) => `docker --context "${context}"`;
 

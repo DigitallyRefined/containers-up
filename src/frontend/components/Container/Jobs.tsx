@@ -1,29 +1,28 @@
-import { useEffect, useState } from 'react';
 import {
-  GitPullRequestArrow,
-  GitPullRequest,
-  RotateCcw,
-  LogsIcon,
   Check,
   CloudDownload,
+  GitPullRequest,
+  GitPullRequestArrow,
+  LogsIcon,
+  RotateCcw,
 } from 'lucide-react';
-import { useRestartJob, useUpdateJob } from '@/frontend/hooks/useApi';
-
+import { useEffect, useState } from 'react';
+import { JobStatus, type JobWithLogs } from '@/backend/db/schema/job';
+import { Logs } from '@/frontend/components/Container/Logs';
+import { Button } from '@/frontend/components/ui/Button';
 import { Card, CardContent } from '@/frontend/components/ui/Card';
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/frontend/components/ui/Dialog';
-import { Button } from '@/frontend/components/ui/Button';
-import { JobStatus, type JobWithLogs } from '@/backend/db/schema/job';
-import { getRelativeTime } from '@/frontend/lib/utils';
 import { Link } from '@/frontend/components/ui/Link';
-import { Logs } from '@/frontend/components/Container/Logs';
-import { Tooltip } from '@/frontend/components/ui/Tooltip';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
+import { Tooltip } from '@/frontend/components/ui/Tooltip';
+import { useRestartJob, useUpdateJob } from '@/frontend/hooks/useApi';
+import { getRelativeTime } from '@/frontend/lib/utils';
 
 export const RepoPrLink = ({
   repoPr,
@@ -40,13 +39,13 @@ export const RepoPrLink = ({
   if (url) {
     return (
       <Link href={url}>
-        <Icon className='' color={iconColor} size={16} />
+        <Icon className="" color={iconColor} size={16} />
         {repoPr}
       </Link>
     );
   }
   return (
-    <span className='inline-flex items-center gap-1'>
+    <span className="inline-flex items-center gap-1">
       <Icon color={iconColor} size={16} />
       {repoPr}
     </span>
@@ -101,7 +100,7 @@ export const Jobs = ({
   };
 
   let prUrl = '';
-  const prUrlMatch = job.repoPr?.match(/^([^\/]+\/[^#]+)#(\d+)$/);
+  const prUrlMatch = job.repoPr?.match(/^([^/]+\/[^#]+)#(\d+)$/);
   if (prUrlMatch) {
     const [, repo, prId] = prUrlMatch;
     prUrl = `https://github.com/${repo}/pull/${prId}`;
@@ -114,7 +113,7 @@ export const Jobs = ({
 
   return (
     <Card key={job.id}>
-      <CardContent className='p-2 sm:p-3 md:p-4 relative'>
+      <CardContent className="p-2 sm:p-3 md:p-4 relative">
         {/* Status badge in top right, blended into border */}
         <span
           className={`absolute -top-2 -right-1 text-xs px-2 py-1 rounded-xl z-10 border border-gray-200 shadow-sm ${getStatusColor(
@@ -124,8 +123,8 @@ export const Jobs = ({
         >
           {JobStatus[job.status]}
         </span>
-        <div className='my-2'>
-          <h5 className='font-medium text-sm text-center w-full break-all'>
+        <div className="my-2">
+          <h5 className="font-medium text-sm text-center w-full break-all">
             {prUrl ? (
               <Link href={prUrl}>{renderTitleWithCode(job.title)}</Link>
             ) : (
@@ -134,22 +133,22 @@ export const Jobs = ({
           </h5>
         </div>
         {job.repoPr && (
-          <p className='text-xs  mb-2'>
+          <p className="text-xs  mb-2">
             PR: <RepoPrLink repoPr={job.repoPr} url={prUrl} status={job.status} />
           </p>
         )}
-        <p className='text-xs '>{getRelativeTime(`${job.updated}Z`)}</p>
-        <div className='mt-3 w-full flex items-center justify-center gap-2'>
+        <p className="text-xs ">{getRelativeTime(`${job.updated}Z`)}</p>
+        <div className="mt-3 w-full flex items-center justify-center gap-2">
           {!job.repoPr && (
             <StreamingDialog
               url={`/api/host/${hostName}/compose`}
-              method='PUT'
+              method="PUT"
               body={{ composeFile, pullFirst: true, jobTitle: job.title, jobFolder: job.folder }}
-              dialogTitle='Pull image & restart'
-              tooltipText='Pull image & restart'
+              dialogTitle="Pull image & restart"
+              tooltipText="Pull image & restart"
             >
-              <Button variant='outline' size='sm' aria-label='Pull image & restart'>
-                <CloudDownload className='size-4' />
+              <Button variant="outline" size="sm" aria-label="Pull image & restart">
+                <CloudDownload className="size-4" />
               </Button>
             </StreamingDialog>
           )}
@@ -159,18 +158,18 @@ export const Jobs = ({
               open={openJobId === job.id}
               onOpenChange={(open) => setOpenJobId(open ? job.id : null)}
             >
-              <Tooltip content='View Logs'>
+              <Tooltip content="View Logs">
                 <DialogTrigger asChild>
-                  <Button variant='outline' size='sm' aria-label='View Logs'>
-                    <LogsIcon className='size-4' />
+                  <Button variant="outline" size="sm" aria-label="View Logs">
+                    <LogsIcon className="size-4" />
                   </Button>
                 </DialogTrigger>
               </Tooltip>
-              <DialogContent className='w-full max-w-screen-lg max-h-[90vh]'>
+              <DialogContent className="w-full max-w-screen-lg max-h-[90vh]">
                 <DialogHeader>
                   <DialogTitle>Logs for {job.title}</DialogTitle>
                 </DialogHeader>
-                <div className='space-y-2 max-h-[80vh] overflow-y-auto'>
+                <div className="space-y-2 max-h-[80vh] overflow-y-auto">
                   {job.logs.map((log, logIndex) => (
                     <Logs key={logIndex} log={log} />
                   ))}
@@ -180,10 +179,10 @@ export const Jobs = ({
           )}
 
           {job.repoPr && (
-            <Tooltip content='Restart Job'>
+            <Tooltip content="Restart Job">
               <Button
-                variant='outline'
-                size='sm'
+                variant="outline"
+                size="sm"
                 onClick={
                   job.status === JobStatus.open
                     ? () => {
@@ -197,9 +196,9 @@ export const Jobs = ({
                     : handleRestart
                 }
                 disabled={restartJobMutation.isPending}
-                aria-label='Restart Job'
+                aria-label="Restart Job"
               >
-                <RotateCcw className='size-4' />
+                <RotateCcw className="size-4" />
               </Button>
             </Tooltip>
           )}
@@ -207,12 +206,12 @@ export const Jobs = ({
           {job.status === JobStatus.running && (
             <StreamingDialog
               url={`/api/job/${job.id}`}
-              method='PATCH'
-              dialogTitle='Mark as completed'
-              tooltipText='Mark as completed'
+              method="PATCH"
+              dialogTitle="Mark as completed"
+              tooltipText="Mark as completed"
             >
-              <Button variant='outline' size='sm' aria-label='Mark as completed'>
-                <Check className='size-4' />
+              <Button variant="outline" size="sm" aria-label="Mark as completed">
+                <Check className="size-4" />
               </Button>
             </StreamingDialog>
           )}

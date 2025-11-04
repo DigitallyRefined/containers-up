@@ -1,11 +1,10 @@
-import { Button } from '@/frontend/components/ui/Button';
-import { LabeledInput } from '@/frontend/components/ui/Input';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { hostSchema, hostEditSchema } from '@/backend/db/schema/host';
+import { Info, MailQuestionMark, Save, Trash2 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import { useCreateHost, useUpdateHost } from '@/frontend/hooks/useApi';
+import { useForm } from 'react-hook-form';
+import type { z } from 'zod';
+import { hostEditSchema, hostSchema } from '@/backend/db/schema/host';
+import { Button } from '@/frontend/components/ui/Button';
 import {
   Dialog,
   DialogContent,
@@ -13,8 +12,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/frontend/components/ui/Dialog';
-import { Info, MailQuestionMark, Save, Trash2 } from 'lucide-react';
+import { LabeledInput } from '@/frontend/components/ui/Input';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
+import { useCreateHost, useUpdateHost } from '@/frontend/hooks/useApi';
 
 export const HostForm = ({
   onSuccess,
@@ -89,60 +89,60 @@ export const HostForm = ({
   const watchedName = watch('name');
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className='space-y-4 text-left'>
-      {initialValues?.id && <input type='hidden' {...register('id')} />}
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 text-left">
+      {initialValues?.id && <input type="hidden" {...register('id')} />}
       <LabeledInput
-        label='Name'
-        id='name'
-        type='text'
+        label="Name"
+        id="name"
+        type="text"
         required
-        placeholder='e.g. my-host'
+        placeholder="e.g. my-host"
         error={errors.name?.message}
         disabled={isSubmitting}
         {...register('name')}
       />
       <LabeledInput
-        label='SSH Hostname'
-        id='sshHost'
-        type='text'
+        label="SSH Hostname"
+        id="sshHost"
+        type="text"
         required
-        placeholder='e.g. user@example.com'
+        placeholder="e.g. user@example.com"
         error={errors.sshHost?.message}
         disabled={isSubmitting}
         {...register('sshHost')}
       />
       <LabeledInput
-        label='SSH Private Key'
-        id='sshKey'
-        type='textarea'
-        placeholder='Paste your SSH private key here'
+        label="SSH Private Key"
+        id="sshKey"
+        type="textarea"
+        placeholder="Paste your SSH private key here"
         error={errors.sshKey?.message}
         disabled={isSubmitting}
         {...register('sshKey')}
       />
       <LabeledInput
-        label='Working Folder'
-        id='workingFolder'
-        type='text'
-        placeholder='e.g. /home/user/stacks'
+        label="Working Folder"
+        id="workingFolder"
+        type="text"
+        placeholder="e.g. /home/user/stacks"
         error={errors.workingFolder?.message}
         disabled={isSubmitting}
         {...register('workingFolder')}
       />
       <LabeledInput
-        label='Exclude Folders regex'
-        id='excludeFolders'
-        type='text'
-        placeholder='e.g. (manual|test)'
+        label="Exclude Folders regex"
+        id="excludeFolders"
+        type="text"
+        placeholder="e.g. (manual|test)"
         error={errors.excludeFolders?.message}
         disabled={isSubmitting}
         {...register('excludeFolders')}
       />
       <LabeledInput
-        label='GitHub Repository'
-        id='repo'
-        type='text'
-        placeholder='e.g. user/repo (without https://github.com/)'
+        label="GitHub Repository"
+        id="repo"
+        type="text"
+        placeholder="e.g. user/repo (without https://github.com/)"
         error={errors.repo?.message}
         disabled={isSubmitting}
         {...register('repo')}
@@ -154,96 +154,96 @@ export const HostForm = ({
             <Dialog>
               <DialogTrigger asChild>
                 <Button
-                  variant='ghost'
-                  size='icon'
-                  aria-label='Show GitHub Webhook URL'
-                  className='cursor-pointer'
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Show GitHub Webhook URL"
+                  className="cursor-pointer"
                 >
-                  <Info className='size-4' />
+                  <Info className="size-4" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className='max-w-xs'>
+              <DialogContent className="max-w-xs">
                 <DialogHeader>
                   <DialogTitle>GitHub Webhook URL</DialogTitle>
                 </DialogHeader>
-                <div className='text-xs break-all'>
+                <div className="text-xs break-all">
                   <code>/api/webhook/github/host/{watchedName}</code>
                 </div>
-                <div className='mt-2 text-xs text-muted-foreground'>
+                <div className="mt-2 text-xs text-muted-foreground">
                   Use this URL as the webhook endpoint in your GitHub repository settings.
                 </div>
               </DialogContent>
             </Dialog>
           </>
         }
-        id='webhookSecret'
-        type='text'
-        placeholder='Shared GitHub webhook secret from settings page'
+        id="webhookSecret"
+        type="text"
+        placeholder="Shared GitHub webhook secret from settings page"
         error={errors.webhookSecret?.message}
         disabled={isSubmitting}
         {...register('webhookSecret')}
       />
       <LabeledInput
         label={
-          <span className='inline-flex items-center gap-1'>
+          <span className="inline-flex items-center gap-1">
             Check for image tag updates schedule (cronjob)
             <a
-              href='https://it-tools.tech/crontab-generator'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='ml-1 align-middle'
+              href="https://it-tools.tech/crontab-generator"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-1 align-middle"
             >
-              <Info className='size-4' />
+              <Info className="size-4" />
             </a>
           </span>
         }
-        id='cron'
-        type='text'
-        placeholder='e.g. 0 1 * * 6 (every Saturday at 1am)'
+        id="cron"
+        type="text"
+        placeholder="e.g. 0 1 * * 6 (every Saturday at 1am)"
         error={errors.cron?.message}
         disabled={isSubmitting}
         {...register('cron')}
       />
       <LabeledInput
-        label='Sort Order'
-        id='sortOrder'
-        type='number'
-        placeholder='e.g. 1 (lower numbers appear first)'
+        label="Sort Order"
+        id="sortOrder"
+        type="number"
+        placeholder="e.g. 1 (lower numbers appear first)"
         error={errors.sortOrder?.message}
         disabled={isSubmitting}
         {...register('sortOrder', {
           setValueAs: (v: string) => (!v ? undefined : parseInt(v)),
         })}
       />
-      <Button type='submit' className='w-full font-semibold mt-4' disabled={isSubmitting}>
-        <Save className='size-4' />
+      <Button type="submit" className="w-full font-semibold mt-4" disabled={isSubmitting}>
+        <Save className="size-4" />
         {isSubmitting ? 'Testing connection...' : 'Save host'}
       </Button>
       {initialValues && (
         <>
           <StreamingDialog
             url={`/api/host/${initialValues.name}/notification/test`}
-            method='POST'
-            dialogTitle='Test notification output'
+            method="POST"
+            dialogTitle="Test notification output"
           >
             <Button
-              variant='outline'
-              className='w-full font-semibold'
+              variant="outline"
+              className="w-full font-semibold"
               disabled={isSubmitting}
-              type='button'
+              type="button"
             >
-              <MailQuestionMark className='size-4' />
+              <MailQuestionMark className="size-4" />
               Send test notification
             </Button>
           </StreamingDialog>
           <Button
-            variant='outline'
-            className='w-full font-semibold text-destructive'
+            variant="outline"
+            className="w-full font-semibold text-destructive"
             disabled={isSubmitting}
             onClick={onDelete}
-            type='button'
+            type="button"
           >
-            <Trash2 className='size-4' />
+            <Trash2 className="size-4" />
             Delete host
           </Button>
         </>

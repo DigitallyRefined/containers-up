@@ -1,20 +1,15 @@
-import { useState, useEffect } from 'react';
-import { BrushCleaning, PencilIcon, SortDesc, WifiSync } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useHosts, useTriggerImageUpdate } from '@/frontend/hooks/useApi';
-
+import { BrushCleaning, PencilIcon, SortDesc, WifiSync } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { version } from '@/../package.json';
-import { Button } from '@/frontend/components/ui/Button';
-import { HostSelector } from '@/frontend/components/Host/Selector';
-import { HostDialog } from '@/frontend/components/Host/Dialog';
-import { ContainerLayout } from '@/frontend/components/Layout';
-import { ContainerRefreshProvider } from '@/frontend/components/Container/ContainerRefreshContext';
-import { useLocalStorage } from '@/frontend/hooks/useLocalStorage';
-import { Tooltip } from '@/frontend/components/ui/Tooltip';
-import { LogsDialog } from '@/frontend/components/Container/LogsDialog';
-import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
-import { ComposeFiles } from '@/frontend/components/Compose/Files';
 import type { Host } from '@/backend/db/schema/host';
+import { ComposeFiles } from '@/frontend/components/Compose/Files';
+import { ContainerRefreshProvider } from '@/frontend/components/Container/ContainerRefreshContext';
+import { LogsDialog } from '@/frontend/components/Container/LogsDialog';
+import { HostDialog } from '@/frontend/components/Host/Dialog';
+import { HostSelector } from '@/frontend/components/Host/Selector';
+import { ContainerLayout } from '@/frontend/components/Layout';
+import { Button } from '@/frontend/components/ui/Button';
 import {
   Select,
   SelectContent,
@@ -22,6 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/frontend/components/ui/Select';
+import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
+import { Tooltip } from '@/frontend/components/ui/Tooltip';
+import { useHosts, useTriggerImageUpdate } from '@/frontend/hooks/useApi';
+import { useLocalStorage } from '@/frontend/hooks/useLocalStorage';
 
 import '@/frontend/index.css';
 import '@/frontend/img/icon-containers-up.svg';
@@ -87,8 +86,8 @@ export function App() {
 
   if (hostsError) {
     return (
-      <div className='container mx-auto p-8 text-center relative'>
-        <p className='text-red-500'>
+      <div className="container mx-auto p-8 text-center relative">
+        <p className="text-red-500">
           Error loading data. Check OIDC configuration: {String(hostsError.message)}
         </p>
       </div>
@@ -97,14 +96,14 @@ export function App() {
 
   return (
     <ContainerRefreshProvider>
-      <div className='p-4 sm:p-6 md:p-8 text-center relative'>
-        <div className='relative pb-7'>
-          <h2 className='text-2xl font-bold mb-0 text-center'>
+      <div className="p-4 sm:p-6 md:p-8 text-center relative">
+        <div className="relative pb-7">
+          <h2 className="text-2xl font-bold mb-0 text-center">
             {hasSelectedHost ? `Containers for ${selectedHost}` : 'Containers Up!'}
           </h2>
         </div>
-        <div className='flex flex-col sm:flex-row gap-2 px-0 mx-0 w-full px-2 sm:px-4 md:px-6'>
-          <div className='flex items-center gap-2 w-1/2 md:w-1/3 min-w-75 sm:min-w-50 md:min-w-80'>
+        <div className="flex flex-col sm:flex-row gap-2 px-0 mx-0 w-full px-2 sm:px-4 md:px-6">
+          <div className="flex items-center gap-2 w-1/2 md:w-1/3 min-w-75 sm:min-w-50 md:min-w-80">
             <HostSelector
               selected={selectedHost}
               setSelected={(value) => {
@@ -125,31 +124,31 @@ export function App() {
               }}
               hosts={hosts}
             />
-            <Tooltip content='Edit Host'>
+            <Tooltip content="Edit Host">
               <Button
-                variant='outline'
-                size='sm'
+                variant="outline"
+                size="sm"
                 disabled={!selectedHost || selectedHost === 'add'}
                 onClick={openEditDialog}
-                aria-label='Edit Host'
+                aria-label="Edit Host"
               >
-                <PencilIcon className='size-4' />
+                <PencilIcon className="size-4" />
               </Button>
             </Tooltip>
           </div>
           {hasSelectedHost && (
-            <div className='flex items-center gap-2 w-1/2 md:w-2/3 md:justify-end'>
+            <div className="flex items-center gap-2 w-1/2 md:w-2/3 md:justify-end">
               <Select value={selectedSort || ''} onValueChange={setSelectedSort}>
-                <Tooltip content='Sort by'>
-                  <SelectTrigger className='min-w-30 max-w-30'>
-                    <SelectValue placeholder='Sort by...' />
+                <Tooltip content="Sort by">
+                  <SelectTrigger className="min-w-30 max-w-30">
+                    <SelectValue placeholder="Sort by..." />
                   </SelectTrigger>
                 </Tooltip>
                 <SelectContent>
                   {['Updates', 'Uptime', 'Name'].map((sort) => (
                     <SelectItem key={sort} value={sort.toLowerCase()}>
-                      <span className='inline-flex items-center gap-1'>
-                        <SortDesc className='size-4 inline' /> {sort}
+                      <span className="inline-flex items-center gap-1">
+                        <SortDesc className="size-4 inline" /> {sort}
                       </span>
                     </SelectItem>
                   ))}
@@ -158,18 +157,18 @@ export function App() {
 
               <StreamingDialog
                 url={`/api/host/${selectedHost}/containers`}
-                method='DELETE'
-                dialogTitle='Cleanup'
-                tooltipText='Cleanup'
+                method="DELETE"
+                dialogTitle="Cleanup"
+                tooltipText="Cleanup"
               >
-                <Button variant='outline' size='sm' aria-label='Cleanup'>
-                  <BrushCleaning className='size-4' />
+                <Button variant="outline" size="sm" aria-label="Cleanup">
+                  <BrushCleaning className="size-4" />
                 </Button>
               </StreamingDialog>
-              <Tooltip content='Check all image tags for updates'>
+              <Tooltip content="Check all image tags for updates">
                 <Button
-                  variant='outline'
-                  size='sm'
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     triggerImageUpdateMutation.mutate(
                       { hostName: selectedHost },
@@ -186,9 +185,9 @@ export function App() {
                     );
                   }}
                   disabled={triggerImageUpdateMutation.isPending}
-                  aria-label='Check all image tags for updates'
+                  aria-label="Check all image tags for updates"
                 >
-                  <WifiSync className='size-4' />
+                  <WifiSync className="size-4" />
                 </Button>
               </Tooltip>
               <LogsDialog selectedHost={selectedHost} />
@@ -210,7 +209,7 @@ export function App() {
           }}
         />
 
-        <div className='text-center text-xs text-gray-500'>Containers Up! - {version}</div>
+        <div className="text-center text-xs text-gray-500">Containers Up! - {version}</div>
       </div>
     </ContainerRefreshProvider>
   );

@@ -20,7 +20,7 @@ const AccordionTrigger = React.forwardRef<
       )}
       {...props}
     >
-      <ChevronDown className='mr-2 h-4 w-4 shrink-0 transition-transform duration-200 -rotate-90 group-data-[state=open]:rotate-0' />
+      <ChevronDown className="mr-2 h-4 w-4 shrink-0 transition-transform duration-200 -rotate-90 group-data-[state=open]:rotate-0" />
       <span>{children}</span>
     </RadixAccordion.Trigger>
   </RadixAccordion.Header>

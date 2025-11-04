@@ -1,5 +1,5 @@
-import { mainLogger } from '@/backend/utils/logger';
 import { createExec } from '@/backend/utils/exec';
+import { mainLogger } from '@/backend/utils/logger';
 
 const event = 'notification';
 const logger = mainLogger.child({ event });

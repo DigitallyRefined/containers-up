@@ -5,14 +5,14 @@
  * It is included in `src/index.html`.
  */
 
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
 import { TooltipProvider } from '@radix-ui/react-tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 import { App } from '@/frontend/App';
-import { ToastProvider } from '@/frontend/components/ui/Toast';
 import { handleCallbackIfPresent, isOidcEnabled } from '@/frontend/auth/oidc';
+import { ToastProvider } from '@/frontend/components/ui/Toast';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -36,8 +36,8 @@ const start = async () => {
     } catch (error) {
       console.error('OIDC callback error:', error);
       MainContent = () => (
-        <div className='container mx-auto p-8 text-center relative'>
-          <p className='text-red-500'>
+        <div className="container mx-auto p-8 text-center relative">
+          <p className="text-red-500">
             Error during authentication: {(error as Error)?.message || 'Check OIDC configuration'}
           </p>
         </div>

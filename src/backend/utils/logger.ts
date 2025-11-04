@@ -1,7 +1,6 @@
-import { Writable } from 'stream';
-
 import pino from 'pino';
 import pretty from 'pino-pretty';
+import { Writable } from 'stream';
 
 // In-memory log storage
 const logs: any[] = [];

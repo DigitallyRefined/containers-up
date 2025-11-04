@@ -1,5 +1,5 @@
 import { Database } from 'bun:sqlite';
-import { mkdir } from 'fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { pathExists } from '@/backend/utils';
 
 let db: Database | undefined;

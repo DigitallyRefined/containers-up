@@ -1,4 +1,4 @@
-import { UserManager, WebStorageStateStore, type User } from 'oidc-client-ts';
+import { type User, UserManager, WebStorageStateStore } from 'oidc-client-ts';
 import config from '../lib/config';
 
 type OidcConfig = {

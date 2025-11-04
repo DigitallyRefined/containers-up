@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useContainerRefresh } from '@/frontend/components/Container/ContainerRefreshContext';
 import { useQueryClient } from '@tanstack/react-query';
-import { authFetch } from '@/frontend/auth/oidc';
+import type React from 'react';
 import type { ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { authFetch } from '@/frontend/auth/oidc';
+import { useContainerRefresh } from '@/frontend/components/Container/ContainerRefreshContext';
 
 import {
   Dialog,
@@ -11,8 +12,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/frontend/components/ui/Dialog';
-import { Tooltip } from '@/frontend/components/ui/Tooltip';
 import { Spinner } from '@/frontend/components/ui/Spinner';
+import { Tooltip } from '@/frontend/components/ui/Tooltip';
 
 interface StreamingDialogProps {
   url: string;
@@ -109,17 +110,17 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
       ) : (
         <DialogTrigger asChild>{children}</DialogTrigger>
       )}
-      <DialogContent className='w-full max-w-screen-lg max-h-[90vh]'>
+      <DialogContent className="w-full max-w-screen-lg max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>{dialogTitle}</DialogTitle>
         </DialogHeader>
-        <div className='space-y-2 max-h-[80vh] overflow-y-auto text-left font-mono text-xs bg-muted p-2 rounded'>
-          {status === 'error' && <div className='text-destructive'>Failed to fetch data.</div>}
+        <div className="space-y-2 max-h-[80vh] overflow-y-auto text-left font-mono text-xs bg-muted p-2 rounded">
+          {status === 'error' && <div className="text-destructive">Failed to fetch data.</div>}
           {logs.map((line, idx) => (
             <div key={idx}>{line}</div>
           ))}
           {status === 'done' && logs.length === 0 && (
-            <div className='text-muted-foreground'>No output.</div>
+            <div className="text-muted-foreground">No output.</div>
           )}
           <div ref={logsEndRef} />
         </div>

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type * as React from 'react';
 
 import { cn } from '@/frontend/lib/utils';
 
@@ -9,7 +9,7 @@ function Input({ className, type, ...props }: React.ComponentProps<'input'>) {
   return (
     <input
       type={type}
-      data-slot='input'
+      data-slot="input"
       className={cn(
         commonClasses,
         'h-9 file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground',
@@ -52,7 +52,7 @@ export function LabeledInput(props: LabeledInputProps) {
     props;
   const labelContent = (
     <>
-      {label} {required && <span className='text-destructive'>*</span>}
+      {label} {required && <span className="text-destructive">*</span>}
     </>
   );
 
@@ -64,7 +64,7 @@ export function LabeledInput(props: LabeledInputProps) {
           {labelContent}
         </label>
         <Textarea id={id} className={className} {...textareaProps} aria-invalid={!!error} />
-        {error && <p className='text-destructive text-sm mt-1'>{error}</p>}
+        {error && <p className="text-destructive text-sm mt-1">{error}</p>}
       </div>
     );
   }
@@ -76,7 +76,7 @@ export function LabeledInput(props: LabeledInputProps) {
         {labelContent}
       </label>
       <Input id={id} className={className} {...inputProps} aria-invalid={!!error} />
-      {error && <p className='text-destructive text-sm mt-1'>{error}</p>}
+      {error && <p className="text-destructive text-sm mt-1">{error}</p>}
     </div>
   );
 }

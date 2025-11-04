@@ -14,7 +14,7 @@ export const host = {
 
     try {
       return db.query(`SELECT * FROM host ${defaultSortOrder}`).as(Host).all();
-    } catch (error) {
+    } catch {
       return [];
     }
   },

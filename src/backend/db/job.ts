@@ -1,7 +1,7 @@
 import { getDb, upsert } from '@/backend/db/connection';
-import { getDatetime } from '@/backend/utils';
 import { log as logDb } from '@/backend/db/log';
 import { Job, JobStatus, JobWithLogs, jobCreateTableSql } from '@/backend/db/schema/job';
+import { getDatetime } from '@/backend/utils';
 
 const addLogsToJobs = async (jobs: JobWithLogs[]) => {
   for (const job of jobs) {

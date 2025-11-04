@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { authFetch } from '@/frontend/auth/oidc';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Host } from '@/backend/db/schema/host';
+import { authFetch } from '@/frontend/auth/oidc';
 import type { ContainersResponse } from '@/frontend/components/Layout';
 
 // Query Keys

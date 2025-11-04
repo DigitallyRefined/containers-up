@@ -1,15 +1,15 @@
+import { useRef, useState } from 'react';
+import type { z } from 'zod';
+import type { hostSchema } from '@/backend/db/schema/host';
+import { HostForm } from '@/frontend/components/Host/Form';
+import { Button } from '@/frontend/components/ui/Button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/frontend/components/ui/Dialog';
-import { HostForm } from '@/frontend/components/Host/Form';
-import { z } from 'zod';
-import { hostSchema } from '@/backend/db/schema/host';
-import { useState, useRef } from 'react';
-import { Button } from '@/frontend/components/ui/Button';
 import { useDeleteHost } from '@/frontend/hooks/useApi';
 
 interface HostDialogProps {
@@ -81,7 +81,7 @@ export const HostDialog = ({
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>Configure host settings for container management.</DialogDescription>
           </DialogHeader>
-          <div className='py-4'>
+          <div className="py-4">
             <HostForm
               initialValues={initialValues}
               onSuccess={onSuccess}
@@ -130,15 +130,15 @@ export const HostDialog = ({
               This action will permanently delete the host and cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <div className='space-y-4'>
+          <div className="space-y-4">
             <p>Are you sure you want to delete the host "{deleteConfirm.name}"?</p>
-            <p className='text-sm text-muted-foreground'>This action cannot be undone.</p>
-            <div className='flex gap-2 justify-end'>
-              <Button variant='outline' onClick={() => setDeleteConfirm({ open: false, name: '' })}>
+            <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setDeleteConfirm({ open: false, name: '' })}>
                 Cancel
               </Button>
               <Button
-                variant='destructive'
+                variant="destructive"
                 onClick={confirmDelete}
                 disabled={deleteHostMutation.isPending}
               >

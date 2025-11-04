@@ -1,13 +1,13 @@
-import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
-import { Play, BrushCleaning } from 'lucide-react';
-import { useLocalStorage } from '@/frontend/hooks/useLocalStorage';
+import { BrushCleaning, Play } from 'lucide-react';
 import { useEffect } from 'react';
 import type { ContainersResponse } from '@/frontend/components/Layout';
 import {
+  AccordionContent,
   AccordionItem,
   AccordionTrigger,
-  AccordionContent,
 } from '@/frontend/components/ui/Accordion';
+import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
+import { useLocalStorage } from '@/frontend/hooks/useLocalStorage';
 
 const getRunningComposedFiles = (
   composedContainers?: ContainersResponse['composedContainers'],
@@ -47,29 +47,29 @@ export const PreviousRunningComposeFiles = ({
   if (previousRunningComposedFiles?.length === 0) return null;
 
   return (
-    <AccordionItem value='previousRunningComposedFiles'>
+    <AccordionItem value="previousRunningComposedFiles">
       <AccordionTrigger>Previously Running Composed Files</AccordionTrigger>
       <AccordionContent>
-        <ul className='mb-4'>
+        <ul className="mb-4">
           {previousRunningComposedFiles.map((file, idx) => (
-            <li key={file} className='pl-7'>
+            <li key={file} className="pl-7">
               <StreamingDialog
                 url={`/api/host/${selectedHost}/compose`}
-                method='POST'
+                method="POST"
                 body={{ composeFile: file }}
                 dialogTitle={`Run Compose File: ${file}`}
               >
-                <a href='#' className='text-sm flex items-center gap-1 hover:underline'>
-                  <Play className='size-4' style={{ minWidth: '1rem' }} />
+                <a href="#" className="text-sm flex items-center gap-1 hover:underline">
+                  <Play className="size-4" style={{ minWidth: '1rem' }} />
                   <BrushCleaning
                     onClick={(e) => {
                       e.preventDefault();
                       removeSeenComposedFile(file);
                     }}
-                    className='size-4'
+                    className="size-4"
                     style={{ minWidth: '1rem' }}
                   />
-                  <span className='text-sm'>{file}</span>
+                  <span className="text-sm">{file}</span>
                 </a>
               </StreamingDialog>
             </li>

@@ -1,5 +1,5 @@
-import { mainLogger } from '@/backend/utils/logger';
 import { createExec } from '@/backend/utils/exec';
+import { mainLogger } from '@/backend/utils/logger';
 
 const event = 'compose';
 const logger = mainLogger.child({ event });
@@ -10,7 +10,7 @@ export const findComposeFiles = async (hostName: string, host: string, workingFo
     throw new Error('Working folder is not configured', { cause: 'NO_WORKING_FOLDER' });
   }
 
-  const sshHost = `find ${workingFolder}/ -regextype posix-extended -regex ".*/(docker-)?compose\.ya?ml$" 2>/dev/null`;
+  const sshHost = `find ${workingFolder}/ -regextype posix-extended -regex ".*/(docker-)?compose.ya?ml$" 2>/dev/null`;
   const { stdout } = await exec.sshRun(hostName, host, sshHost, false);
   return stdout
     .split('\n')
