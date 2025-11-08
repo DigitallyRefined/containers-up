@@ -19,7 +19,7 @@ It provides a unified interface for managing containerized applications, and aut
   - 🗑️ Cleanup of unused images
 - 🔄 **Automated Updates**: Container updates via GitHub webhooks (via Dependabot pull requests) & image tag updates via a schedule
 - 📩 **Notifications**: When a new Dependabot PR is created or a new container image is available (via [Apprise](https://github.com/caronc/apprise#supported-notifications))
-- 🌐 **Service Discovery**: Display web app icons and URLs (via existing Traefik labels)
+- 🌐 **Service Discovery**: Display [web app icons](https://dashboardicons.com) and URLs (via existing Traefik labels)
 - 🧹 **Resource Management**: Cleanup of older images
 - 📱 **Responsive Design**: Works seamlessly on desktop and mobile devices
 - 🌓 **Modern UX**: Automatic light and dark mode (based on system settings)
@@ -38,7 +38,7 @@ The app can be started using the following `compose.yml`:
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:0.0.23
+    image: ghcr.io/digitallyrefined/containers-up:1.0.0
     restart: unless-stopped
     ports:
       - 3000:3000
@@ -62,7 +62,7 @@ Optional system wide configuration can be changed by copying `.env.default` to `
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:0.0.23
+    image: ghcr.io/digitallyrefined/containers-up:1.0.0
     restart: unless-stopped
     volumes:
       - ./containers-up/storage:/storage
@@ -186,7 +186,7 @@ jobs:
 
 8. Next edit your host in Containers Up! and add the working folder where your repo is checked out on your server and add your GitHub repo URL `user/repo` (without `https://github.com/`), generate a random webhook secret and click the ℹ️ info icon copy the base URL to the webhook
 
-9. Back on GitHub, go to **Settings > Webhooks > Add webhook**, add your public webhook domain and base URL (listed on the Containers Up! edit webhook info screen). Use the same random webhook secret from your repo settings, choose **Let me select individual events > Pull requests**
+9. Back on GitHub, go to **Settings > Webhooks > Add webhook**, add your public webhook domain and base **URL** (listed on the Containers Up! edit webhook info screen) and select `application/json` as the **Content Type**. Use the same random **webhook secret** from your repo settings and choose **Let me select individual events > Pull requests**
 
 If everything has been set up correctly the next time Dependabot creates a PR to update a `compose.yml` file an update will also appear on the Containers Up! dashboard.
 
