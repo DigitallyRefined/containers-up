@@ -78,7 +78,8 @@ export const handleCallbackIfPresent = async () => {
   }
 
   // Clean URL after callback
-  window.history.replaceState({}, document.title, '/');
+  const host = url.searchParams.get('host');
+  window.history.replaceState({}, document.title, `/${host ? `?host=${host}` : ''}`);
   return true;
 };
 
@@ -98,7 +99,7 @@ export async function init() {
   userManager = new UserManager({
     authority: config.get('OIDC_ISSUER_URI'),
     client_id: config.get('OIDC_CLIENT_ID'),
-    redirect_uri: `${window.location.origin}/auth-callback`,
+    redirect_uri: `${window.location.origin}/auth-callback${window.location.search}`,
     post_logout_redirect_uri: `${window.location.origin}/`,
     response_type: 'code',
     scope: 'openid',

@@ -38,7 +38,7 @@ The app can be started using the following `compose.yml`:
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:1.0.0
+    image: ghcr.io/digitallyrefined/containers-up:1.0.1
     restart: unless-stopped
     ports:
       - 3000:3000
@@ -62,7 +62,7 @@ Optional system wide configuration can be changed by copying `.env.default` to `
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:1.0.0
+    image: ghcr.io/digitallyrefined/containers-up:1.0.1
     restart: unless-stopped
     volumes:
       - ./containers-up/storage:/storage
@@ -129,7 +129,7 @@ networks:
 
 2. Create the network `docker network create traefik` and start the services `docker compose up -d`
 3. Once Traefik and Pocket ID are up and running, set up a [new user via Pocket ID](https://pocket-id.org/docs/setup/installation) and optionally add them to an admin group
-4. In the Pocket ID admin account create a new OIDC client and set up the callback URL as `https://containers-up.example.com/auth-callback` and optionally only allow the admin group
+4. In the Pocket ID admin account create a new OIDC client and set up the callback URL as `https://containers-up.example.com/auth-callback*` and optionally only allow the admin group
 5. In the Containers Up! `.env` file (see `.env.default`) uncomment the OIDC config section, add the URI of Pocket ID (without any trailing paths) then copy and paste the client ID and secret (JWKS certificate URL can be set manually if auto-discovery fails via `OIDC_JWKS_URL`)
 6. After restarting the app, accessing `https://containers-up.example.com` should now require you to login
 </details>
