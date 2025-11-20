@@ -137,7 +137,9 @@ export const Jobs = ({
             PR: <RepoPrLink repoPr={job.repoPr} url={prUrl} status={job.status} />
           </p>
         )}
-        <p className="text-xs ">{getRelativeTime(`${job.updated}Z`)}</p>
+        <Tooltip content={job.updated}>
+          <p className="text-xs ">{getRelativeTime(`${job.updated}Z`)}</p>
+        </Tooltip>
         <div className="mt-3 w-full flex items-center justify-center gap-2">
           {!job.repoPr && (
             <StreamingDialog

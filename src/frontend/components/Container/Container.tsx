@@ -4,6 +4,7 @@ import { Button } from '@/frontend/components/ui/Button';
 import { Card, CardContent } from '@/frontend/components/ui/Card';
 import { Link } from '@/frontend/components/ui/Link';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
+import { Tooltip } from '@/frontend/components/ui/Tooltip';
 import { getContainerStatusColor, getRelativeTime } from '@/frontend/lib/utils';
 
 export const Container = ({ service, hostName }: { service: Service; hostName: string }) => {
@@ -58,7 +59,9 @@ export const Container = ({ service, hostName }: { service: Service; hostName: s
           {service.State.Health?.Status && `(${service.State.Health.Status})`}
         </p>
         {service.State.StartedAt && (
-          <p className="text-xs">{getRelativeTime(service.State.StartedAt)}</p>
+          <Tooltip content={service.State.StartedAt.split('.')[0]}>
+            <p className="text-xs">{getRelativeTime(service.State.StartedAt)}</p>
+          </Tooltip>
         )}
         {service.urls && service.urls.length > 0 && (
           <div className="mt-2">

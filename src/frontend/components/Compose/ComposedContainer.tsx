@@ -150,7 +150,9 @@ export const ComposedContainer = ({
                     {service.State.Health?.Status && `(${service.State.Health.Status})`}
                   </p>
                   {service.State.StartedAt && (
-                    <p className="text-xs">{getRelativeTime(service.State.StartedAt)}</p>
+                    <Tooltip content={service.State.StartedAt.split('.')[0]}>
+                      <p className="text-xs">{getRelativeTime(service.State.StartedAt)}</p>
+                    </Tooltip>
                   )}
                   {service.urls && service.urls.length > 0 && (
                     <div className="mt-2">

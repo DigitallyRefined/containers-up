@@ -141,6 +141,20 @@ export const getContainers = async (selectedHost: Host, sort: SortOptions = 'upd
     });
   }
 
+  if (sort === 'uptime') {
+    composedContainersByComposeFileEntries.sort((a, b) => {
+      const getLatestStartedAt = (entry: (typeof composedContainersByComposeFileEntries)[0]) => {
+        if (!entry[1].services || entry[1].services.length === 0) return 0;
+        return Math.max(...entry[1].services.map((s) => new Date(s.State.StartedAt).getTime()));
+      };
+
+      const aLatest = getLatestStartedAt(a);
+      const bLatest = getLatestStartedAt(b);
+
+      return bLatest - aLatest;
+    });
+  }
+
   if (sort === 'name') {
     composedContainersByComposeFileEntries.sort();
   }

@@ -3,6 +3,7 @@ import type { Image } from '@/frontend/components/Layout';
 import { Button } from '@/frontend/components/ui/Button';
 import { Card, CardContent } from '@/frontend/components/ui/Card';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
+import { Tooltip } from '@/frontend/components/ui/Tooltip';
 import { getRelativeTime } from '@/frontend/lib/utils';
 
 type ContainerImageProps = { image: Image; hostName: string };
@@ -32,7 +33,9 @@ export const ContainerImage = ({ image, hostName }: ContainerImageProps) => {
           ID: <code>{imageId}</code>
         </p>
         <p className="text-xs">Size: {image.Size} MB</p>
-        <p className="text-xs">Created: {getRelativeTime(image.CreatedAt)}</p>
+        <Tooltip content={image.CreatedAt.split('.')[0]}>
+          <p className="text-xs">Created: {getRelativeTime(image.CreatedAt)}</p>
+        </Tooltip>
       </CardContent>
     </Card>
   );
