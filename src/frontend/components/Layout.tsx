@@ -201,6 +201,7 @@ export const ContainerLayout = ({
                     services={services}
                     host={selectedHost}
                     hideViewDependabot
+                    hideCheckForUpdates
                     openAccordionItems={openAccordionItems}
                     onAccordionChange={handleAccordionChange}
                   />

@@ -4,14 +4,12 @@ import type { Host } from '@/backend/db/schema/host';
 import { JobStatus } from '@/backend/db/schema/job';
 import { getContainers } from '@/backend/endpoints/containers';
 import { batchPromises } from '@/backend/utils';
-import { createDockerExec } from '@/backend/utils/docker';
-import { getRemoteConfigDigestFromRef } from '@/backend/utils/docker/remote-image-digest';
+import { getRemoteImageDigestFromRef } from '@/backend/utils/docker/remote-image-digest';
 import { getLogs, mainLogger } from '@/backend/utils/logger';
 import { sendNotification } from '@/backend/utils/notification';
 
 const event = 'update-check';
 const logger = mainLogger.child({ event });
-const dockerExec = createDockerExec(logger);
 
 const getSmallHash = (digest: string) => {
   const match = digest.split(':');
@@ -29,18 +27,23 @@ const getImagesToCheck = async (
   >();
 
   for (const [composeFile, { services }] of Object.entries(containers.composedContainers)) {
-    const containers = [];
+    const containersToCheck = [];
     for (const service of services) {
       if (checkService && checkService !== service.Config.Image) continue;
-      const digest = service.Image;
+
+      const matchingImage = containers.images?.find?.(
+        (image) => !image.Digest.includes('none') && image.ID === service.Image
+      );
+      const digest = matchingImage?.Digest || service.Image;
+
       if (digest) {
         imagesToCheck.set(digest, service.Config.Image);
       } else {
         logger.warn(`Not checking: "${service.Config.Image}" image does not have a digest`);
       }
-      containers.push({ name: service.Name, image: service.Config.Image, digest });
+      containersToCheck.push({ name: service.Name, image: service.Config.Image, digest });
     }
-    composedContainers.set(composeFile, containers);
+    composedContainers.set(composeFile, containersToCheck);
   }
 
   return { imagesToCheck, composedContainers };
@@ -64,15 +67,13 @@ export const checkHostForImageUpdates = async (
 
   const { imagesToCheck, composedContainers } = await getImagesToCheck(containers, checkService);
 
-  const { os, arch } = await dockerExec.getServerPlatform(selectedHost.name);
-
   const digests = await batchPromises(
     Array.from(imagesToCheck),
     2,
     async ([localDigest, imageName]) => {
       let remoteDigest = localDigest;
       try {
-        remoteDigest = await getRemoteConfigDigestFromRef(imageName, os, arch);
+        remoteDigest = await getRemoteImageDigestFromRef(imageName);
       } catch (err) {
         logger.error(
           err,

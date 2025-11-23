@@ -100,7 +100,9 @@ export const createDockerExec = (logger: Logger) => {
         )} ps -aq --no-trunc)`
       ),
     listImages: async (context: string) =>
-      runParsedDockerCommand(`${getDockerCmd(context)} images --no-trunc --format "{{json .}}"`),
+      runParsedDockerCommand(
+        `${getDockerCmd(context)} images --no-trunc --digests --format "{{json .}}"`
+      ),
     restartStopOrDeleteContainer: (
       context: string,
       containerId: string,
@@ -187,34 +189,6 @@ export const createDockerExec = (logger: Logger) => {
       const configDigest = result.stdout.trim();
       logger.debug({ configDigest }, `Local image config digest for "${image}"`);
       return configDigest;
-    },
-    getServerPlatform: async (context: string) => {
-      const { stdout, code } = await exec.run(
-        `${getDockerCmd(context)} version --format '{{json .Server}}'`,
-        false
-      );
-
-      if (code !== 0) {
-        logger.warn(
-          { code, stdout },
-          `Failed to get Docker server platform for context "${context}"`
-        );
-        return { os: 'linux', arch: 'amd64' };
-      }
-
-      try {
-        const server = JSON.parse(stdout.trim());
-        const os = server?.Os || server?.os;
-        const arch = server?.Arch || server?.arch;
-        if (!os || !arch) {
-          logger.warn({ server }, `Unexpected Docker server JSON for platform`);
-          return { os: 'linux', arch: 'amd64' };
-        }
-        return { os, arch };
-      } catch (err) {
-        logger.warn({ err, stdout }, `Failed to parse Docker server JSON`);
-        return { os: 'linux', arch: 'amd64' };
-      }
     },
     getRemoteImageDigest: async (selectedHost: Host, image: string) => {
       const { stdout, code } = await exec.sshRun(

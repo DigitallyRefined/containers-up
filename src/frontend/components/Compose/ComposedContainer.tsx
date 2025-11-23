@@ -18,6 +18,7 @@ interface ComposedContainerProps {
   jobs?: JobWithLogs[];
   host: Host;
   hideViewDependabot?: boolean;
+  hideCheckForUpdates?: boolean;
   openAccordionItems?: string[];
   onAccordionChange?: (value: string[]) => void;
 }
@@ -28,6 +29,7 @@ export const ComposedContainer = ({
   jobs,
   host,
   hideViewDependabot = false,
+  hideCheckForUpdates = false,
   openAccordionItems = [],
   onAccordionChange,
 }: ComposedContainerProps) => {
@@ -96,33 +98,35 @@ export const ComposedContainer = ({
                     onError={(e) => (e.currentTarget.style.display = 'none')}
                   />
                   <div className="absolute top-2 right-2 flex gap-1 z-10">
-                    <Tooltip content="Check for image tag updates">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          triggerImageUpdateMutation.mutate(
-                            { hostName, checkService: service.Config.Image },
-                            {
-                              onSuccess: () => {
-                                (window as any).showToast(
-                                  'Checking for image tag updates, see logs'
-                                );
-                              },
-                              onError: (error) => {
-                                (window as any).showToast(
-                                  error.message || 'Failed to trigger image tag update check'
-                                );
-                              },
-                            }
-                          );
-                        }}
-                        disabled={triggerImageUpdateMutation.isPending}
-                        aria-label="Check for image tag updates"
-                      >
-                        <WifiSync className="size-4" />
-                      </Button>
-                    </Tooltip>
+                    {!hideCheckForUpdates && (
+                      <Tooltip content="Check for image tag updates">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            triggerImageUpdateMutation.mutate(
+                              { hostName, checkService: service.Config.Image },
+                              {
+                                onSuccess: () => {
+                                  (window as any).showToast(
+                                    'Checking for image tag updates, see logs'
+                                  );
+                                },
+                                onError: (error) => {
+                                  (window as any).showToast(
+                                    error.message || 'Failed to trigger image tag update check'
+                                  );
+                                },
+                              }
+                            );
+                          }}
+                          disabled={triggerImageUpdateMutation.isPending}
+                          aria-label="Check for image tag updates"
+                        >
+                          <WifiSync className="size-4" />
+                        </Button>
+                      </Tooltip>
+                    )}
                     <StreamingDialog
                       url={`/api/host/${hostName}/container/${service.Name.replaceAll(
                         '/',

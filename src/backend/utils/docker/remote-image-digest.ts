@@ -1,8 +1,5 @@
-type Registry = 'dockerhub' | 'generic';
-
 interface RegistryOptions {
-  registry: Registry;
-  registryHost: string; // e.g. 'docker.io', 'ghcr.io', 'registry.example.com'
+  registry: string;
   repository: string;
   tag: string;
   username?: string;
@@ -10,83 +7,66 @@ interface RegistryOptions {
 }
 
 /**
- * Parse Docker image reference string into registry host, repository, image, tag, and full repo string.
+ * Parses a docker image string into its components.
+ * Handles formats like:
+ * - nginx -> library/nginx:latest (index.docker.io)
+ * - nginx:alpine -> library/nginx:alpine (index.docker.io)
+ * - myregistry.com/myimage:tag
+ * - myuser/myimage
  */
-const parseImageReference = (
-  ref: string
-): {
-  registryHost: string;
-  repository: string;
-  tag: string;
-} => {
-  let tag = 'latest';
-  let name = ref;
-
-  const tagIndex = ref.lastIndexOf(':');
-  const slashIndex = ref.indexOf('/');
-
-  // Only treat colon as tag separator if it comes after last slash
-  if (tagIndex > -1 && tagIndex > slashIndex) {
-    tag = ref.substring(tagIndex + 1);
-    name = ref.substring(0, tagIndex);
-  }
-
-  // Default registry host
-  let registryHost = 'docker.io';
-  let path = name;
-
-  const firstPart = name.split('/')[0];
-  if (firstPart.includes('.') || firstPart.includes(':') || firstPart === 'localhost') {
-    registryHost = firstPart;
-    path = name.substring(firstPart.length + 1);
-  }
-
-  const parts = path.split('/');
+const parseImageString = (imageStr: string) => {
+  let registry = 'index.docker.io';
   let repository = '';
-  let image = '';
+  let tag = 'latest';
 
-  if (registryHost === 'docker.io') {
-    // Official Docker images default to "library"
-    if (parts.length === 1) {
-      repository = 'library';
-      image = parts[0];
-    } else {
-      repository = parts[0];
-      image = parts.slice(1).join('/');
-    }
-  } else {
-    if (parts.length === 1) {
-      repository = '';
-      image = parts[0];
-    } else {
-      repository = parts[0];
-      image = parts.slice(1).join('/');
-    }
+  // Check for tag
+  const lastColonIndex = imageStr.lastIndexOf(':');
+  const slashIndex = imageStr.lastIndexOf('/');
+
+  // If colon is after the last slash, it's a tag (avoids port numbers in registry)
+  if (lastColonIndex > slashIndex && lastColonIndex !== -1) {
+    tag = imageStr.substring(lastColonIndex + 1);
+    imageStr = imageStr.substring(0, lastColonIndex);
   }
 
-  const fullRepo = repository ? `${repository}/${image}` : image;
+  // Check for registry
+  const parts = imageStr.split('/');
+  if (
+    parts.length > 1 &&
+    (parts[0].includes('.') || parts[0].includes(':') || parts[0] === 'localhost')
+  ) {
+    registry = parts[0];
+    parts.shift();
+  }
 
-  return { registryHost, repository: fullRepo, tag };
+  repository = parts.join('/');
+
+  // Normalize Docker Hub registry for API calls
+  if (registry === 'docker.io') {
+    registry = 'index.docker.io';
+  }
+
+  // Handle official library images on Docker Hub
+  if (registry === 'index.docker.io' && !repository.includes('/')) {
+    repository = `library/${repository}`;
+  }
+
+  return { registry, repository, tag };
 };
 
 /**
  * Build auth-capable registry options from an image reference and environment.
  */
 const createRegistryOptionsFromRef = (imageRef: string): RegistryOptions => {
-  const { registryHost, repository, tag } = parseImageReference(imageRef);
-
-  const registry: Registry =
-    registryHost === 'docker.io' || registryHost === 'registry-1.docker.io'
-      ? 'dockerhub'
-      : 'generic';
+  const { registry, repository, tag } = parseImageString(imageRef);
 
   let username: string | undefined;
   let token: string | undefined;
 
-  if (registry === 'dockerhub') {
+  if (registry.includes('docker.io')) {
     username = process.env.DOCKER_USERNAME;
     token = process.env.DOCKER_TOKEN;
-  } else if (registryHost === 'ghcr.io') {
+  } else if (registry.includes('ghcr.io')) {
     username = process.env.GHCR_USERNAME;
     token = process.env.GHCR_TOKEN;
   }
@@ -98,7 +78,6 @@ const createRegistryOptionsFromRef = (imageRef: string): RegistryOptions => {
 
   return {
     registry,
-    registryHost,
     repository,
     tag,
     username,
@@ -107,192 +86,98 @@ const createRegistryOptionsFromRef = (imageRef: string): RegistryOptions => {
 };
 
 /**
- * Compute the registry base URL for API requests.
+ * Fetches the auth token for a given scope and realm.
  */
-const getRegistryBaseURL = (options: Pick<RegistryOptions, 'registry' | 'registryHost'>) =>
-  options.registry === 'dockerhub'
-    ? 'https://registry-1.docker.io'
-    : `https://${options.registryHost}`;
+const getAuthToken = async (
+  realm: string,
+  service: string,
+  scope: string,
+  { username, token }: Partial<RegistryOptions>
+) => {
+  try {
+    const encodedAuth =
+      username && token ? Buffer.from(`${username}:${token}`).toString('base64') : null;
+    const headers = encodedAuth ? { Authorization: `Basic ${encodedAuth}` } : {};
+
+    const url = `${realm}?service=${service}&scope=${scope}`;
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.token || data.access_token;
+  } catch (error) {
+    throw new Error(`Failed to get auth token: ${error.message}`);
+  }
+};
 
 /**
- * Get authentication header string for the registry.
+ * Fetches the manifest digest for a given image.
  */
-const getAuthHeader = async (options: RegistryOptions): Promise<string | null> => {
-  const { registry, registryHost, repository, username, token } = options;
+const getRemoteImageDigest = async ({
+  registry,
+  repository,
+  tag,
+  username,
+  token,
+}: RegistryOptions) => {
+  // Determine base URL
+  const protocol = registry.startsWith('http') ? '' : 'https://';
+  const baseUrl = `${protocol}${registry}`;
+
+  // Docker Hub specific handling for URL
+  const registryApiUrl = registry.includes('docker.io') ? 'https://registry-1.docker.io' : baseUrl;
+
+  const manifestUrl = `${registryApiUrl}/v2/${repository}/manifests/${tag}`;
 
   const encodedAuth =
     username && token ? Buffer.from(`${username}:${token}`).toString('base64') : null;
 
-  // Docker Hub token endpoint
-  const headers = encodedAuth
-    ? {
-        Authorization: `Basic ${encodedAuth}`,
-      }
-    : {};
-
-  let baseUrl = `https://${registryHost}/token?service=${registryHost}`;
-  if (registry === 'dockerhub') {
-    baseUrl = 'https://auth.docker.io/token?service=registry.docker.io';
-  }
-  const url = `${baseUrl}&scope=repository:${repository}:pull`;
-  const res = await fetch(url, {
-    headers: { ...headers, Accept: 'application/json' },
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(
-      `Auth token fetch failed: ${url} ${res.status} ${res.statusText} ${JSON.stringify(data)}`
-    );
-  }
-
-  return `Bearer ${data.token}`;
-};
-
-/**
- * Fetch the image manifest digest with a HEAD request.
- */
-const getImageDigest = async (options: RegistryOptions): Promise<string | null> => {
-  const { registry, registryHost, repository, tag } = options;
-
-  const authHeader = await getAuthHeader(options);
-
-  // Docker Hub registry base URL
-  const baseURL = getRegistryBaseURL({ registry, registryHost });
-
-  const url = `${baseURL.replace(/\/$/, '')}/v2/${repository}/manifests/${tag}`;
-
-  const headers: Record<string, string> = {
-    Accept: 'application/vnd.docker.distribution.manifest.v2+json',
+  const headers = {
+    ...(encodedAuth ? { Authorization: `Basic ${encodedAuth}` } : {}),
+    Accept:
+      'application/vnd.docker.distribution.manifest.v2+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.manifest.v1+json, application/vnd.oci.image.index.v1+json',
   };
 
-  if (authHeader) {
-    headers['Authorization'] = authHeader;
-  }
+  // First attempt (might fail with 401)
+  let response = await fetch(manifestUrl, { method: 'HEAD', headers });
 
-  try {
-    const res = await fetch(url, {
-      method: 'HEAD',
-      headers,
-    });
+  if (response.status === 401) {
+    // Handle Authentication
+    const authHeader = response.headers.get('www-authenticate');
+    if (authHeader) {
+      const realmMatch = authHeader.match(/realm="([^"]+)"/);
+      const serviceMatch = authHeader.match(/service="([^"]+)"/);
+      const scopeMatch = authHeader.match(/scope="([^"]+)"/);
 
-    if (!res.ok) {
-      throw new Error(`Failed to fetch manifest HEAD: ${res.status} ${res.statusText}`);
-    }
-
-    const digest = res.headers.get('docker-content-digest');
-    if (!digest) {
-      throw new Error('docker-content-digest header not found');
-    }
-
-    return digest;
-  } catch (err) {
-    throw new Error('Error fetching manifest digest', { cause: err });
-  }
-};
-
-/**
- * Fetch the config digest (image ID basis) for a specific platform.
- * Falls back to single-manifest images by returning their config.digest directly.
- */
-export const getRemoteConfigDigest = async (
-  options: RegistryOptions,
-  platformOs: string = 'linux',
-  platformArch: string = 'amd64'
-): Promise<string | null> => {
-  const { registry, registryHost, repository, tag } = options;
-
-  const authHeader = await getAuthHeader(options);
-
-  const baseURL = getRegistryBaseURL({ registry, registryHost });
-  const url = `${baseURL.replace(/\/$/, '')}/v2/${repository}/manifests/${tag}`;
-
-  const headers: Record<string, string> = {
-    // Support Docker and OCI media types
-    Accept: [
-      'application/vnd.docker.distribution.manifest.list.v2+json',
-      'application/vnd.oci.image.index.v1+json',
-      'application/vnd.docker.distribution.manifest.v2+json',
-      'application/vnd.oci.image.manifest.v1+json',
-    ].join(', '),
-  };
-
-  if (authHeader) headers['Authorization'] = authHeader;
-
-  try {
-    const res = await fetch(url, { method: 'GET', headers });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Failed to fetch manifest: ${res.status} ${res.statusText} ${text}`);
-    }
-
-    const contentType = res.headers.get('content-type') || '';
-    const manifestJson = await res.json();
-
-    const isIndex =
-      contentType.includes('application/vnd.docker.distribution.manifest.list.v2+json') ||
-      contentType.includes('application/vnd.oci.image.index.v1+json') ||
-      Array.isArray((manifestJson as any).manifests);
-
-    // If it's a manifest list / index, select the matching platform digest
-    if (isIndex) {
-      const manifests = (manifestJson as any).manifests as Array<any>;
-      const match = manifests?.find(
-        (m) => m.platform?.os === platformOs && m.platform?.architecture === platformArch
-      );
-      const manifestDigest = match?.digest as string | undefined;
-      if (!manifestDigest) {
-        throw new Error(
-          `No manifest found for platform ${platformOs}/${platformArch} in ${repository}:${tag}`
-        );
+      if (realmMatch && serviceMatch && scopeMatch) {
+        const bearerToken = await getAuthToken(realmMatch[1], serviceMatch[1], scopeMatch[1], {
+          username,
+          token,
+        });
+        headers['Authorization'] = `Bearer ${bearerToken}`;
+        // Retry with token
+        response = await fetch(manifestUrl, { method: 'HEAD', headers });
       }
-
-      // Fetch the specific platform manifest and extract its config.digest
-      const manifestUrl = `${baseURL.replace(
-        /\/$/,
-        ''
-      )}/v2/${repository}/manifests/${manifestDigest}`;
-      const manifestHeaders: Record<string, string> = {
-        Accept:
-          'application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.manifest.v1+json',
-      };
-      if (authHeader) manifestHeaders['Authorization'] = authHeader;
-
-      const manifestRes = await fetch(manifestUrl, { method: 'GET', headers: manifestHeaders });
-      if (!manifestRes.ok) {
-        const text = await manifestRes.text();
-        throw new Error(`Failed to fetch platform manifest: ${manifestRes.status} ${text}`);
-      }
-      const manifestBody = await manifestRes.json();
-      const configDigest = (manifestBody as any)?.config?.digest as string | undefined;
-      if (!configDigest) throw new Error('config.digest not found on platform manifest');
-      return configDigest;
     }
-
-    // Single-arch manifest: return its config.digest directly
-    const configDigest = (manifestJson as any)?.config?.digest as string | undefined;
-    if (!configDigest) throw new Error('config.digest not found on image manifest');
-    return configDigest;
-  } catch (err) {
-    throw new Error('Error fetching remote config digest', { cause: err as any });
   }
+
+  if (response.status === 404) {
+    throw new Error(`Image not found: ${repository}:${tag}`);
+  }
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch manifest: ${response.status} ${response.statusText}`);
+  }
+
+  const digest = response.headers.get('docker-content-digest');
+  if (!digest) {
+    throw new Error('No Docker-Content-Digest header found in response');
+  }
+  return digest;
 };
 
-/**
- * Main function: parse image ref, determine registry, pick token from env,
- * and fetch digest.
- */
-export const getImageDigestFromRef = async (imageRef: string): Promise<string | null> => {
+export const getRemoteImageDigestFromRef = async (imageRef: string): Promise<string | null> => {
   const options = createRegistryOptionsFromRef(imageRef);
-  return getImageDigest(options);
-};
-
-export const getRemoteConfigDigestFromRef = async (
-  imageRef: string,
-  platformOs: string = 'linux',
-  platformArch: string = 'amd64'
-): Promise<string | null> => {
-  const options = createRegistryOptionsFromRef(imageRef);
-  return getRemoteConfigDigest(options, platformOs, platformArch);
+  return getRemoteImageDigest(options);
 };
