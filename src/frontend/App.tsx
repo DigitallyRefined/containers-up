@@ -209,7 +209,14 @@ export function App() {
           }}
         />
 
-        <div className="text-center text-xs text-gray-500">Containers Up! - {version}</div>
+        <a
+          href="https://github.com/DigitallyRefined/containers-up"
+          target="_blank"
+          rel="noopener"
+          className="text-center text-xs text-gray-500"
+        >
+          Containers Up! - {version}
+        </a>
       </div>
     </ContainerRefreshProvider>
   );

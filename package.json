@@ -1,6 +1,14 @@
 {
-  "name": "bun-react-template",
-  "version": "1.2.0",
+  "name": "containers-up",
+  "version": "1.2.1",
+  "description": "Containers Up! a web based platform designed to manage and update containers",
+  "author": "DigitallyRefined",
+  "license": "ISC",
+  "homepage": "https://github.com/DigitallyRefined/containers-up#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DigitallyRefined/containers-up.git"
+  },
   "private": true,
   "type": "module",
   "main": "src/index.ts",
@@ -22,23 +30,23 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-toast": "^1.2.15",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@tanstack/react-query": "^5.90.10",
-    "@tanstack/react-query-devtools": "^5.91.0",
+    "@tanstack/react-query": "^5.90.11",
+    "@tanstack/react-query-devtools": "^5.91.1",
     "bun-plugin-tailwind": "^0.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "jose": "^6.1.2",
+    "jose": "^6.1.3",
     "lucide-react": "^0.555.0",
     "oidc-client-ts": "^3.4.1",
     "pino": "^10.1.0",
-    "pino-pretty": "^13.1.2",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "react-hook-form": "^7.66.1",
+    "pino-pretty": "^13.1.3",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "react-hook-form": "^7.68.0",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.17",
     "tailwindcss-animate": "^1.0.7",
-    "zod": "^4.1.12"
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.8",
@@ -46,7 +54,7 @@
     "@types/bun": "^1.3.3",
     "@types/pino": "^7.0.5",
     "@types/pino-pretty": "^5.0.0",
-    "@types/react": "^19.2.6",
+    "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3"
   }
 }
