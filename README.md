@@ -1,8 +1,8 @@
 # Containers Up!
 
 [![Build and push workflow](https://github.com/DigitallyRefined/containers-up/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/DigitallyRefined/containers-up/actions/workflows/build-and-push.yml)
-[![Container registry](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdigitallyrefined.github.io%2Fbackage%2FDigitallyRefined%2Fcontainers-up%2Fcontainers-up.json&query=%24.downloads&label=Pulls)](https://github.com/DigitallyRefined/containers-up/pkgs/container/containers-up)
-[![Container registry](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdigitallyrefined.github.io%2Fbackage%2FDigitallyRefined%2Fcontainers-up%2Fcontainers-up.json&query=%24.downloads_month&label=Pulls%20per%20month)](https://github.com/DigitallyRefined/containers-up/pkgs/container/containers-up)
+[![Container registry](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fipitio.github.io%2Fbackage%2FDigitallyRefined%2Fcontainers-up%2Fcontainers-up.json&query=%24.downloads&label=Pulls)](https://github.com/DigitallyRefined/containers-up/pkgs/container/containers-up)
+[![Container registry](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fipitio.github.io%2Fbackage%2FDigitallyRefined%2Fcontainers-up%2Fcontainers-up.json&query=%24.downloads_month&label=Pulls%20per%20month)](https://github.com/DigitallyRefined/containers-up/pkgs/container/containers-up)
 
 Containers Up! is a web-based container management platform designed to simplify the administration of containers across multiple remote hosts.
 
