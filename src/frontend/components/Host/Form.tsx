@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Info, MailQuestionMark, Save, Trash2 } from 'lucide-react';
-import { useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useMemo, useRef } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import type { z } from 'zod';
 import { hostEditSchema, hostSchema } from '@/backend/db/schema/host';
 import { Button } from '@/frontend/components/ui/Button';
@@ -13,6 +13,13 @@ import {
   DialogTrigger,
 } from '@/frontend/components/ui/Dialog';
 import { LabeledInput } from '@/frontend/components/ui/Input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/frontend/components/ui/Select';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 import { useCreateHost, useUpdateHost } from '@/frontend/hooks/useApi';
 
@@ -39,7 +46,7 @@ export const HostForm = ({
   const createHostMutation = useCreateHost();
   const updateHostMutation = useUpdateHost();
 
-  const onSubmit = async (data: HostForm | HostEditForm) => {
+  const onSubmit = (data: HostForm | HostEditForm) => {
     const mutation = initialValues ? updateHostMutation : createHostMutation;
 
     mutation.mutate(data, {
@@ -67,24 +74,38 @@ export const HostForm = ({
     onDeleteConfirm?.({ open: true, name: initialValues.name });
   };
 
+  const schema = useMemo(() => (initialValues ? hostEditSchema : hostSchema), [initialValues]);
+  const defaultValues = useMemo(
+    () => ({
+      name: '',
+      sshHost: '',
+      sshKey: '',
+      ...normalizeNulls(initialValues),
+      repoHost: initialValues?.repoHost || 'https://github.com',
+      botType: (initialValues?.botType || 'dependabot') as 'dependabot' | 'renovate',
+    }),
+    [initialValues]
+  );
+
   const {
     register,
     handleSubmit,
     formState: { errors },
+    control,
     reset,
     watch,
-  } = useForm<HostForm | HostEditForm>({
-    resolver: zodResolver(initialValues ? hostEditSchema : hostSchema),
-    defaultValues: normalizeNulls(initialValues),
+  } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues,
   });
 
   const isSubmitting = createHostMutation.isPending || updateHostMutation.isPending;
 
   useEffect(() => {
     if (initialValues) {
-      reset(normalizeNulls(initialValues));
+      reset(defaultValues);
     }
-  }, [initialValues, reset]);
+  }, [initialValues, reset, defaultValues]);
 
   const watchedName = watch('name');
 
@@ -101,6 +122,7 @@ export const HostForm = ({
         disabled={isSubmitting}
         {...register('name')}
       />
+
       <LabeledInput
         label="SSH Hostname"
         id="sshHost"
@@ -111,6 +133,7 @@ export const HostForm = ({
         disabled={isSubmitting}
         {...register('sshHost')}
       />
+
       <LabeledInput
         label="SSH Private Key"
         id="sshKey"
@@ -120,6 +143,7 @@ export const HostForm = ({
         disabled={isSubmitting}
         {...register('sshKey')}
       />
+
       <LabeledInput
         label="Working Folder"
         id="workingFolder"
@@ -129,6 +153,7 @@ export const HostForm = ({
         disabled={isSubmitting}
         {...register('workingFolder')}
       />
+
       <LabeledInput
         label="Exclude Folders regex"
         id="excludeFolders"
@@ -138,25 +163,59 @@ export const HostForm = ({
         disabled={isSubmitting}
         {...register('excludeFolders')}
       />
+
       <LabeledInput
-        label="GitHub Repository"
+        label="Repository Host"
+        id="repoHost"
+        type="text"
+        error={errors.repoHost?.message}
+        disabled={isSubmitting}
+        {...register('repoHost')}
+      />
+
+      <LabeledInput
+        label="Repository"
         id="repo"
         type="text"
-        placeholder="e.g. user/repo (without https://github.com/)"
+        placeholder="e.g. user/repo"
         error={errors.repo?.message}
         disabled={isSubmitting}
         {...register('repo')}
       />
+
+      <LabeledInput
+        label="Update Bot Type"
+        id="botType"
+        type="custom"
+        error={errors.botType?.message}
+      >
+        <Controller
+          name="botType"
+          control={control}
+          render={({ field }) => (
+            <Select onValueChange={field.onChange} value={field.value}>
+              <SelectTrigger id="botType">
+                <SelectValue placeholder="Select bot type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="dependabot">Dependabot</SelectItem>
+                <SelectItem value="renovate">Renovate Bot</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
+      </LabeledInput>
+
       <LabeledInput
         label={
           <>
-            GitHub Webhook Secret
+            Webhook Secret
             <Dialog>
               <DialogTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="Show GitHub Webhook URL"
+                  aria-label="Show Webhook URL"
                   className="cursor-pointer"
                 >
                   <Info className="size-4" />
@@ -164,13 +223,13 @@ export const HostForm = ({
               </DialogTrigger>
               <DialogContent className="max-w-xs">
                 <DialogHeader>
-                  <DialogTitle>GitHub Webhook URL</DialogTitle>
+                  <DialogTitle>Webhook URL</DialogTitle>
                 </DialogHeader>
                 <div className="text-xs break-all">
-                  <code>/api/webhook/github/host/{watchedName}</code>
+                  <code>/api/webhook/[github|forgejo]/host/{watchedName}</code>
                 </div>
                 <div className="mt-2 text-xs text-muted-foreground">
-                  Use this URL as the webhook endpoint in your GitHub repository settings.
+                  Use this URL as the webhook endpoint in your repository settings.
                 </div>
               </DialogContent>
             </Dialog>
@@ -178,11 +237,12 @@ export const HostForm = ({
         }
         id="webhookSecret"
         type="text"
-        placeholder="Shared GitHub webhook secret from settings page"
+        placeholder="Shared webhook secret from settings page"
         error={errors.webhookSecret?.message}
         disabled={isSubmitting}
         {...register('webhookSecret')}
       />
+
       <LabeledInput
         label={
           <span className="inline-flex items-center gap-1">
@@ -204,6 +264,7 @@ export const HostForm = ({
         disabled={isSubmitting}
         {...register('cron')}
       />
+
       <LabeledInput
         label="Sort Order"
         id="sortOrder"
@@ -215,10 +276,12 @@ export const HostForm = ({
           setValueAs: (v: string) => (!v ? undefined : parseInt(v)),
         })}
       />
+
       <Button type="submit" className="w-full font-semibold mt-4" disabled={isSubmitting}>
         <Save className="size-4" />
         {isSubmitting ? 'Testing connection...' : 'Save host'}
       </Button>
+
       {initialValues && (
         <>
           <StreamingDialog
@@ -236,6 +299,7 @@ export const HostForm = ({
               Send test notification
             </Button>
           </StreamingDialog>
+
           <Button
             variant="outline"
             className="w-full font-semibold text-destructive"

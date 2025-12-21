@@ -56,10 +56,12 @@ export const Jobs = ({
   job,
   hostName,
   composeFile,
+  repoHost = '',
 }: {
   job: JobWithLogs;
   hostName: string;
   composeFile: string;
+  repoHost?: string;
 }) => {
   const [openJobId, setOpenJobId] = useState<number | null>(null);
   const restartJobMutation = useRestartJob();
@@ -103,7 +105,9 @@ export const Jobs = ({
   const prUrlMatch = job.repoPr?.match(/^([^/]+\/[^#]+)#(\d+)$/);
   if (prUrlMatch) {
     const [, repo, prId] = prUrlMatch;
-    prUrl = `https://github.com/${repo}/pull/${prId}`;
+    prUrl = repoHost.includes('github')
+      ? `https://github.com/${repo}/pull/${prId}`
+      : `${repoHost}/${repo}/pulls/${prId}`;
   }
 
   const renderTitleWithCode = (title: string) => {
@@ -180,30 +184,32 @@ export const Jobs = ({
             </Dialog>
           )}
 
-          {job.repoPr && (
-            <Tooltip content="Restart Job">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={
-                  job.status === JobStatus.open
-                    ? () => {
-                        window.open(
-                          `https://github.com/${job.repoPr.split('/')[0]}/${
-                            job.repoPr.split('/')[1].split('#')[0]
-                          }/settings/hooks`,
-                          '_blank'
-                        );
-                      }
-                    : handleRestart
-                }
-                disabled={restartJobMutation.isPending}
-                aria-label="Restart Job"
-              >
-                <RotateCcw className="size-4" />
-              </Button>
-            </Tooltip>
-          )}
+          {job.repoPr &&
+            (repoHost.includes('github') ||
+              (!repoHost.includes('github') && job.status !== JobStatus.open)) && (
+              <Tooltip content="Restart Job">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={
+                    repoHost.includes('github') && job.status === JobStatus.open
+                      ? () => {
+                          window.open(
+                            `https://github.com/${job.repoPr.split('/')[0]}/${
+                              job.repoPr.split('/')[1].split('#')[0]
+                            }/settings/hooks`,
+                            '_blank'
+                          );
+                        }
+                      : handleRestart
+                  }
+                  disabled={restartJobMutation.isPending}
+                  aria-label="Restart Job"
+                >
+                  <RotateCcw className="size-4" />
+                </Button>
+              </Tooltip>
+            )}
 
           {job.status === JobStatus.running && (
             <StreamingDialog

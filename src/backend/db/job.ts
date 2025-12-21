@@ -33,6 +33,15 @@ export const job = {
     const db = await getDb();
     return db.query('SELECT * FROM job WHERE id = $id').as(Job).get({ id });
   },
+  getByRepoPrTitle: async (repoHost: string, repoPr: string, title: string) => {
+    const db = await getDb();
+    return db
+      .query(
+        'SELECT job.* FROM job INNER JOIN host ON job.hostId = host.id WHERE host.repoHost = $repoHost AND job.repoPr = $repoPr AND job.title = $title'
+      )
+      .as(Job)
+      .get({ repoHost, repoPr, title });
+  },
   getJobsWithLogs: async (hostId: number, folder?: string) => {
     const db = await getDb();
     const hasFolder = folder !== undefined;

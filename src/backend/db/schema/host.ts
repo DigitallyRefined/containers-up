@@ -5,7 +5,9 @@ export class Host {
   name: string;
   sshHost: string;
   sshKey: string;
+  repoHost?: string;
   repo?: string;
+  botType?: 'dependabot' | 'renovate';
   webhookSecret?: string;
   workingFolder?: string;
   excludeFolders?: string;
@@ -19,13 +21,16 @@ export const hostCreateTableSql = `
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
     sshHost TEXT NOT NULL,
+    repoHost TEXT DEFAULT 'https://github.com',
     repo TEXT,
+    botType TEXT DEFAULT 'dependabot',
     webhookSecret TEXT,
     workingFolder TEXT,
     excludeFolders TEXT,
     cron TEXT,
     sortOrder INTEGER,
-    created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(repoHost, repo)
   )
 `;
 
@@ -53,7 +58,9 @@ export const hostSchema = z.object({
         message: 'Invalid SSH private key format',
       }
     ),
+  repoHost: z.string().default('https://github.com'),
   repo: z.string().optional(),
+  botType: z.enum(['dependabot', 'renovate']).default('dependabot'),
   webhookSecret: z.string().optional(),
   workingFolder: z.string().optional(),
   excludeFolders: z.string().optional(),

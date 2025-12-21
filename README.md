@@ -17,7 +17,7 @@ It provides a unified interface for managing containerized applications, and aut
   - 🖼️ Container image management
   - 📑 Container log viewer
   - 🗑️ Cleanup of unused images
-- 🔄 **Automated Updates**: Container updates via GitHub webhooks (via Dependabot pull requests) & image tag updates via a schedule
+- 🔄 **Automated Updates**: Container updates via GitHub/Forgejo webhooks (via Dependabot/Renovate Bot pull requests) & image tag updates via a schedule
 - 📩 **Notifications**: When a new Dependabot PR is created or a new container image is available (via [Apprise](https://github.com/caronc/apprise#supported-notifications))
 - 🌐 **Service Discovery**: Display [web app icons](https://dashboardicons.com) and URLs (via existing Traefik labels)
 - 🧹 **Resource Management**: Cleanup of older images
@@ -38,7 +38,7 @@ The app can be started using the following `compose.yml`:
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:1.2.2
+    image: ghcr.io/digitallyrefined/containers-up:1.3.0
     restart: unless-stopped
     ports:
       - 3000:3000
@@ -62,7 +62,7 @@ Optional system wide configuration can be changed by copying `.env.default` to `
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:1.2.2
+    image: ghcr.io/digitallyrefined/containers-up:1.3.0
     restart: unless-stopped
     volumes:
       - ./containers-up/storage:/storage
@@ -134,13 +134,16 @@ networks:
 6. After restarting the app, accessing `https://containers-up.example.com` should now require you to login
 </details>
 
-## Setting up automatic `compose.yml` updates via Dependabot
+## Setting up automatic `compose.yml` updates
 
 1. Make sure that your Containers Up! instance is available online publicly via HTTPS, sharing only the webhook port `3001`. E.g. via a [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) or a [Docker Wireguard Tunnel](https://github.com/DigitallyRefined/docker-wireguard-tunnel)
 
-2. Create a GitHub repository with your container `compose.yml` files
+2. Create a repository with your container `compose.yml` files
 
-3. Each of your `compose.yml` files must use the full image version (**not** `:latest`) to receive Dependabot updates
+3. Each of your `compose.yml` files must use the full image version (**not** `:latest`) to receive updates to the files from a bot (below)
+
+<details>
+<summary>A) Via Dependabot (GitHub)</summary>
 
 4. Under the **Settings > Actions**, enable **Allow all actions and reusable workflows** and under **Workflow permissions** allow **Read and write permissions**
 
@@ -173,22 +176,78 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Generate dependabot.yml
         uses: Makeshift/generate-dependabot-glob-action@master
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
 ```
 
 7. This will automatically create a PR that will create a GitHub action managed `.github/dependabot.yml` file, which will automatically be updated for each of your `compose.yml` files. If it doesn't, click **Actions > Generate dependabot.yml > Run workflow**
 
-8. Next edit your host in Containers Up! and add the working folder where your repo is checked out on your server and add your GitHub repo URL `user/repo` (without `https://github.com/`), generate a random webhook secret and click the ℹ️ info icon copy the base URL to the webhook
+8. Next edit your host in Containers Up! and add the working folder where your repo is checked out on your server and add your GitHub repo URL `user/repo`, generate a random webhook secret and click the ℹ️ info icon copy the base URL to the webhook (removing `forgejo` e.g. `https://containers-up.example.com/api/webhook/github/host/YOUR_HOST`)
 
-9. Back on GitHub, go to **Settings > Webhooks > Add webhook**, add your public webhook domain and base **URL** (listed on the Containers Up! edit webhook info screen) and select `application/json` as the **Content Type**. Use the same random **webhook secret** from your repo settings and choose **Let me select individual events > Pull requests**
+9. Back on GitHub, go to your repo **Settings > Webhooks > Add webhook**, add your public webhook domain and base **URL** (listed on the Containers Up! edit webhook info screen) and select `application/json` as the **Content Type**. Use the same random **webhook secret** from your repo settings and choose **Let me select individual events > Pull requests**
+</details>
 
-If everything has been set up correctly the next time Dependabot creates a PR to update a `compose.yml` file an update will also appear on the Containers Up! dashboard.
+<details>
+<summary>B) Via Renovate Bot (Forgejo)</summary>
+
+4. Under **Settings > Application**, create a new Access token (with at least permissions to Read and write to issues, package and repository)
+
+5. Copy the token and under **Actions > Secrets** create a new token called `ACTIONS_TOKEN` with the token value
+
+6. Create an `EXTERNAL_GITHUB_TOKEN` secret with your GitHub personal access token (PAT)
+
+7. Create a `.forgejo/workflows/renovate.yml` file with the following content:
+
+```yaml
+name: Renovate
+
+on:
+  push:
+    branches:
+      - main
+      - 'renovate/**'
+  schedule:
+    # At 02:00, only on Saturday
+    - cron: "0 2 * * 6"
+  issues:
+    types:
+      - edited
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  renovate:
+    runs-on: docker
+    container:
+      image: renovate/renovate:42.64.1
+
+    steps:
+      - name: Set Git identity
+        run: |
+          git config --global user.name "Renovate Bot"
+          git config --global user.email "renovate@localhost"
+
+      - name: Run Renovate
+        env:
+          LOG_LEVEL: info
+          RENOVATE_PLATFORM: forgejo
+          RENOVATE_ENDPOINT: ${{ github.api_url }} # GitHub variables still work in Forgejo
+          RENOVATE_TOKEN: ${{ secrets.ACTIONS_TOKEN }}
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
+          RENOVATE_GITHUB_COM_TOKEN: ${{ secrets.EXTERNAL_GITHUB_TOKEN }}
+        run: renovate
+```
+
+8. Next edit your host in Containers Up! and add the working folder where your repo is checked out on your server and add your Forgejo repo URL `user/repo`, generate a random webhook secret and click the ℹ️ info icon copy the base URL to the webhook (removing `github` e.g. `https://containers-up.example.com/api/webhook/forgejo/host/YOUR_HOST`)
+
+9. Back on Forgejo, go to your repo **Settings > Webhooks > Add a Forgejo webhook**, add your public webhook domain and base **URL** (listed on the Containers Up! edit webhook info screen) and select `POST` as the **Method** and `application/json` as the **Content Type**. Use the same random **webhook secret** from your repo settings and choose **Custom events > Pull requests Modifications**
+</details>
+
+If everything has been set up correctly the next time Dependabot or Renovate Bot creates a PR to update a `compose.yml` file an update will also appear on the Containers Up! dashboard.
 
 ## Environment variables
 

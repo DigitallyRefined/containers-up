@@ -16,7 +16,7 @@ interface HostSelectorProps {
 export const HostSelector = ({ selected, setSelected, hosts }: HostSelectorProps) => {
   return (
     <Select value={selected || ''} onValueChange={setSelected}>
-      <SelectTrigger>
+      <SelectTrigger className="border-muted-foreground/40">
         <SelectValue placeholder="Select or add a host..." />
       </SelectTrigger>
       <SelectContent>

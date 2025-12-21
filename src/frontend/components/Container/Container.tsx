@@ -10,7 +10,7 @@ import { getContainerStatusColor, getRelativeTime } from '@/frontend/lib/utils';
 export const Container = ({ service, hostName }: { service: Service; hostName: string }) => {
   return (
     <Card>
-      <CardContent className="p-2 sm:p-3 md:p-4 relative flex flex-col">
+      <CardContent className="p-2 pt-4 sm:p-3 md:p-4 relative flex flex-col">
         <ContainerIcon size={16} className="absolute top-4 right-4 opacity-80 z-0" />
         <div className="absolute top-2 right-2 flex gap-1 z-10">
           <StreamingDialog
@@ -47,7 +47,7 @@ export const Container = ({ service, hostName }: { service: Service; hostName: s
             </StreamingDialog>
           )}
         </div>
-        <h5 className="font-semibold text-sm mb-2 break-all">{service.Name}</h5>
+        <h5 className="font-semibold text-sm mb-2 break-all pb-2">{service.Name}</h5>
         <p className="text-xs break-all">{service.Config.Image.split('@')[0]}</p>
         <p
           className={`text-xs font-medium ${getContainerStatusColor(

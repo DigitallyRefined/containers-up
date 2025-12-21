@@ -102,8 +102,8 @@ export function App() {
             {hasSelectedHost ? `Containers for ${selectedHost}` : 'Containers Up!'}
           </h2>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 px-0 mx-0 w-full px-2 sm:px-4 md:px-6">
-          <div className="flex items-center gap-2 w-1/2 md:w-1/3 min-w-75 sm:min-w-50 md:min-w-80">
+        <div className="flex flex-col md:flex-row flex-wrap md:flex-nowrap items-center justify-between gap-2 px-0 mx-0 w-full px-2 sm:px-4 md:px-6">
+          <div className="flex items-center justify-between md:justify-start gap-2 w-full md:w-auto min-w-0 sm:min-w-fit md:min-w-80">
             <HostSelector
               selected={selectedHost}
               setSelected={(value) => {
@@ -127,7 +127,7 @@ export function App() {
             <Tooltip content="Edit Host">
               <Button
                 variant="outline"
-                size="sm"
+                size="icon"
                 disabled={!selectedHost || selectedHost === 'add'}
                 onClick={openEditDialog}
                 aria-label="Edit Host"
@@ -137,10 +137,10 @@ export function App() {
             </Tooltip>
           </div>
           {hasSelectedHost && (
-            <div className="flex items-center gap-2 w-1/2 md:w-2/3 md:justify-end">
+            <div className="flex items-center justify-between md:justify-end gap-2 w-full md:flex-1 flex-wrap">
               <Select value={selectedSort || ''} onValueChange={setSelectedSort}>
                 <Tooltip content="Sort by">
-                  <SelectTrigger className="min-w-30 max-w-30">
+                  <SelectTrigger className="min-w-30 max-w-30 border-muted-foreground/40">
                     <SelectValue placeholder="Sort by..." />
                   </SelectTrigger>
                 </Tooltip>
@@ -161,14 +161,14 @@ export function App() {
                 dialogTitle="Cleanup"
                 tooltipText="Cleanup"
               >
-                <Button variant="outline" size="sm" aria-label="Cleanup">
+                <Button variant="outline" size="icon" aria-label="Cleanup">
                   <BrushCleaning className="size-4" />
                 </Button>
               </StreamingDialog>
               <Tooltip content="Check all image tags for updates">
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
                   onClick={() => {
                     triggerImageUpdateMutation.mutate(
                       { hostName: selectedHost },

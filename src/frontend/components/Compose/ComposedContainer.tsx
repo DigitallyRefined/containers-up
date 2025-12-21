@@ -36,53 +36,53 @@ export const ComposedContainer = ({
   const hostName = host.name;
   const triggerImageUpdateMutation = useTriggerImageUpdate();
   return (
-    <Card key={cardTitle} className="my-2">
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card key={cardTitle} className="my-2 relative">
+      <div className="absolute -top-3 -right-1 flex gap-1 z-10">
+        <StreamingDialog
+          url={`/api/host/${hostName}/compose`}
+          method="PUT"
+          body={{ composeFile: cardTitle }}
+          dialogTitle={`Restart: ${cardTitle}`}
+          tooltipText="Restart all containers in this compose file"
+        >
+          <Button variant="outline" size="sm" aria-label="Restart">
+            <RotateCcw className="size-4" />
+          </Button>
+        </StreamingDialog>
+
+        <StreamingDialog
+          url={`/api/host/${hostName}/compose`}
+          method="DELETE"
+          body={{ composeFile: cardTitle }}
+          dialogTitle={`Stop: ${cardTitle}`}
+          tooltipText="Stop all containers in this compose file"
+        >
+          <Button variant="outline" size="sm" aria-label="Stop">
+            <PowerOff className="size-4" />
+          </Button>
+        </StreamingDialog>
+
+        {host.botType === 'dependabot' && !hideViewDependabot && (
+          <Tooltip content="Dependabot updates">
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label="Dependabot updates"
+              onClick={() => {
+                window.open(
+                  `https://github.com/${host.repo}/network/updates#:~:text=${encodeURIComponent(
+                    cardTitle
+                  ).replace(/-/g, '%2D')}`
+                );
+              }}
+            >
+              <Bot className="size-4" />
+            </Button>
+          </Tooltip>
+        )}
+      </div>
+      <CardHeader>
         <CardTitle className="text-left break-all">{cardTitle}</CardTitle>
-        <div className="flex gap-2">
-          <StreamingDialog
-            url={`/api/host/${hostName}/compose`}
-            method="PUT"
-            body={{ composeFile: cardTitle }}
-            dialogTitle={`Restart: ${cardTitle}`}
-            tooltipText="Restart all containers in this compose file"
-          >
-            <Button variant="outline" size="sm" aria-label="Restart">
-              <RotateCcw className="size-4" />
-            </Button>
-          </StreamingDialog>
-
-          <StreamingDialog
-            url={`/api/host/${hostName}/compose`}
-            method="DELETE"
-            body={{ composeFile: cardTitle }}
-            dialogTitle={`Stop: ${cardTitle}`}
-            tooltipText="Stop all containers in this compose file"
-          >
-            <Button variant="outline" size="sm" aria-label="Stop">
-              <PowerOff className="size-4" />
-            </Button>
-          </StreamingDialog>
-
-          {!hideViewDependabot && (
-            <Tooltip content="Dependabot updates">
-              <Button
-                variant="outline"
-                size="sm"
-                aria-label="Dependabot updates"
-                onClick={() => {
-                  window.open(
-                    `https://github.com/${host.repo}/network/updates#:~:text=${encodeURIComponent(
-                      cardTitle
-                    ).replace(/-/g, '%2D')}`
-                  );
-                }}
-              >
-                <Bot className="size-4" />
-              </Button>
-            </Tooltip>
-          )}
-        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
@@ -90,14 +90,14 @@ export const ComposedContainer = ({
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {services.map((service, index) => (
               <Card key={index}>
-                <CardContent className="p-2 sm:p-3 md:p-4 relative">
+                <CardContent className="p-2 pt-4 sm:p-3 md:p-4 relative">
                   <img
                     src={`/icons/${service.Config.Labels['com.docker.compose.service']}.webp`}
                     alt={service.Config.Labels['com.docker.compose.service']}
                     className="absolute top-4 left-4 w-8 opacity-80 z-0"
                     onError={(e) => (e.currentTarget.style.display = 'none')}
                   />
-                  <div className="absolute top-2 right-2 flex gap-1 z-10">
+                  <div className="absolute -top-3 -right-1 flex gap-1 z-10">
                     {!hideCheckForUpdates && (
                       <Tooltip content="Check for image tag updates">
                         <Button
@@ -140,7 +140,7 @@ export const ComposedContainer = ({
                       </Button>
                     </StreamingDialog>
                   </div>
-                  <h5 className="font-semibold text-sm mb-2">
+                  <h5 className="font-semibold text-sm mb-2 break-all pb-2">
                     {service.Config.Labels['com.docker.compose.service']}
                   </h5>
                   <p className="text-xs break-all">{service.Config.Image.split('@')[0]}</p>
@@ -184,7 +184,13 @@ export const ComposedContainer = ({
               <AccordionContent>
                 <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
                   {jobs.map((job) => (
-                    <Jobs key={job.id} job={job} hostName={hostName} composeFile={cardTitle} />
+                    <Jobs
+                      key={job.id}
+                      job={job}
+                      hostName={hostName}
+                      composeFile={cardTitle}
+                      repoHost={host.repoHost}
+                    />
                   ))}
                 </div>
               </AccordionContent>

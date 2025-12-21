@@ -142,4 +142,18 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Custom scrollbar styling */
+  /* Note: scrollbar-color doesn't support CSS variables in most browsers,
+     so we use hardcoded values that match the theme */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(240 3.8% 46.1% / 0.6) hsl(240 4.8% 95.9% / 0.2);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .custom-scrollbar {
+      scrollbar-color: hsl(240 5% 64.9% / 0.6) hsl(240 3.7% 15.9% / 0.2);
+    }
+  }
 }

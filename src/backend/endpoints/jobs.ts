@@ -1,13 +1,13 @@
 import { host as hostDb } from '@/backend/db/host';
 import { job as jobDb } from '@/backend/db/job';
-import { githubWebhookHandler } from '@/backend/endpoints/webhook/github';
+import { commonWebhookHandler } from '@/backend/endpoints/webhook/common';
 
 export const restartJob = async (id: string) => {
   const { hostId, folder, repoPr, title } = await jobDb.get(id);
 
   const repoConfig = await hostDb.get(hostId);
 
-  await githubWebhookHandler(
+  await commonWebhookHandler(
     {
       number: parseInt(repoPr.split('#')[1], 10),
       action: 'closed',
@@ -15,7 +15,11 @@ export const restartJob = async (id: string) => {
       title,
       sender: null,
     },
-    repoConfig
+    repoConfig,
+    {
+      eventName: 'manual-restart',
+      folder,
+    }
   );
 
   return await jobDb.getJobsWithLogs(hostId, folder);

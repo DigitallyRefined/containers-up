@@ -147,6 +147,7 @@ export const ContainerLayout = ({
                   job={job}
                   hostName={selectedHostName}
                   composeFile={job.composeFile}
+                  repoHost={selectedHost?.repoHost}
                 />
               ))}
             </div>

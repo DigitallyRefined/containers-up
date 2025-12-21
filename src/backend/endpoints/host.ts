@@ -30,6 +30,13 @@ export const postHost = async (host: Host, options: { createSshKey?: boolean } =
     throw new Error('Host already exists', { cause: 'HOST_ALREADY_EXISTS' });
   }
 
+  const existingRepoHost = await hostDb.getByRepoAndHost(host.repoHost, host.repo);
+  if (existingRepoHost && existingRepoHost.id !== host.id) {
+    throw new Error('A host with this repository already exists for this Git provider', {
+      cause: 'HOST_REPO_ALREADY_EXISTS',
+    });
+  }
+
   if (host.workingFolder.endsWith('/')) {
     host.workingFolder = host.workingFolder.slice(0, -1);
   }

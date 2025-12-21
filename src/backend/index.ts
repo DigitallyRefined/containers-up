@@ -12,7 +12,9 @@ import { containersCleanup } from '@/backend/endpoints/containers-cleanup';
 import { deleteHost, getHosts, postHost, putHost } from '@/backend/endpoints/host';
 import { restartJob } from '@/backend/endpoints/jobs';
 import { checkHostForImageUpdates } from '@/backend/endpoints/update-check';
-import { type GitHubWebhookEvent, githubWebhookHandler } from '@/backend/endpoints/webhook/github';
+import { forgejoWebhookHandler } from '@/backend/endpoints/webhook/forgejo';
+import { githubWebhookHandler } from '@/backend/endpoints/webhook/github';
+import { handleWebhookRequest } from '@/backend/endpoints/webhook/request-handler';
 import { isValidContainerIdOrName } from '@/backend/utils';
 import { createDockerExec } from '@/backend/utils/docker';
 import { mainLogger } from '@/backend/utils/logger';
@@ -608,85 +610,19 @@ export const startServer = () => {
     routes: {
       '/api/webhook/github/host/:host': {
         async POST(req) {
-          const selectedHost = await host.getByName(req.params.host);
-          if (!selectedHost) {
-            return new Response('Not Found', { status: 404 });
-          }
+          return handleWebhookRequest(req, req.params.host, {
+            handler: githubWebhookHandler,
+            name: 'GitHub',
+          });
+        },
+      },
 
-          const signature = req.headers.get('x-hub-signature-256');
-          if (!signature) {
-            return new Response('Unauthorized (no signature)', { status: 401 });
-          }
-
-          const bodyBuffer = new Uint8Array(await req.arrayBuffer());
-          const key = await crypto.subtle.importKey(
-            'raw',
-            new TextEncoder().encode(selectedHost.webhookSecret),
-            { name: 'HMAC', hash: 'SHA-256' },
-            false,
-            ['sign']
-          );
-          const signatureBuffer = await crypto.subtle.sign('HMAC', key, bodyBuffer);
-          const hash = Array.from(new Uint8Array(signatureBuffer))
-            .map((b) => b.toString(16).padStart(2, '0'))
-            .join('');
-          const expectedSignature = `sha256=${hash}`;
-
-          if (signature !== expectedSignature) {
-            return new Response('Unauthorized (bad signature)', { status: 401 });
-          }
-
-          const json = new TextDecoder().decode(bodyBuffer);
-          let webhookData: Record<string, any> | undefined;
-          if (!json) {
-            return Response.json({ message: 'JSON payload is empty' }, { status: 400 });
-          }
-          try {
-            webhookData = JSON.parse(json);
-          } catch (error) {
-            if (json.includes('Speak+like+a+human')) {
-              const msg = `GitHub webhook ping received for host: ${selectedHost.name}`;
-              mainLogger.info(msg);
-              logDb.create({
-                hostId: selectedHost.id,
-                level: 30,
-                time: Date.now(),
-                event: 'GitHub webhook ping',
-                msg,
-              });
-              return Response.json({ message: 'webhook ping received' });
-            }
-            return Response.json({ message: 'Invalid JSON payload', json }, { status: 400 });
-          }
-
-          const isDockerComposePr = webhookData.pull_request?.labels?.some(
-            (label: { name: string }) => label.name === 'docker_compose'
-          );
-          if (!isDockerComposePr) {
-            return Response.json({ message: 'Not a Docker Compose PR' }, { status: 400 });
-          }
-
-          const webhookEvent: GitHubWebhookEvent = {
-            sender: webhookData.sender?.login,
-            repo: webhookData.repository.full_name,
-            number: webhookData.pull_request?.number,
-            action: webhookData.action,
-            merged: webhookData.pull_request?.merged,
-            title: webhookData.pull_request?.title,
-            body: webhookData.pull_request?.body,
-            url: webhookData.pull_request?.html_url,
-          };
-
-          const foundHosts = await host.getAllByRepo(webhookEvent.repo);
-          if (!foundHosts?.length) {
-            return new Response('Host not found', { status: 404 });
-          }
-
-          for (const foundHost of foundHosts) {
-            githubWebhookHandler(webhookEvent, foundHost);
-          }
-
-          return Response.json({ message: 'webhook received' });
+      '/api/webhook/forgejo/host/:host': {
+        async POST(req) {
+          return handleWebhookRequest(req, req.params.host, {
+            handler: forgejoWebhookHandler,
+            name: 'Forgejo',
+          });
         },
       },
     },

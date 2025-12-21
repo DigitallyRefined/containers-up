@@ -28,19 +28,21 @@ export const host = {
       .as(Host)
       .get({ name });
   },
-  getAllByRepo: async (repo: string) => {
+  getByRepoAndHost: async (repoHost: string, repo: string) => {
     const db = await getDb();
 
     return db
-      .query(`SELECT * FROM host WHERE repo=$repo ${defaultSortOrder}`)
+      .query(`SELECT * FROM host WHERE repoHost=$repoHost AND repo=$repo`)
       .as(Host)
-      .all({ repo });
+      .get({ repoHost, repo });
   },
   upsert: async ({
     id,
     name,
     sshHost,
+    repoHost,
     repo,
+    botType,
     webhookSecret,
     workingFolder,
     excludeFolders,
@@ -51,7 +53,9 @@ export const host = {
       id,
       name,
       sshHost,
+      repoHost,
       repo,
+      botType,
       webhookSecret,
       workingFolder,
       excludeFolders: excludeFolders || '',

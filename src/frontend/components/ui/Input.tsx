@@ -45,7 +45,8 @@ type LabeledInputProps =
       type?: 'text' | 'password' | 'email' | 'number' | 'tel' | 'url';
     } & React.ComponentProps<'input'> &
       LabeledInput)
-  | ({ type: 'textarea' } & React.ComponentProps<'textarea'> & LabeledInput);
+  | ({ type: 'textarea' } & React.ComponentProps<'textarea'> & LabeledInput)
+  | ({ type: 'custom'; children: React.ReactNode } & LabeledInput);
 
 export function LabeledInput(props: LabeledInputProps) {
   const { label, id, error, className, labelClassName, containerClassName, required, ...rest } =
@@ -56,26 +57,26 @@ export function LabeledInput(props: LabeledInputProps) {
     </>
   );
 
-  if (props.type === 'textarea') {
-    const textareaProps = rest as React.ComponentProps<'textarea'>;
-    return (
-      <div className={containerClassName}>
-        <label htmlFor={id} className={labelClassName ?? 'block font-medium mb-1'}>
-          {labelContent}
-        </label>
-        <Textarea id={id} className={className} {...textareaProps} aria-invalid={!!error} />
-        {error && <p className="text-destructive text-sm mt-1">{error}</p>}
-      </div>
-    );
-  }
+  const renderContent = () => {
+    if (props.type === 'textarea') {
+      const textareaProps = rest as React.ComponentProps<'textarea'>;
+      return <Textarea id={id} className={className} {...textareaProps} aria-invalid={!!error} />;
+    }
 
-  const inputProps = rest as React.ComponentProps<'input'>;
+    if (props.type === 'custom') {
+      return props.children;
+    }
+
+    const inputProps = rest as React.ComponentProps<'input'>;
+    return <Input id={id} className={className} {...inputProps} aria-invalid={!!error} />;
+  };
+
   return (
     <div className={containerClassName}>
       <label htmlFor={id} className={labelClassName ?? 'block font-medium mb-1'}>
         {labelContent}
       </label>
-      <Input id={id} className={className} {...inputProps} aria-invalid={!!error} />
+      {renderContent()}
       {error && <p className="text-destructive text-sm mt-1">{error}</p>}
     </div>
   );

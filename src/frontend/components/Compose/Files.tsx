@@ -22,7 +22,7 @@ export const ComposeFiles = ({ hostName }: { hostName: string }) => {
     <Dialog open={open} onOpenChange={setOpen}>
       <Tooltip content="Start service from a compose file">
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm" aria-label="Start service from a compose file">
+          <Button variant="outline" size="icon" aria-label="Start service from a compose file">
             <Plus className="size-4" />
           </Button>
         </DialogTrigger>

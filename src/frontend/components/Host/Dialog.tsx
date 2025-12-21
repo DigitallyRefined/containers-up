@@ -81,7 +81,7 @@ export const HostDialog = ({
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>Configure host settings for container management.</DialogDescription>
           </DialogHeader>
-          <div className="py-4">
+          <div className="py-4 px-1 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <HostForm
               initialValues={initialValues}
               onSuccess={onSuccess}

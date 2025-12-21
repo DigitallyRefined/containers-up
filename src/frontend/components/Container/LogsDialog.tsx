@@ -28,7 +28,7 @@ export const LogsDialog: React.FC<LogsDialogProps> = ({ selectedHost }) => {
     <Dialog open={open} onOpenChange={setOpen}>
       <Tooltip content="Show logs">
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm" aria-label="Show logs">
+          <Button variant="outline" size="icon" aria-label="Show logs">
             <LogsIcon className="size-4" />
           </Button>
         </DialogTrigger>
