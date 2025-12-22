@@ -38,7 +38,7 @@ The app can be started using the following `compose.yml`:
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:1.3.0
+    image: ghcr.io/digitallyrefined/containers-up:1.3.1
     restart: unless-stopped
     ports:
       - 3000:3000
@@ -62,7 +62,7 @@ Optional system wide configuration can be changed by copying `.env.default` to `
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:1.3.0
+    image: ghcr.io/digitallyrefined/containers-up:1.3.1
     restart: unless-stopped
     volumes:
       - ./containers-up/storage:/storage
@@ -132,6 +132,7 @@ networks:
 4. In the Pocket ID admin account create a new OIDC client and set up the callback URL as `https://containers-up.example.com/auth-callback*` and optionally only allow the admin group
 5. In the Containers Up! `.env` file (see `.env.default`) uncomment the OIDC config section, add the URI of Pocket ID (without any trailing paths) then copy and paste the client ID and secret (JWKS certificate URL can be set manually if auto-discovery fails via `OIDC_JWKS_URL`)
 6. After restarting the app, accessing `https://containers-up.example.com` should now require you to login
+
 </details>
 
 ## Setting up automatic `compose.yml` updates
@@ -190,6 +191,7 @@ jobs:
 8. Next edit your host in Containers Up! and add the working folder where your repo is checked out on your server and add your GitHub repo URL `user/repo`, generate a random webhook secret and click the ℹ️ info icon copy the base URL to the webhook (removing `forgejo` e.g. `https://containers-up.example.com/api/webhook/github/host/YOUR_HOST`)
 
 9. Back on GitHub, go to your repo **Settings > Webhooks > Add webhook**, add your public webhook domain and base **URL** (listed on the Containers Up! edit webhook info screen) and select `application/json` as the **Content Type**. Use the same random **webhook secret** from your repo settings and choose **Let me select individual events > Pull requests**
+
 </details>
 
 <details>
@@ -245,6 +247,7 @@ jobs:
 8. Next edit your host in Containers Up! and add the working folder where your repo is checked out on your server and add your Forgejo repo URL `user/repo`, generate a random webhook secret and click the ℹ️ info icon copy the base URL to the webhook (removing `github` e.g. `https://containers-up.example.com/api/webhook/forgejo/host/YOUR_HOST`)
 
 9. Back on Forgejo, go to your repo **Settings > Webhooks > Add a Forgejo webhook**, add your public webhook domain and base **URL** (listed on the Containers Up! edit webhook info screen) and select `POST` as the **Method** and `application/json` as the **Content Type**. Use the same random **webhook secret** from your repo settings and choose **Custom events > Pull requests Modifications**
+
 </details>
 
 If everything has been set up correctly the next time Dependabot or Renovate Bot creates a PR to update a `compose.yml` file an update will also appear on the Containers Up! dashboard.
@@ -258,6 +261,7 @@ All environment variables are _optional_ and can be set in the `compose.yml` fil
 | `COMPOSE_FILENAME`            | The default compose file to look for in the folder (usually `compose.yml` or `docker-compose.yml`)                                                                                                                              | `compose.yml`   |
 | `APP_URL`                     | App URL to used by links in notifications                                                                                                                                                                                       |                 |
 | `APPRISE_NOTIFICATION`        | Apprise is used for container update notifications. See Apprise syntax, see: [Apprise Supported Notifications syntax](https://github.com/caronc/apprise#supported-notifications)                                                |                 |
+| `RUN_COMPOSE_MAX_DEPTH`       | How many folders deep to search for compose files                                                                                                                                                                               | `3`             |
 | `SSH_CONTROL_PERSIST`         | How long SSH connections should persist after last request                                                                                                                                                                      | `20m`           |
 | `ENV_PUBLIC_OIDC_ISSUER_URI`  | OpenID Connect base URI                                                                                                                                                                                                         | Auth disabled   |
 | `ENV_PUBLIC_OIDC_CLIENT_ID`   | OpenID Connect client ID                                                                                                                                                                                                        |                 |

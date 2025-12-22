@@ -6,7 +6,7 @@ import { job as jobDb } from '@/backend/db/job';
 import { log as logDb } from '@/backend/db/log';
 import type { Host } from '@/backend/db/schema/host';
 import { JobStatus } from '@/backend/db/schema/job';
-import { findComposeFiles } from '@/backend/endpoints/compose';
+import { findNonRunningComposeFiles } from '@/backend/endpoints/compose';
 import { getContainers, type SortOptions } from '@/backend/endpoints/containers';
 import { containersCleanup } from '@/backend/endpoints/containers-cleanup';
 import { deleteHost, getHosts, postHost, putHost } from '@/backend/endpoints/host';
@@ -351,13 +351,7 @@ export const startServer = () => {
           const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
           if (error) return error;
 
-          return Response.json(
-            await findComposeFiles(
-              selectedHost.name,
-              selectedHost.sshHost,
-              selectedHost.workingFolder
-            )
-          );
+          return Response.json(await findNonRunningComposeFiles(selectedHost));
         },
 
         async POST(req) {

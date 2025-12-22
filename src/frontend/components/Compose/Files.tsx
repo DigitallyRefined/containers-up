@@ -60,7 +60,9 @@ export const ComposeFiles = ({ hostName }: { hostName: string }) => {
               ))}
             </ul>
           ) : (
-            <div className="text-muted-foreground">No compose files found.</div>
+            <div className="text-muted-foreground">
+              No compose files found or all containers are already running.
+            </div>
           )}
         </div>
       </DialogContent>
