@@ -24,7 +24,7 @@ export const job = {
       status,
       updated: getDatetime(),
     };
-    await upsert({ table: 'job', data, conflictKey: 'title' });
+    await upsert({ table: 'job', data, conflictKey: ['hostId', 'title'] });
 
     const row = db.query('SELECT id FROM job WHERE title = $title').as(Job).get({ title });
     return row ? row.id : undefined;
@@ -33,14 +33,14 @@ export const job = {
     const db = await getDb();
     return db.query('SELECT * FROM job WHERE id = $id').as(Job).get({ id });
   },
-  getByRepoPrTitle: async (repoHost: string, repoPr: string, title: string) => {
+  getByRepoPr: async (hostId: number, repoPr: string) => {
     const db = await getDb();
     return db
       .query(
-        'SELECT job.* FROM job INNER JOIN host ON job.hostId = host.id WHERE host.repoHost = $repoHost AND job.repoPr = $repoPr AND job.title = $title'
+        'SELECT job.* FROM job INNER JOIN host ON job.hostId = host.id WHERE host.id = $hostId AND job.repoPr = $repoPr'
       )
       .as(Job)
-      .get({ repoHost, repoPr, title });
+      .get({ hostId, repoPr });
   },
   getJobsWithLogs: async (hostId: number, folder?: string) => {
     const db = await getDb();

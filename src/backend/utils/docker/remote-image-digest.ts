@@ -155,7 +155,7 @@ const getRemoteImageDigest = async ({
           username,
           token,
         });
-        headers['Authorization'] = `Bearer ${bearerToken}`;
+        headers.Authorization = `Bearer ${bearerToken}`;
         // Retry with token
         response = await fetch(manifestUrl, { method: 'HEAD', headers });
       }

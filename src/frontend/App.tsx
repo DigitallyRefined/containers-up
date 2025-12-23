@@ -102,7 +102,7 @@ export function App() {
             {hasSelectedHost ? `Containers for ${selectedHost}` : 'Containers Up!'}
           </h2>
         </div>
-        <div className="flex flex-col md:flex-row flex-wrap md:flex-nowrap items-center justify-between gap-2 px-0 mx-0 w-full px-2 sm:px-4 md:px-6">
+        <div className="flex flex-col md:flex-row flex-wrap md:flex-nowrap items-center justify-between gap-2 px-0 mx-0 w-full px-2 sm:px-4 md:px-6 mb-4 md:mb-0">
           <div className="flex items-center justify-between md:justify-start gap-2 w-full md:w-auto min-w-0 sm:min-w-fit md:min-w-80">
             <HostSelector
               selected={selectedHost}

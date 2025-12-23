@@ -34,9 +34,10 @@ export const jobCreateTableSql = `
     hostId INTEGER NOT NULL,
     repoPr TEXT,
     folder TEXT NOT NULL,
-    title TEXT NOT NULL UNIQUE,
+    title TEXT NOT NULL,
     status INTEGER NOT NULL,
     created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(hostId, title)
   )
 `;

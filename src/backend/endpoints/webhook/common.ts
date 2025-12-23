@@ -77,7 +77,7 @@ export const commonWebhookHandler = async (
     }
   }
 
-  let containersCleanupLogs;
+  let containersCleanupLogs: [];
   let jobId: number;
 
   if (action === 'opened') {
@@ -96,13 +96,9 @@ export const commonWebhookHandler = async (
     }
   } else if (action === 'closed') {
     // Check if we have a tracking job for this PR
-    const existingJob = await jobDb.getByRepoPrTitle(
-      hostConfig.repoHost,
-      jobData.repoPr,
-      jobData.title
-    );
+    const existingJob = await jobDb.getByRepoPr(hostConfig.id, jobData.repoPr);
     if (!existingJob) {
-      logger.info(`No job found for title: '${title}', skipping event`);
+      logger.info(`No job found for: '${jobData.repoPr}', skipping event`);
       return;
     }
 
