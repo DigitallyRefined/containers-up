@@ -6,12 +6,10 @@ import { isComposeFilename } from '@/backend/utils';
 import { createDockerExec } from '@/backend/utils/docker';
 import { createExec } from '@/backend/utils/exec';
 
-const composeFilename = process.env.COMPOSE_FILENAME || 'compose.yml';
-
-const fileExcluded = (file: string, excludeFolders: string | null): boolean => {
+const folderExcluded = (folder: string, excludeFolders: string | null): boolean => {
   if (!excludeFolders || excludeFolders === 'null') return false;
   const regex = new RegExp(excludeFolders);
-  return regex.test(file);
+  return regex.test(folder);
 };
 
 export const pullRestartUpdatedContainers = async (
@@ -24,32 +22,32 @@ export const pullRestartUpdatedContainers = async (
   const exec = createExec(logger);
   const dockerExec = createDockerExec(logger);
 
-  const composePullDownUp = async (composeFile: string) => {
-    logger.info(`Restarting services for compose file: ${composeFile}`);
-    const response = dockerExec.restartCompose(name, host, composeFile, true);
+  const composePullDownUp = async (composeFolder: string) => {
+    logger.info(`Restarting services for compose file: ${composeFolder}`);
+    const response = dockerExec.restartCompose(name, host, composeFolder, true);
     await response.text();
   };
 
   await exec.sshRun(name, host, `cd ${workingFolder} && git pull --prune`);
 
-  let fileExists = 'missing';
-  let file = '';
+  let composeFolderExists = 'missing';
+  let containerFolder = '';
 
   if (folder) {
-    file = path.join(workingFolder, folder, composeFilename);
+    containerFolder = path.join(workingFolder, folder);
     const { stdout } = await exec.sshRun(
       name,
       host,
-      `test -f "${file}" && echo exists || echo missing`
+      `test -d "${containerFolder}" && echo exists || echo missing`
     );
-    fileExists = stdout;
+    composeFolderExists = stdout;
   }
 
-  if (fileExists === 'exists') {
-    if (!fileExcluded(file, excludeFolders)) {
-      await composePullDownUp(file);
+  if (composeFolderExists === 'exists') {
+    if (!folderExcluded(containerFolder, excludeFolders)) {
+      await composePullDownUp(containerFolder);
     } else {
-      logger.info(`Compose file excluded: ${file}`);
+      logger.info(`Compose folder excluded: ${containerFolder}`);
     }
   } else {
     // Single compose file watch (via git diff)
@@ -61,7 +59,7 @@ export const pullRestartUpdatedContainers = async (
     const changedFiles = changedFilesStdout.split('\n').filter(Boolean);
     if (changedFiles.some((f: string) => isComposeFilename(f))) {
       for (const changedFile of changedFiles) {
-        if (isComposeFilename(changedFile) && !fileExcluded(changedFile, excludeFolders)) {
+        if (isComposeFilename(changedFile) && !folderExcluded(changedFile, excludeFolders)) {
           await composePullDownUp(changedFile);
         }
       }

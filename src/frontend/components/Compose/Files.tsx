@@ -11,6 +11,7 @@ import {
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 import { Tooltip } from '@/frontend/components/ui/Tooltip';
 import { useComposeFiles } from '@/frontend/hooks/useApi';
+import { getFolderName } from '@/frontend/lib/utils';
 
 export const ComposeFiles = ({ hostName }: { hostName: string }) => {
   const [open, setOpen] = useState(false);
@@ -42,18 +43,18 @@ export const ComposeFiles = ({ hostName }: { hostName: string }) => {
             </div>
           ) : files && files.length > 0 ? (
             <ul>
-              {files.map((file, idx) => (
+              {files.map(getFolderName).map((composeFolder, idx) => (
                 <li key={idx} className="flex items-center gap-2">
                   <StreamingDialog
                     url={`/api/host/${hostName}/compose`}
                     method="POST"
-                    body={{ composeFile: file }}
-                    dialogTitle={`Run Compose File: ${file}`}
-                    tooltipText={file ? `Run ${file}` : undefined}
+                    body={{ composeFolder }}
+                    dialogTitle={`Run Compose File: ${composeFolder}`}
+                    tooltipText={composeFolder ? `Run ${composeFolder}` : undefined}
                   >
                     <a href="#" className="text-sm flex items-center gap-1 hover:underline">
                       <Play className="size-4" />
-                      <span className="text-sm">{file}</span>
+                      <span className="text-sm">{composeFolder}</span>
                     </a>
                   </StreamingDialog>
                 </li>

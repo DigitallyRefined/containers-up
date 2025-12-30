@@ -38,7 +38,7 @@ The app can be started using the following `compose.yml`:
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:1.3.2
+    image: ghcr.io/digitallyrefined/containers-up:1.3.3
     restart: unless-stopped
     ports:
       - 3000:3000
@@ -62,7 +62,7 @@ Optional system wide configuration can be changed by copying `.env.default` to `
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:1.3.2
+    image: ghcr.io/digitallyrefined/containers-up:1.3.3
     restart: unless-stopped
     volumes:
       - ./containers-up/storage:/storage
@@ -258,7 +258,6 @@ All environment variables are _optional_ and can be set in the `compose.yml` fil
 
 | Key                           | Description                                                                                                                                                                                                                     | Default         |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
-| `COMPOSE_FILENAME`            | The default compose file to look for in the folder (usually `compose.yml` or `docker-compose.yml`)                                                                                                                              | `compose.yml`   |
 | `APP_URL`                     | App URL to used by links in notifications                                                                                                                                                                                       |                 |
 | `APPRISE_NOTIFICATION`        | Apprise is used for container update notifications. See Apprise syntax, see: [Apprise Supported Notifications syntax](https://github.com/caronc/apprise#supported-notifications)                                                |                 |
 | `RUN_COMPOSE_MAX_DEPTH`       | How many folders deep to search for compose files                                                                                                                                                                               | `3`             |

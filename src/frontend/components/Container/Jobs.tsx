@@ -55,12 +55,12 @@ export const RepoPrLink = ({
 export const Jobs = ({
   job,
   hostName,
-  composeFile,
+  composeFolder,
   repoHost = '',
 }: {
   job: JobWithLogs;
   hostName: string;
-  composeFile: string;
+  composeFolder: string;
   repoHost?: string;
 }) => {
   const [openJobId, setOpenJobId] = useState<number | null>(null);
@@ -149,7 +149,7 @@ export const Jobs = ({
             <StreamingDialog
               url={`/api/host/${hostName}/compose`}
               method="PUT"
-              body={{ composeFile, pullFirst: true, jobTitle: job.title, jobFolder: job.folder }}
+              body={{ composeFolder, pullFirst: true, jobTitle: job.title, jobFolder: job.folder }}
               dialogTitle="Pull image & restart"
               tooltipText="Pull image & restart"
             >

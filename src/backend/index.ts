@@ -86,20 +86,21 @@ const getAuthorizedHost = async (
   return { selectedHost };
 };
 
-const resolveAndValidateComposeFile = async (
+const resolveAndValidateComposeFolder = async (
   selectedHost: Host,
-  data: { composeFile?: string }
+  data: { composeFolder?: string }
 ) => {
-  if (!data.composeFile) throw new Error('composeFile is required');
-  const composeFile = data.composeFile.startsWith('/')
-    ? data.composeFile
-    : `${selectedHost.workingFolder}/${data.composeFile}`;
-  if (await dockerExec.isInvalidComposeFile(selectedHost, composeFile)) {
+  if (!data.composeFolder) throw new Error('composeFolder is required');
+  const composeFolder =
+    data.composeFolder !== '/' && data.composeFolder.startsWith('/')
+      ? data.composeFolder
+      : join(selectedHost.workingFolder, data.composeFolder);
+  if (await dockerExec.isInvalidComposeFolder(selectedHost, composeFolder)) {
     return {
-      composeError: Response.json({ error: 'Invalid or missing compose file' }, { status: 400 }),
+      composeError: Response.json({ error: 'Invalid or missing compose folder' }, { status: 400 }),
     };
   }
-  return { composeFile };
+  return { composeFolder };
 };
 
 const serverOptions = {
@@ -359,13 +360,13 @@ export const startServer = () => {
           if (error) return error;
 
           const data = await req.json();
-          const { composeError, composeFile } = await resolveAndValidateComposeFile(
+          const { composeError, composeFolder } = await resolveAndValidateComposeFolder(
             selectedHost,
             data
           );
           if (composeError) return composeError;
 
-          return dockerExec.startCompose(selectedHost.name, selectedHost.sshHost, composeFile);
+          return dockerExec.startCompose(selectedHost.name, selectedHost.sshHost, composeFolder);
         },
 
         async PUT(req) {
@@ -373,7 +374,7 @@ export const startServer = () => {
           if (error) return error;
 
           const data = await req.json();
-          const { composeError, composeFile } = await resolveAndValidateComposeFile(
+          const { composeError, composeFolder } = await resolveAndValidateComposeFolder(
             selectedHost,
             data
           );
@@ -391,7 +392,7 @@ export const startServer = () => {
           return dockerExec.restartCompose(
             selectedHost.name,
             selectedHost.sshHost,
-            composeFile,
+            composeFolder,
             Boolean(data.pullFirst)
           );
         },
@@ -401,13 +402,13 @@ export const startServer = () => {
           if (error) return error;
 
           const data = await req.json();
-          const { composeError, composeFile } = await resolveAndValidateComposeFile(
+          const { composeError, composeFolder } = await resolveAndValidateComposeFolder(
             selectedHost,
             data
           );
           if (composeError) return composeError;
 
-          return dockerExec.stopCompose(selectedHost.name, selectedHost.sshHost, composeFile);
+          return dockerExec.stopCompose(selectedHost.name, selectedHost.sshHost, composeFolder);
         },
       },
 

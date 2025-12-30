@@ -8,14 +8,15 @@ import {
 } from '@/frontend/components/ui/Accordion';
 import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 import { useLocalStorage } from '@/frontend/hooks/useLocalStorage';
+import { getFolderName } from '@/frontend/lib/utils';
 
-const getRunningComposedFiles = (
+const getRunningComposedFolders = (
   composedContainers?: ContainersResponse['composedContainers'],
   otherComposedContainers?: ContainersResponse['otherComposedContainers']
 ) => {
   const composedFiles = Object.keys(composedContainers || {});
   const otherComposedFiles = Object.keys(otherComposedContainers || {});
-  return [...composedFiles, ...otherComposedFiles];
+  return [...composedFiles, ...otherComposedFiles].map(getFolderName);
 };
 
 export const PreviousRunningComposeFiles = ({
@@ -27,49 +28,52 @@ export const PreviousRunningComposeFiles = ({
   composedContainers: ContainersResponse['composedContainers'];
   otherComposedContainers: ContainersResponse['otherComposedContainers'];
 }) => {
-  const [seenComposedFiles, setSeenComposedFiles, removeSeenComposedFile] = useLocalStorage<
+  const [seenComposedFolders, setSeenComposedFolders, removeSeenComposedFolder] = useLocalStorage<
     string[]
-  >(`seenComposedFiles`, selectedHost, [], 'append');
+  >(`seenComposedFolders`, selectedHost, [], 'append');
 
   useEffect(() => {
-    const newSeenComposedFiles = getRunningComposedFiles(
+    const newSeenComposedFolders = getRunningComposedFolders(
       composedContainers,
       otherComposedContainers
     );
-    setSeenComposedFiles(newSeenComposedFiles);
+    setSeenComposedFolders(newSeenComposedFolders);
   }, [selectedHost, composedContainers, otherComposedContainers]);
 
-  const runningComposedFiles = getRunningComposedFiles(composedContainers, otherComposedContainers);
-  const previousRunningComposedFiles = seenComposedFiles.filter(
-    (file) => !runningComposedFiles.includes(file)
+  const runningComposedFolders = getRunningComposedFolders(
+    composedContainers,
+    otherComposedContainers
+  );
+  const previousRunningComposedFolders = seenComposedFolders.filter(
+    (folder) => !runningComposedFolders.includes(folder)
   );
 
-  if (previousRunningComposedFiles?.length === 0) return null;
+  if (previousRunningComposedFolders?.length === 0) return null;
 
   return (
     <AccordionItem value="previousRunningComposedFiles">
       <AccordionTrigger>Previously Running Composed Files</AccordionTrigger>
       <AccordionContent>
         <ul className="mb-4">
-          {previousRunningComposedFiles.map((file, idx) => (
-            <li key={file} className="pl-7">
+          {previousRunningComposedFolders.map((composeFolder) => (
+            <li key={composeFolder} className="pl-7">
               <StreamingDialog
                 url={`/api/host/${selectedHost}/compose`}
                 method="POST"
-                body={{ composeFile: file }}
-                dialogTitle={`Run Compose File: ${file}`}
+                body={{ composeFolder }}
+                dialogTitle={`Run Compose File: ${composeFolder}`}
               >
                 <a href="#" className="text-sm flex items-center gap-1 hover:underline">
                   <Play className="size-4" style={{ minWidth: '1rem' }} />
                   <BrushCleaning
                     onClick={(e) => {
                       e.preventDefault();
-                      removeSeenComposedFile(file);
+                      removeSeenComposedFolder(composeFolder);
                     }}
                     className="size-4"
                     style={{ minWidth: '1rem' }}
                   />
-                  <span className="text-sm">{file}</span>
+                  <span className="text-sm">{composeFolder}</span>
                 </a>
               </StreamingDialog>
             </li>

@@ -53,3 +53,7 @@ export function getContainerStatusColor(status: string, healthStatus?: string) {
 
   return 'text-red-600';
 }
+
+export function getFolderName(composeFile: string) {
+  return composeFile.split('/').slice(0, -1).join('/') || '/';
+}

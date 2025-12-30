@@ -20,6 +20,7 @@ import { Card, CardContent } from '@/frontend/components/ui/Card';
 import { Tooltip } from '@/frontend/components/ui/Tooltip';
 import { useContainers } from '@/frontend/hooks/useApi';
 import { useLocalStorage } from '@/frontend/hooks/useLocalStorage';
+import { getFolderName } from '@/frontend/lib/utils';
 
 export interface Service {
   Id: string;
@@ -146,7 +147,7 @@ export const ContainerLayout = ({
                   key={job.id}
                   job={job}
                   hostName={selectedHostName}
-                  composeFile={job.composeFile}
+                  composeFolder={getFolderName(job.composeFile)}
                   repoHost={selectedHost?.repoHost}
                 />
               ))}
@@ -161,7 +162,7 @@ export const ContainerLayout = ({
           {Object.entries(containersData.composedContainers).map(([composeFile, containerData]) => (
             <ComposedContainer
               key={composeFile}
-              cardTitle={composeFile}
+              composeFolder={getFolderName(composeFile)}
               services={containerData.services}
               jobs={containerData.jobs}
               host={selectedHost}
@@ -195,18 +196,20 @@ export const ContainerLayout = ({
             <AccordionTrigger>Other Composed Containers</AccordionTrigger>
             <AccordionContent>
               <div className="grid gap-4 md:grid-cols-1 2xl:grid-cols-2 3xl:grid-cols-3 mb-8">
-                {Object.entries(containersData.otherComposedContainers).map(([key, services]) => (
-                  <ComposedContainer
-                    key={key}
-                    cardTitle={key}
-                    services={services}
-                    host={selectedHost}
-                    hideViewDependabot
-                    hideCheckForUpdates
-                    openAccordionItems={openAccordionItems}
-                    onAccordionChange={handleAccordionChange}
-                  />
-                ))}
+                {Object.entries(containersData.otherComposedContainers).map(
+                  ([filename, services]) => (
+                    <ComposedContainer
+                      key={filename}
+                      composeFolder={getFolderName(filename)}
+                      services={services}
+                      host={selectedHost}
+                      hideViewDependabot
+                      hideCheckForUpdates
+                      openAccordionItems={openAccordionItems}
+                      onAccordionChange={handleAccordionChange}
+                    />
+                  )
+                )}
               </div>
             </AccordionContent>
           </AccordionItem>

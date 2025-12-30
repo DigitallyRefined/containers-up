@@ -13,7 +13,7 @@ import { getContainerStatusColor, getRelativeTime } from '@/frontend/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/Accordion';
 
 interface ComposedContainerProps {
-  cardTitle: string;
+  composeFolder: string;
   services: Service[];
   jobs?: JobWithLogs[];
   host: Host;
@@ -24,7 +24,7 @@ interface ComposedContainerProps {
 }
 
 export const ComposedContainer = ({
-  cardTitle,
+  composeFolder,
   services,
   jobs,
   host,
@@ -36,13 +36,13 @@ export const ComposedContainer = ({
   const hostName = host.name;
   const triggerImageUpdateMutation = useTriggerImageUpdate();
   return (
-    <Card key={cardTitle} className="my-2 relative">
+    <Card key={composeFolder} className="my-2 relative">
       <div className="absolute -top-3 -right-1 flex gap-1 z-10">
         <StreamingDialog
           url={`/api/host/${hostName}/compose`}
           method="PUT"
-          body={{ composeFile: cardTitle }}
-          dialogTitle={`Restart: ${cardTitle}`}
+          body={{ composeFolder }}
+          dialogTitle={`Restart: ${composeFolder}`}
           tooltipText="Restart all containers in this compose file"
         >
           <Button variant="outline" size="sm" aria-label="Restart">
@@ -53,8 +53,8 @@ export const ComposedContainer = ({
         <StreamingDialog
           url={`/api/host/${hostName}/compose`}
           method="DELETE"
-          body={{ composeFile: cardTitle }}
-          dialogTitle={`Stop: ${cardTitle}`}
+          body={{ composeFolder }}
+          dialogTitle={`Stop: ${composeFolder}`}
           tooltipText="Stop all containers in this compose file"
         >
           <Button variant="outline" size="sm" aria-label="Stop">
@@ -71,7 +71,7 @@ export const ComposedContainer = ({
               onClick={() => {
                 window.open(
                   `https://github.com/${host.repo}/network/updates#:~:text=${encodeURIComponent(
-                    cardTitle
+                    composeFolder
                   ).replace(/-/g, '%2D')}`
                 );
               }}
@@ -82,7 +82,7 @@ export const ComposedContainer = ({
         )}
       </div>
       <CardHeader>
-        <CardTitle className="text-left break-all">{cardTitle}</CardTitle>
+        <CardTitle className="text-left break-all">{composeFolder}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
@@ -188,7 +188,7 @@ export const ComposedContainer = ({
                       key={job.id}
                       job={job}
                       hostName={hostName}
-                      composeFile={cardTitle}
+                      composeFolder={composeFolder}
                       repoHost={host.repoHost}
                     />
                   ))}

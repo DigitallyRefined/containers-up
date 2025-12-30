@@ -114,28 +114,27 @@ export const createDockerExec = (logger: Logger) => {
       ),
     removeImage: (context: string, imageId: string) =>
       runStreamedCommand(`${getDockerCmd(context)} rmi "${imageId}"`),
-    isInvalidComposeFile: async (host: Host, composeFile: string) =>
-      typeof composeFile !== 'string' ||
-      !/(docker-compose|compose)\.ya?ml$/.test(composeFile) ||
-      !(await exec.pathExistsOnRemote(host.name, host.sshHost, composeFile)),
-    stopCompose: (hostName: string, host: string, composeFile: string) => {
-      return runStreamedCommand(`docker compose -f "${composeFile}" down`, {
+    isInvalidComposeFolder: async (host: Host, composeFolder: string) =>
+      typeof composeFolder !== 'string' ||
+      !(await exec.pathExistsOnRemote(host.name, host.sshHost, composeFolder)),
+    stopCompose: (hostName: string, host: string, composeFolder: string) => {
+      return runStreamedCommand(`docker compose --project-directory "${composeFolder}" down`, {
         hostName,
         host,
       });
     },
-    startCompose: (hostName: string, host: string, composeFile: string) =>
-      runStreamedCommand(`docker compose -f "${composeFile}" up -d`, {
+    startCompose: (hostName: string, host: string, composeFolder: string) =>
+      runStreamedCommand(`docker compose --project-directory "${composeFolder}" up -d`, {
         hostName,
         host,
       }),
-    restartCompose: (hostName: string, host: string, composeFile: string, pullFirst = false) => {
+    restartCompose: (hostName: string, host: string, composeFolder: string, pullFirst = false) => {
       let command = '';
       if (pullFirst) {
-        command = `docker compose -f "${composeFile}" pull && `;
+        command = `docker compose --project-directory "${composeFolder}" pull && `;
       }
-      command += `docker compose -f "${composeFile}" down && docker compose -f "${composeFile}" up -d`;
-      if (composeFile.includes('containers-up')) {
+      command += `docker compose --project-directory "${composeFolder}" down && docker compose --project-directory "${composeFolder}" up -d`;
+      if (composeFolder.includes('containers-up')) {
         command = `nohup bash -c "${command}" >> /tmp/containers-up.log 2>&1 &`;
       }
       return runStreamedCommand(command, {
