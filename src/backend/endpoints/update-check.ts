@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import { job as jobDb } from '@/backend/db/job';
 import { log as logDb } from '@/backend/db/log';
 import type { Host } from '@/backend/db/schema/host';
@@ -7,6 +9,7 @@ import { batchPromises } from '@/backend/utils';
 import { getRemoteImageDigestFromRef } from '@/backend/utils/docker/remote-image-digest';
 import { getLogs, mainLogger } from '@/backend/utils/logger';
 import { sendNotification } from '@/backend/utils/notification';
+import { getFolderName } from '@/frontend/lib/utils';
 
 const event = 'update-check';
 const logger = mainLogger.child({ event });
@@ -116,7 +119,7 @@ export const checkHostForImageUpdates = async (
     for (const imageToUpdate of imagesToUpdate) {
       for (const [composeFile, containers] of composedContainers) {
         if (containers.some((c) => c.image === imageToUpdate.imageName)) {
-          const folder = `/${composeFile.split('/').slice(0, -1).join('/')}`;
+          const folder = path.join('/', getFolderName(composeFile));
           const title = `Bump ${imageToUpdate.imageName} from \`${getSmallHash(
             imageToUpdate.localDigest
           )}\` to \`${getSmallHash(imageToUpdate.remoteDigest)}\` in ${folder}`;

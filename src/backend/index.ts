@@ -1,6 +1,7 @@
-import { join } from 'node:path';
+import path from 'node:path';
 import { type ErrorLike, serve } from 'bun';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+
 import { host } from '@/backend/db/host';
 import { job as jobDb } from '@/backend/db/job';
 import { log as logDb } from '@/backend/db/log';
@@ -28,7 +29,7 @@ const ENV_PUBLIC_OIDC_CLIENT_ID = process.env.ENV_PUBLIC_OIDC_CLIENT_ID;
 const OIDC_CLIENT_SECRET = process.env.OIDC_CLIENT_SECRET;
 const OIDC_JWKS_URL =
   process.env.OIDC_JWKS_URL ||
-  (ENV_PUBLIC_OIDC_ISSUER_URI && join(ENV_PUBLIC_OIDC_ISSUER_URI, '.well-known/jwks.json'));
+  (ENV_PUBLIC_OIDC_ISSUER_URI && path.join(ENV_PUBLIC_OIDC_ISSUER_URI, '.well-known/jwks.json'));
 
 const isOidcEnabled = Boolean(ENV_PUBLIC_OIDC_ISSUER_URI && ENV_PUBLIC_OIDC_CLIENT_ID);
 
@@ -94,7 +95,7 @@ const resolveAndValidateComposeFolder = async (
   const composeFolder =
     data.composeFolder !== '/' && data.composeFolder.startsWith('/')
       ? data.composeFolder
-      : join(selectedHost.workingFolder, data.composeFolder);
+      : path.join(selectedHost.workingFolder, data.composeFolder);
   if (await dockerExec.isInvalidComposeFolder(selectedHost, composeFolder)) {
     return {
       composeError: Response.json({ error: 'Invalid or missing compose folder' }, { status: 400 }),
@@ -143,14 +144,14 @@ export const startServer = () => {
         : {
             '/*': async (req: Request) => {
               const url = new URL(req.url);
-              const path = join(import.meta.dir, url.pathname);
-              const file = Bun.file(path);
+              const filePath = path.join(import.meta.dir, url.pathname);
+              const file = Bun.file(filePath);
               if ((await file.exists()) && url.pathname !== '/index.html') {
                 return new Response(file);
               }
 
               // Read index.html
-              const htmlBundle = Bun.file(join(import.meta.dir, 'index.html'));
+              const htmlBundle = Bun.file(path.join(import.meta.dir, 'index.html'));
 
               // Inject environment variables
               const html = (await htmlBundle.text())

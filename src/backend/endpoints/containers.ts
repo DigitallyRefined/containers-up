@@ -6,6 +6,7 @@ import { getTraefikUrl } from '@/backend/utils';
 import { createDockerExec } from '@/backend/utils/docker';
 import { getIcon } from '@/backend/utils/icon';
 import { mainLogger } from '@/backend/utils/logger';
+import { getFolderName } from '@/frontend/lib/utils';
 
 export type SortOptions = 'updates' | 'uptime' | 'name';
 
@@ -39,10 +40,9 @@ const enrichJobsWithComposeFile = (
   composedContainers: Record<string, any>
 ) => {
   return jobs.map((job) => {
-    const composeFile = Object.keys(composedContainers).find((file) => {
-      const compose = file.split('/').slice(0, -1).join('/');
-      return job.folder.endsWith(compose);
-    });
+    const composeFile = Object.keys(composedContainers).find((file) =>
+      job.folder.endsWith(getFolderName(file))
+    );
     return {
       ...job,
       composeFile,
