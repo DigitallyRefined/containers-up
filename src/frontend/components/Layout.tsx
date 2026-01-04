@@ -247,7 +247,7 @@ export const ContainerLayout = ({
             <AccordionContent>
               <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3 text-left">
                 {containersData.unusedDockerImages.map((image, idx) => (
-                  <ContainerImage key={idx} image={image} hostName={selectedHostName} />
+                  <ContainerImage key={idx} image={image} hostName={selectedHostName} showDelete />
                 ))}
               </div>
             </AccordionContent>
