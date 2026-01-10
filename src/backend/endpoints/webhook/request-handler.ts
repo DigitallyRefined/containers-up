@@ -68,7 +68,6 @@ export const handleWebhookRequest = async (
   }
 
   const webhookEvent: WebhookEvent = {
-    sender: webhookData.sender?.login,
     repo: webhookData.repository.full_name,
     number: webhookData.pull_request?.number,
     action: webhookData.action,

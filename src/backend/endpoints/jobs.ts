@@ -13,7 +13,6 @@ export const restartJob = async (id: string) => {
       action: 'closed',
       merged: 'true',
       title,
-      sender: null,
     },
     repoConfig,
     {

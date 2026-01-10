@@ -16,7 +16,6 @@ export type WebhookEvent = {
   title: string;
   body?: string;
   labels?: { name: string }[];
-  sender: string;
   url?: string;
 };
 
@@ -38,6 +37,22 @@ export const commonWebhookHandler = async (
 
   const event = `${eventName} ${hostConfig.name} ${folder || 'auto'}`;
   const logger = mainLogger.child({ event });
+
+  const saveLogs = async () => {
+    const logs = [getLogs(event), containersCleanupLogs].filter(Boolean).flat();
+    return Promise.all(logs.map(async (log) => {
+      await logDb.create({ jobId, hostId: hostConfig.id, ...log });
+    }));
+  };
+
+  if (!isBot) {
+    logger.info(
+      `Received ${eventName}: Not processing request from non-bot user: action='${action}' merged='${merged}' title='${title}'`
+    );
+
+    saveLogs();
+    return;
+  }
 
   const jobData = {
     hostId: hostConfig.id,
@@ -77,31 +92,18 @@ export const commonWebhookHandler = async (
     }
   }
 
-  let containersCleanupLogs: [];
+  let containersCleanupLogs: any[];
   let jobId: number;
 
   if (action === 'opened') {
-    if (isBot) {
-      jobId = await jobDb.upsert({ ...jobData, status: JobStatus.open });
+    jobId = await jobDb.upsert({ ...jobData, status: JobStatus.open });
 
-      sendNotification({
-        hostName: hostConfig.name,
-        subject: `${title} on ${hostConfig.name}`,
-        message: `${body}\n\n${webhookEvent.url}`,
-      });
-    } else {
-      logger.info(
-        `No action required for workingFolder: '${hostConfig.workingFolder}' action: '${action}' merged: '${merged}' title: '${title}'`
-      );
-    }
+    sendNotification({
+      hostName: hostConfig.name,
+      subject: `${title} on ${hostConfig.name}`,
+      message: `${body}\n\n${webhookEvent.url}`,
+    });
   } else if (action === 'closed') {
-    // Check if we have a tracking job for this PR
-    const existingJob = await jobDb.getByRepoPr(hostConfig.id, jobData.repoPr);
-    if (!existingJob) {
-      logger.info(`No job found for: '${jobData.repoPr}', skipping event`);
-      return;
-    }
-
     if (merged) {
       jobId = await jobDb.upsert({ ...jobData, status: JobStatus.running });
       try {
@@ -116,11 +118,5 @@ export const commonWebhookHandler = async (
     }
   }
 
-  // save logs
-  [getLogs(event), containersCleanupLogs]
-    .filter(Boolean)
-    .flat()
-    .forEach(async (log) => {
-      await logDb.create({ jobId, hostId: hostConfig.id, ...log });
-    });
+  saveLogs();
 };
