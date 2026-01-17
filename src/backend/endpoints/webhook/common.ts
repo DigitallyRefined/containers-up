@@ -38,6 +38,9 @@ export const commonWebhookHandler = async (
   const event = `${eventName} ${hostConfig.name} ${folder || 'auto'}`;
   const logger = mainLogger.child({ event });
 
+  let containersCleanupLogs: any[] = [];
+  let jobId: number;
+
   const saveLogs = async () => {
     const logs = [getLogs(event), containersCleanupLogs].filter(Boolean).flat();
     return Promise.all(logs.map(async (log) => {
@@ -45,7 +48,7 @@ export const commonWebhookHandler = async (
     }));
   };
 
-  if (!isBot) {
+  if (!isBot && options.eventName !== 'manual-restart') {
     logger.info(
       `Received ${eventName}: Not processing request from non-bot user: action='${action}' merged='${merged}' title='${title}'`
     );
@@ -91,9 +94,6 @@ export const commonWebhookHandler = async (
       return;
     }
   }
-
-  let containersCleanupLogs: any[];
-  let jobId: number;
 
   if (action === 'opened') {
     jobId = await jobDb.upsert({ ...jobData, status: JobStatus.open });

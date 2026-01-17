@@ -23,7 +23,7 @@ export const pullRestartUpdatedContainers = async (
   const dockerExec = createDockerExec(logger);
 
   const composePullDownUp = async (composeFolder: string) => {
-    logger.info(`Restarting services for compose file: ${composeFolder}`);
+    logger.info(`Restarting services in: ${composeFolder}`);
     const response = dockerExec.restartCompose(name, host, composeFolder, true);
     await response.text();
   };
@@ -59,8 +59,9 @@ export const pullRestartUpdatedContainers = async (
     const changedFiles = changedFilesStdout.split('\n').filter(Boolean);
     if (changedFiles.some((f: string) => isComposeFilename(f))) {
       for (const changedFile of changedFiles) {
-        if (isComposeFilename(changedFile) && !folderExcluded(changedFile, excludeFolders)) {
-          await composePullDownUp(changedFile);
+        const composeFolder = path.dirname(path.join(workingFolder, changedFile));
+        if (!folderExcluded(composeFolder, excludeFolders)) {
+          await composePullDownUp(composeFolder);
         }
       }
     } else {
