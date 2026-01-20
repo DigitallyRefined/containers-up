@@ -197,7 +197,7 @@ jobs:
 <details>
 <summary>B) Via Renovate Bot (Forgejo)</summary>
 
-4. Under **Settings > Application**, create a new Access token (with at least permissions to Read and write to issues, package and repository)
+4. Under **Settings > Application**, create a new Access token (with at least permissions listed on the [Renovate Forgejo docs](https://docs.renovatebot.com/modules/platform/forgejo/))
 
 5. Copy the token and under **Actions > Secrets** create a new token called `ACTIONS_TOKEN` with the token value
 
@@ -225,9 +225,17 @@ jobs:
   renovate:
     runs-on: docker
     container:
-      image: renovate/renovate:42.64.1
+      image: renovate/renovate:42.90.2
 
     steps:
+      - name: Restore Renovate Cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/renovate-cache
+          key: renovate-cache-${{ runner.os }}
+          restore-keys: |
+            renovate-cache-
+
       - name: Set Git identity
         run: |
           git config --global user.name "Renovate Bot"
@@ -235,12 +243,13 @@ jobs:
 
       - name: Run Renovate
         env:
-          LOG_LEVEL: info
+          LOG_LEVEL: debug
           RENOVATE_PLATFORM: forgejo
           RENOVATE_ENDPOINT: ${{ github.api_url }} # GitHub variables still work in Forgejo
           RENOVATE_TOKEN: ${{ secrets.ACTIONS_TOKEN }}
           RENOVATE_REPOSITORIES: ${{ github.repository }}
           RENOVATE_GITHUB_COM_TOKEN: ${{ secrets.EXTERNAL_GITHUB_TOKEN }}
+          RENOVATE_CACHE_DIR: ${{ github.workspace }}/renovate-cache
         run: renovate
 ```
 
