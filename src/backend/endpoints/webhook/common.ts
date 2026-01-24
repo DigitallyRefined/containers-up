@@ -43,9 +43,11 @@ export const commonWebhookHandler = async (
 
   const saveLogs = async () => {
     const logs = [getLogs(event), containersCleanupLogs].filter(Boolean).flat();
-    return Promise.all(logs.map(async (log) => {
-      await logDb.create({ jobId, hostId: hostConfig.id, ...log });
-    }));
+    return Promise.all(
+      logs.map(async (log) => {
+        await logDb.create({ jobId, hostId: hostConfig.id, ...log });
+      })
+    );
   };
 
   if (!isBot && options.eventName !== 'manual-restart') {

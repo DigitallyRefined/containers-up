@@ -78,8 +78,12 @@ export const handleCallbackIfPresent = async () => {
   }
 
   // Clean URL after callback
-  const host = url.searchParams.get('host');
-  window.history.replaceState({}, document.title, `/${host ? `?host=${host}` : ''}`);
+  const href = window.location.href;
+  const idx = href.indexOf('auth-callback');
+  if (idx !== -1) {
+    const cleanUrl = href.slice(0, idx) || `${window.location.origin}/`;
+    window.history.replaceState(null, document.title, cleanUrl);
+  }
   return true;
 };
 
@@ -99,7 +103,7 @@ export async function init() {
   userManager = new UserManager({
     authority: config.get('OIDC_ISSUER_URI'),
     client_id: config.get('OIDC_CLIENT_ID'),
-    redirect_uri: `${window.location.origin}/auth-callback${window.location.search}`,
+    redirect_uri: `${window.location.origin}/auth-callback`,
     post_logout_redirect_uri: `${window.location.origin}/`,
     response_type: 'code',
     scope: 'openid',
@@ -140,6 +144,11 @@ export async function authFetch(input: RequestInfo | URL, initOpts: RequestInit 
     if (userManager) {
       await userManager.removeUser();
       currentUser = null;
+    }
+    // Save host query parameter if present before redirecting
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('host')) {
+      localStorage.setItem('selectedHost:global', JSON.stringify(url.searchParams.get('host')));
     }
     // Redirect to login
     await login();

@@ -102,12 +102,12 @@ const getAuthToken = async (
     const url = `${realm}?service=${service}&scope=${scope}`;
     const response = await fetch(url, { headers });
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error! status: ${response.status ?? ''}`);
     }
     const data = await response.json();
     return data.token || data.access_token;
   } catch (error) {
-    throw new Error(`Failed to get auth token: ${error.message}`);
+    throw new Error(`Failed to get auth token: ${error.message ?? ''}`);
   }
 };
 
@@ -167,7 +167,9 @@ const getRemoteImageDigest = async ({
   }
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch manifest: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Failed to fetch manifest: ${response.status ?? ''} ${response.statusText ?? ''}`
+    );
   }
 
   const digest = response.headers.get('docker-content-digest');

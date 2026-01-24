@@ -21,7 +21,9 @@ export const createExec = (logger: Logger) => {
         code: typeof error.code === 'number' ? error.code : 1,
       };
       if (throwOnError) {
-        logger.error(`${command} ${errorData.stderr} ${errorData.stdout} ${errorData.code}`);
+        logger.error(
+          `${command} ${errorData?.stderr ?? ''} ${errorData?.stdout ?? ''} ${errorData?.code ?? ''}`
+        );
         throw errorData;
       }
       return errorData;

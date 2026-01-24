@@ -31,7 +31,9 @@ const api = {
     const response = await authFetch(url);
     if (!response.ok) {
       const error = await response.json().catch(() => null);
-      throw new Error(`Failed to fetch containers ${response.statusText} ${error?.details}`);
+      throw new Error(
+        `Failed to fetch containers ${response.statusText ?? ''} ${error.details ?? ''}`
+      );
     }
     return response.json();
   },

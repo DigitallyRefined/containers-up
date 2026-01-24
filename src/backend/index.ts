@@ -496,7 +496,7 @@ export const startServer = () => {
             )}/.well-known/openid-configuration`;
             const metadataRes = await fetch(metadataUrl);
             if (!metadataRes.ok) {
-              mainLogger.error(`Failed to fetch OIDC metadata: ${metadataRes.statusText}`);
+              mainLogger.error(`Failed to fetch OIDC metadata: ${metadataRes.statusText ?? ''}`);
               return Response.json({ error: `Failed to fetch OIDC metadata` }, { status: 500 });
             }
             const metadata = await metadataRes.json();
