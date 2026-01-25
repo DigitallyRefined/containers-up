@@ -47,6 +47,7 @@ export const host = {
     workingFolder,
     excludeFolders,
     cron,
+    squashUpdates,
     sortOrder,
   }: Host) => {
     const data = {
@@ -60,6 +61,7 @@ export const host = {
       workingFolder,
       excludeFolders: excludeFolders || '',
       cron,
+      squashUpdates: squashUpdates ? 1 : 0,
       sortOrder,
     };
 

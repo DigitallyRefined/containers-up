@@ -25,6 +25,7 @@ It provides a unified interface for managing containerized applications, and aut
 - 🌓 **Modern UX**: Automatic light and dark mode (based on system settings)
 - 📊 **Job Tracking**: Monitor update jobs with detailed logs and retry capabilities
 - 🔐 **Security**: Secure SSH connections, webhook signature verification and OIDC authentication
+- 🗜️ **Optional Git Commit Squashing**: Automatically squash multiple dependency update commits to keep Git history clean
 
 ## Screenshot
 
@@ -38,7 +39,7 @@ The app can be started using the following `compose.yml`:
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:1.3.8
+    image: ghcr.io/digitallyrefined/containers-up:1.4.0
     restart: unless-stopped
     ports:
       - 3000:3000
@@ -62,7 +63,7 @@ Optional system wide configuration can be changed by copying `.env.default` to `
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:1.3.8
+    image: ghcr.io/digitallyrefined/containers-up:1.4.0
     restart: unless-stopped
     volumes:
       - ./containers-up/storage:/storage
@@ -215,7 +216,7 @@ on:
       - 'renovate/**'
   schedule:
     # At 02:00, only on Saturday
-    - cron: "0 2 * * 6"
+    - cron: '0 2 * * 6'
   issues:
     types:
       - edited
@@ -265,21 +266,24 @@ If everything has been set up correctly the next time Dependabot or Renovate Bot
 
 All environment variables are _optional_ and can be set in the `compose.yml` file via an `env_file: ./.env` or using the `environment:` array. Environment variables starting with `ENV_PUBLIC_` are also embedded in the public HTML output.
 
-| Key                           | Description                                                                                                                                                                                                                     | Default         |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
-| `APP_URL`                     | App URL to used by links in notifications                                                                                                                                                                                       |                 |
-| `APPRISE_NOTIFICATION`        | Apprise is used for container update notifications. See Apprise syntax, see: [Apprise Supported Notifications syntax](https://github.com/caronc/apprise#supported-notifications)                                                |                 |
-| `RUN_COMPOSE_MAX_DEPTH`       | How many folders deep to search for compose files                                                                                                                                                                               | `3`             |
-| `SSH_CONTROL_PERSIST`         | How long SSH connections should persist after last request                                                                                                                                                                      | `20m`           |
-| `ENV_PUBLIC_OIDC_ISSUER_URI`  | OpenID Connect base URI                                                                                                                                                                                                         | Auth disabled   |
-| `ENV_PUBLIC_OIDC_CLIENT_ID`   | OpenID Connect client ID                                                                                                                                                                                                        |                 |
-| `OIDC_CLIENT_SECRET`          | OpenID Connect client secret                                                                                                                                                                                                    |                 |
-| `OIDC_JWKS_URL`               | _Optional_ OpenID Connect JSON Web Key Set (file URL)                                                                                                                                                                           | Auto discovered |
-| `MAX_QUEUE_TIME_MINS`         | Max time in minutes a queued update can wait for                                                                                                                                                                                | `10`            |
-| `LOG_LINES`                   | Number of previous log lines shown when viewing a containers logs                                                                                                                                                               | `500`           |
-| `DOCKER_USERNAME`             | [Docker Hub](https://hub.docker.com) username - used to check for image updates (use if [rate limited by Docker](https://docs.docker.com/docker-hub/usage/))                                                                    |                 |
-| `DOCKER_TOKEN`                | Docker Hub token                                                                                                                                                                                                                |                 |
-| `GHCR_USERNAME`               | [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) username - used to check for image updates on GHCR (use if rate limited by GitHub) |                 |
-| `GHCR_TOKEN`                  | GitHub Container Registry token                                                                                                                                                                                                 |                 |
-| `CONTAINER_REGISTRY_USERNAME` | Custom container image registry username                                                                                                                                                                                        |                 |
-| `CONTAINER_REGISTRY_TOKEN`    | Custom container image registry token                                                                                                                                                                                           |                 |
+| Key                           | Description                                                                                                                                                                                                                     | Default               |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| `APP_URL`                     | App URL to used by links in notifications                                                                                                                                                                                       |                       |
+| `APPRISE_NOTIFICATION`        | Apprise is used for container update notifications. See Apprise syntax, see: [Apprise Supported Notifications syntax](https://github.com/caronc/apprise#supported-notifications)                                                |                       |
+| `RUN_COMPOSE_MAX_DEPTH`       | How many folders deep to search for compose files                                                                                                                                                                               | `3`                   |
+| `SSH_CONTROL_PERSIST`         | How long SSH connections should persist after last request                                                                                                                                                                      | `20m`                 |
+| `ENV_PUBLIC_OIDC_ISSUER_URI`  | OpenID Connect base URI                                                                                                                                                                                                         | Auth disabled         |
+| `ENV_PUBLIC_OIDC_CLIENT_ID`   | OpenID Connect client ID                                                                                                                                                                                                        |                       |
+| `OIDC_CLIENT_SECRET`          | OpenID Connect client secret                                                                                                                                                                                                    |                       |
+| `OIDC_JWKS_URL`               | _Optional_ OpenID Connect JSON Web Key Set (file URL)                                                                                                                                                                           | Auto discovered       |
+| `MAX_QUEUE_TIME_MINS`         | Max time in minutes a queued update can wait for                                                                                                                                                                                | `10`                  |
+| `LOG_LINES`                   | Number of previous log lines shown when viewing a containers logs                                                                                                                                                               | `500`                 |
+| `DOCKER_USERNAME`             | [Docker Hub](https://hub.docker.com) username - used to check for image updates (use if [rate limited by Docker](https://docs.docker.com/docker-hub/usage/))                                                                    |                       |
+| `DOCKER_TOKEN`                | Docker Hub token                                                                                                                                                                                                                |                       |
+| `GHCR_USERNAME`               | [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) username - used to check for image updates on GHCR (use if rate limited by GitHub) |                       |
+| `GHCR_TOKEN`                  | GitHub Container Registry token                                                                                                                                                                                                 |                       |
+| `CONTAINER_REGISTRY_USERNAME` | Custom container image registry username                                                                                                                                                                                        |                       |
+| `CONTAINER_REGISTRY_TOKEN`    | Custom container image registry token                                                                                                                                                                                           |                       |
+| `SQUASH_UPDATE_MESSAGE`       | Commit message prefix used when squashing dependency update commits (requires squash updates enabled per host)                                                                                                                  | `Update dependencies` |
+| `SQUASH_DAYS_AGO`             | Number of days before considering a commit too old to squash with newer dependency updates                                                                                                                                      | `5`                   |
+| `SQUASH_MAX_UPDATE_COMMITS`   | Maximum number of dependency update commits to keep before squashing the oldest two together                                                                                                                                    | `5`                   |

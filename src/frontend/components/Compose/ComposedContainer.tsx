@@ -94,7 +94,7 @@ export const ComposedContainer = ({
                   <img
                     src={`/icons/${service.Config.Labels['com.docker.compose.service']}.webp`}
                     alt={service.Config.Labels['com.docker.compose.service']}
-                    className="absolute top-4 left-4 w-8 opacity-80 z-0"
+                    className="absolute top-4 left-4 max-w-8 max-h-9 opacity-80 z-0"
                     onError={(e) => (e.currentTarget.style.display = 'none')}
                   />
                   <div className="absolute -top-3 -right-1 flex gap-1 z-10">

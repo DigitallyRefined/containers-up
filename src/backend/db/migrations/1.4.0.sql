@@ -1,0 +1,1 @@
+ALTER TABLE host ADD COLUMN squashUpdates INTEGER DEFAULT 0;

@@ -5,6 +5,7 @@ import type { Host } from '@/backend/db/schema/host';
 import { isComposeFilename } from '@/backend/utils';
 import { createDockerExec } from '@/backend/utils/docker';
 import { createExec } from '@/backend/utils/exec';
+import { squashUpdates } from '@/backend/utils/git';
 
 const folderExcluded = (folder: string, excludeFolders: string | null): boolean => {
   if (!excludeFolders || excludeFolders === 'null') return false;
@@ -21,6 +22,7 @@ export const pullRestartUpdatedContainers = async (
 
   const exec = createExec(logger);
   const dockerExec = createDockerExec(logger);
+  const sshRun = (cmd: string) => exec.sshRun(name, host, `cd ${workingFolder} && ${cmd}`);
 
   const composePullDownUp = async (composeFolder: string) => {
     logger.info(`Restarting services in: ${composeFolder}`);
@@ -28,18 +30,24 @@ export const pullRestartUpdatedContainers = async (
     await response.text();
   };
 
-  await exec.sshRun(name, host, `cd ${workingFolder} && git pull --prune`);
+  const checkAndSquashUpdates = async () => {
+    if (repoConfig.squashUpdates) {
+      try {
+        await squashUpdates(sshRun, logger);
+      } catch (err) {
+        logger.error({ err }, 'Failed to squash update commits');
+      }
+    }
+  };
+
+  await sshRun(`git pull --prune`);
 
   let composeFolderExists = 'missing';
   let containerFolder = '';
 
   if (folder) {
     containerFolder = path.join(workingFolder, folder);
-    const { stdout } = await exec.sshRun(
-      name,
-      host,
-      `test -d "${containerFolder}" && echo exists || echo missing`
-    );
+    const { stdout } = await sshRun(`test -d "${containerFolder}" && echo exists || echo missing`);
     composeFolderExists = stdout;
   }
 
@@ -49,21 +57,21 @@ export const pullRestartUpdatedContainers = async (
     } else {
       logger.info(`Compose folder excluded: ${containerFolder}`);
     }
+    await checkAndSquashUpdates();
   } else {
     // Single compose file watch (via git diff)
-    const { stdout: changedFilesStdout } = await exec.sshRun(
-      name,
-      host,
-      `cd ${workingFolder} && git diff --name-only HEAD~1 HEAD`
-    );
+    const { stdout: changedFilesStdout } = await sshRun(`git diff --name-only HEAD~1 HEAD`);
     const changedFiles = changedFilesStdout.split('\n').filter(Boolean);
     if (changedFiles.some((f: string) => isComposeFilename(f))) {
       for (const changedFile of changedFiles) {
         const composeFolder = path.dirname(path.join(workingFolder, changedFile));
         if (!folderExcluded(composeFolder, excludeFolders)) {
           await composePullDownUp(composeFolder);
+        } else {
+          logger.info(`Compose folder excluded: ${composeFolder}`);
         }
       }
+      await checkAndSquashUpdates();
     } else {
       logger.info('No compose YAML files have been changed');
     }

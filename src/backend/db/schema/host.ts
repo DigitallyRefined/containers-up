@@ -12,6 +12,7 @@ export class Host {
   workingFolder?: string;
   excludeFolders?: string;
   cron?: string;
+  squashUpdates?: boolean;
   sortOrder?: number;
   created?: string;
 }
@@ -28,6 +29,7 @@ export const hostCreateTableSql = `
     workingFolder TEXT,
     excludeFolders TEXT,
     cron TEXT,
+    squashUpdates INTEGER DEFAULT 0,
     sortOrder INTEGER,
     created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(repoHost, repo)
@@ -65,6 +67,7 @@ export const hostSchema = z.object({
   workingFolder: z.string().optional(),
   excludeFolders: z.string().optional(),
   cron: z.string().optional(),
+  squashUpdates: z.boolean().optional().default(false),
   sortOrder: z.number().optional(),
 });
 

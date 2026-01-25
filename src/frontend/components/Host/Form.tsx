@@ -83,6 +83,7 @@ export const HostForm = ({
       ...normalizeNulls(initialValues),
       repoHost: initialValues?.repoHost || 'https://github.com',
       botType: (initialValues?.botType || 'dependabot') as 'dependabot' | 'renovate',
+      squashUpdates: initialValues?.squashUpdates ?? false,
     }),
     [initialValues]
   );
@@ -208,7 +209,7 @@ export const HostForm = ({
 
       <LabeledInput
         label={
-          <>
+          <span className="inline-flex items-center">
             Webhook Secret
             <Dialog>
               <DialogTrigger asChild>
@@ -233,7 +234,7 @@ export const HostForm = ({
                 </div>
               </DialogContent>
             </Dialog>
-          </>
+          </span>
         }
         id="webhookSecret"
         type="text"
@@ -264,6 +265,49 @@ export const HostForm = ({
         disabled={isSubmitting}
         {...register('cron')}
       />
+
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="squashUpdates"
+          className="h-4 w-4 rounded border-gray-300"
+          disabled={isSubmitting}
+          {...register('squashUpdates')}
+        />
+        <label
+          htmlFor="squashUpdates"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 inline-flex items-center"
+        >
+          Squash update commits
+          <small className="ml-1">(experimental)</small>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Info about squash updates"
+                className="cursor-pointer"
+              >
+                <Info className="size-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-xs text-sm font-medium mb-2">
+              <DialogHeader>
+                <DialogTitle>Squashing Updates</DialogTitle>
+              </DialogHeader>
+              <p>
+                When enabled, multiple dependency update commits will be squashed into a single
+                commit after pulling updates.
+              </p>
+              <p>
+                Note: Requires repositories to use the Git pull request squash merge strategy and
+                may not work in all scenarios.
+              </p>
+              <p>Warning: This feature is experimental, use with caution.</p>
+            </DialogContent>
+          </Dialog>
+        </label>
+      </div>
 
       <LabeledInput
         label="Sort Order"
