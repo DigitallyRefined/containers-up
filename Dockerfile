@@ -1,4 +1,6 @@
-FROM oven/bun:1.3.6-alpine AS base
+FROM oven/bun:1.3.7-alpine AS base
+
+RUN apk upgrade --no-cache
 
 RUN apk add --no-cache \
     openssh-client \
