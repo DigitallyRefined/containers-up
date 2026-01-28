@@ -43,6 +43,20 @@ export const handleWebhookRequest = async (
     return new Response('Unauthorized (bad signature)', { status: 401 });
   }
 
+  const eventType = req.headers.get('X-GitHub-Event');
+  if (eventType === 'ping') {
+    const msg = `${options.name} webhook ping received for host: ${selectedHost.name}`;
+    mainLogger.info(msg);
+    logDb.create({
+      hostId: selectedHost.id,
+      level: 30,
+      time: Date.now(),
+      event: `${options.name} webhook ping`,
+      msg,
+    });
+    return Response.json({ message: 'webhook ping received' });
+  }
+
   const json = new TextDecoder().decode(bodyBuffer);
   let webhookData: Record<string, any> | undefined;
   if (!json) {
@@ -51,19 +65,6 @@ export const handleWebhookRequest = async (
   try {
     webhookData = JSON.parse(json);
   } catch {
-    // Basic ping check for GitHub
-    if (json.includes('Speak+like+a+human')) {
-      const msg = `${options.name} webhook ping received for host: ${selectedHost.name}`;
-      mainLogger.info(msg);
-      logDb.create({
-        hostId: selectedHost.id,
-        level: 30,
-        time: Date.now(),
-        event: `${options.name} webhook ping`,
-        msg,
-      });
-      return Response.json({ message: 'webhook ping received' });
-    }
     return Response.json({ message: 'Invalid JSON payload', json }, { status: 400 });
   }
 

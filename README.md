@@ -39,7 +39,7 @@ The app can be started using the following `compose.yml`:
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:1.4.0
+    image: ghcr.io/digitallyrefined/containers-up:1.4.1
     restart: unless-stopped
     ports:
       - 3000:3000
@@ -63,7 +63,7 @@ Optional system wide configuration can be changed by copying `.env.default` to `
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:1.4.0
+    image: ghcr.io/digitallyrefined/containers-up:1.4.1
     restart: unless-stopped
     volumes:
       - ./containers-up/storage:/storage
