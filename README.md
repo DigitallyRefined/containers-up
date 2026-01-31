@@ -29,7 +29,7 @@ It provides a unified interface for managing containerized applications, and aut
 
 ## Screenshot
 
-![screenshot](./screenshot.webp)
+[![screenshot](./screenshot.webp)](https://youtu.be/BXh_dP7b07k)
 
 ## Installation
 
