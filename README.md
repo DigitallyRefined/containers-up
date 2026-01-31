@@ -39,7 +39,7 @@ The app can be started using the following `compose.yml`:
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:1.4.1
+    image: ghcr.io/digitallyrefined/containers-up:1.4.2
     restart: unless-stopped
     ports:
       - 3000:3000
@@ -63,7 +63,7 @@ Optional system wide configuration can be changed by copying `.env.default` to `
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:1.4.1
+    image: ghcr.io/digitallyrefined/containers-up:1.4.2
     restart: unless-stopped
     volumes:
       - ./containers-up/storage:/storage
@@ -92,13 +92,14 @@ services:
 
   pocket-id:
     # https://github.com/pocket-id/pocket-id/releases
-    image: ghcr.io/pocket-id/pocket-id:v1.13.1
+    image: ghcr.io/pocket-id/pocket-id:v2.2.0
     restart: unless-stopped
     volumes:
       - './pocket-id/data:/app/data'
     environment:
       - APP_URL=https://id.example.com # < Update this
       - TRUST_PROXY=true
+      - ENCRYPTION_KEY="run `openssl rand -base64 32`" # < Run to generate a unique key
     networks:
       - 'traefik'
     labels:
@@ -111,7 +112,7 @@ services:
   traefik:
     # Check migration guide first: https://doc.traefik.io/traefik/master/migration/v3/
     # https://github.com/traefik/traefik/releases
-    image: docker.io/traefik:3.5.0
+    image: traefik:v3.6.7
     container_name: 'traefik'
     restart: unless-stopped
     ports:
@@ -226,7 +227,7 @@ jobs:
   renovate:
     runs-on: docker
     container:
-      image: renovate/renovate:42.90.2
+      image: renovate/renovate:43.0.6
 
     steps:
       - name: Restore Renovate Cache

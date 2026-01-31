@@ -29,6 +29,27 @@ const hasUncommittedChanges = async (
   return !!status.stdout.trim();
 };
 
+const getCommitMetadata = async (
+  sshRun: (cmd: string) => Promise<{ stdout: string }>,
+  skipCount = 0
+) => {
+  const skip = skipCount > 0 ? `--skip=${skipCount} ` : '';
+  const subject = (await sshRun(`git log -1 ${skip}--format=%s`)).stdout.trim();
+  const body = (await sshRun(`git log -1 ${skip}--format=%b`)).stdout.trim();
+  const authorDate = (await sshRun(`git log -1 ${skip}--format=%aI`)).stdout.trim();
+  const authorName = (await sshRun(`git log -1 ${skip}--format=%an`)).stdout.trim();
+  const timestamp =
+    Number.parseInt((await sshRun(`git log -1 ${skip}--format=%at`)).stdout.trim()) * 1000;
+
+  return {
+    subject,
+    body,
+    authorDate,
+    authorName,
+    timestamp,
+  };
+};
+
 const updateCurrentCommit = async (
   sshRun: (cmd: string) => Promise<{ stdout: string }>,
   subject: string,
@@ -132,33 +153,53 @@ export const squashUpdates = async (
     return;
   }
 
-  // Get current commit info
-  const lastCommitSubject = (await sshRun('git log -1 --format=%s')).stdout.trim();
-  const lastCommitBody = (await sshRun('git log -1 --format=%b')).stdout.trim();
+  // Keep squashing while the previous commit is from an automated author
+  let continueSquashing = true;
+  let loopCount = 0;
+  const MAX_SQUASH_LOOPS = 50; // To prevent infinite loops
 
-  // Get previous commit info
-  const prevCommitSubject = (await sshRun('git log -1 --skip=1 --format=%s')).stdout.trim();
-  const prevCommitBody = (await sshRun('git log -1 --skip=1 --format=%b')).stdout.trim();
-  const prevCommitAuthorDate = (await sshRun('git log -1 --skip=1 --format=%aI')).stdout.trim();
-  const prevCommitTimestamp =
-    Number.parseInt((await sshRun('git log -1 --skip=1 --format=%at')).stdout.trim()) * 1000;
+  while (continueSquashing && loopCount < MAX_SQUASH_LOOPS) {
+    loopCount++;
+    logger.info(`Squash loop iteration ${loopCount}`);
+
+    // Get current commit info (needs to be inside loop as HEAD changes after each squash)
+    const lastCommit = await getCommitMetadata(sshRun, 0);
+
+    // Get previous commit info
+    const prevCommit = await getCommitMetadata(sshRun, 1);
+
+    const isAutomatedAuthor = /dependabot|renovate/i.test(prevCommit.authorName);
+
+    // If previous commit is not from automated author, stop squashing
+    if (!isAutomatedAuthor) {
+      continueSquashing = false;
+    } else {
+      // Previous commit is from automated author, squash them together
+      logger.info(`Squashing last 2 commits together (previous author: ${prevCommit.authorName})`);
+      await squashLastTwoCommits(
+        sshRun,
+        lastCommit.subject,
+        lastCommit.body,
+        prevCommit.body,
+        prevCommit.authorDate
+      );
+    }
+  }
+
+  if (loopCount >= MAX_SQUASH_LOOPS) {
+    logger.warn(`Reached maximum squash loop limit of ${MAX_SQUASH_LOOPS}`);
+  }
+
+  // Get current commit info after squashing
+  const lastCommit = await getCommitMetadata(sshRun, 0);
+  const prevCommit = await getCommitMetadata(sshRun, 1);
 
   const DAYS_AGO = Date.now() - SQUASH__DEPS_DAYS_AGO * 24 * 60 * 60 * 1000;
 
   // If previous commit is old or doesn't start with "Update dependencies", just update current commit
-  if (prevCommitTimestamp < DAYS_AGO || !prevCommitSubject.includes(SQUASH_UPDATE_MESSAGE)) {
+  if (prevCommit.timestamp < DAYS_AGO || !prevCommit.subject.includes(SQUASH_UPDATE_MESSAGE)) {
     logger.info('Updating current commit message only (previous is old or not an update commit)');
-    await updateCurrentCommit(sshRun, lastCommitSubject, lastCommitBody);
-  } else {
-    // Previous commit already has "Update dependencies", squash them together
-    logger.info('Squashing last 2 commits together');
-    await squashLastTwoCommits(
-      sshRun,
-      lastCommitSubject,
-      lastCommitBody,
-      prevCommitBody,
-      prevCommitAuthorDate
-    );
+    await updateCurrentCommit(sshRun, lastCommit.subject, lastCommit.body);
   }
 
   // After squashing, check if we've exceeded the max number of update commits

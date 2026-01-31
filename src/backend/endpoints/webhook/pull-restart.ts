@@ -1,6 +1,6 @@
 import path from 'node:path';
 import type { Logger } from 'pino';
-
+import { job as jobDb } from '@/backend/db/job';
 import type { Host } from '@/backend/db/schema/host';
 import { isComposeFilename } from '@/backend/utils';
 import { createDockerExec } from '@/backend/utils/docker';
@@ -18,7 +18,7 @@ export const pullRestartUpdatedContainers = async (
   repoConfig: Host,
   logger: Logger
 ) => {
-  const { workingFolder, excludeFolders, name, sshHost: host } = repoConfig;
+  const { id, workingFolder, excludeFolders, name, sshHost: host } = repoConfig;
 
   const exec = createExec(logger);
   const dockerExec = createDockerExec(logger);
@@ -31,7 +31,7 @@ export const pullRestartUpdatedContainers = async (
   };
 
   const checkAndSquashUpdates = async () => {
-    if (repoConfig.squashUpdates) {
+    if (repoConfig.squashUpdates && (await jobDb.getIncompleteJobsWithPr(id)).length <= 1) {
       try {
         await squashUpdates(sshRun, logger);
       } catch (err) {

@@ -61,6 +61,15 @@ export const job = {
 
     return addLogsToJobs(jobs);
   },
+  getIncompleteJobsWithPr: async (hostId: number) => {
+    const db = await getDb();
+    return db
+      .query(
+        `SELECT * FROM job WHERE hostId = $hostId AND status != ${JobStatus.completed} AND status != ${JobStatus.closed} AND repoPr IS NOT NULL ORDER BY status, updated DESC LIMIT 50`
+      )
+      .as(JobWithLogs)
+      .all({ hostId });
+  },
   getRunningJobs: async (hostId: number) => {
     const db = await getDb();
     return db
