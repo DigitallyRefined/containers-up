@@ -1,7 +1,13 @@
 import type { Logger } from 'pino';
 
+import { log as logDb } from '@/backend/db/log';
+import { getLogs, mainLogger } from '@/backend/utils/logger';
+
+const event = 'git-squash-updates';
+const logger = mainLogger.child({ event });
+
 const SQUASH_UPDATE_MESSAGE = process.env.SQUASH_UPDATE_MESSAGE || 'Update dependencies';
-const SQUASH__DEPS_DAYS_AGO = Number.parseInt(process.env.SQUASH_DAYS_AGO || '5');
+const SQUASH_DEPS_DAYS_AGO = Number.parseInt(process.env.SQUASH_DAYS_AGO || '5');
 const SQUASH_MAX_UPDATE_COMMITS = Number.parseInt(process.env.SQUASH_MAX_UPDATE_COMMITS || '5');
 
 const buildMessage = (subject: string, body?: string) => {
@@ -143,7 +149,8 @@ const pushToRemote = async (
 
 export const squashUpdates = async (
   sshRun: (cmd: string) => Promise<{ stdout: string }>,
-  logger: Logger
+  jobId: number,
+  hostId: number
 ) => {
   logger.info('Squashing dependency update commits');
 
@@ -153,12 +160,10 @@ export const squashUpdates = async (
     return;
   }
 
-  // Keep squashing while the previous commit is from an automated author
-  let continueSquashing = true;
   let loopCount = 0;
   const MAX_SQUASH_LOOPS = 50; // To prevent infinite loops
 
-  while (continueSquashing && loopCount < MAX_SQUASH_LOOPS) {
+  while (loopCount < MAX_SQUASH_LOOPS) {
     loopCount++;
     logger.info(`Squash loop iteration ${loopCount}`);
 
@@ -169,11 +174,12 @@ export const squashUpdates = async (
     const prevCommit = await getCommitMetadata(sshRun, 1);
 
     const isAutomatedAuthor = /dependabot|renovate/i.test(prevCommit.authorName);
+    const X_DAYS_AGO = Date.now() - SQUASH_DEPS_DAYS_AGO * 24 * 60 * 60 * 1000;
 
-    // If previous commit is not from automated author, stop squashing
-    if (!isAutomatedAuthor) {
-      continueSquashing = false;
-    } else {
+    if (
+      isAutomatedAuthor ||
+      (prevCommit.timestamp > X_DAYS_AGO && prevCommit.subject.includes(SQUASH_UPDATE_MESSAGE))
+    ) {
       // Previous commit is from automated author, squash them together
       logger.info(`Squashing last 2 commits together (previous author: ${prevCommit.authorName})`);
       await squashLastTwoCommits(
@@ -183,23 +189,19 @@ export const squashUpdates = async (
         prevCommit.body,
         prevCommit.authorDate
       );
+      continue;
     }
+
+    if (!lastCommit.subject.includes(SQUASH_UPDATE_MESSAGE)) {
+      logger.info('Updating current commit message only (previous is old or not an update commit)');
+      await updateCurrentCommit(sshRun, lastCommit.subject, lastCommit.body);
+    }
+
+    break;
   }
 
   if (loopCount >= MAX_SQUASH_LOOPS) {
     logger.warn(`Reached maximum squash loop limit of ${MAX_SQUASH_LOOPS}`);
-  }
-
-  // Get current commit info after squashing
-  const lastCommit = await getCommitMetadata(sshRun, 0);
-  const prevCommit = await getCommitMetadata(sshRun, 1);
-
-  const DAYS_AGO = Date.now() - SQUASH__DEPS_DAYS_AGO * 24 * 60 * 60 * 1000;
-
-  // If previous commit is old or doesn't start with "Update dependencies", just update current commit
-  if (prevCommit.timestamp < DAYS_AGO || !prevCommit.subject.includes(SQUASH_UPDATE_MESSAGE)) {
-    logger.info('Updating current commit message only (previous is old or not an update commit)');
-    await updateCurrentCommit(sshRun, lastCommit.subject, lastCommit.body);
   }
 
   // After squashing, check if we've exceeded the max number of update commits
@@ -219,4 +221,8 @@ export const squashUpdates = async (
 
   await pushToRemote(sshRun, logger);
   logger.info('Finished squashing dependency update commits');
+
+  getLogs(event).map(async (log) => {
+    await logDb.create({ jobId, hostId, ...log });
+  });
 };

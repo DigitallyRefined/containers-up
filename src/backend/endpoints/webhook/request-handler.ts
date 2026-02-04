@@ -87,7 +87,17 @@ export const handleWebhookRequest = async (
     }
   }
 
-  options.handler(webhookEvent, selectedHost);
+  void options.handler(webhookEvent, selectedHost).catch((err) => {
+    const msg = `${options.name} webhook handler failed for host: ${selectedHost.name}`;
+    mainLogger.error({ err }, msg);
+    void logDb.create({
+      hostId: selectedHost.id,
+      level: 50,
+      time: Date.now(),
+      event: `${options.name} webhook error`,
+      msg,
+    });
+  });
 
   return Response.json({ message: 'webhook received' });
 };

@@ -25,7 +25,7 @@ It provides a unified interface for managing containerized applications, and aut
 - 🌓 **Modern UX**: Automatic light and dark mode (based on system settings)
 - 📊 **Job Tracking**: Monitor update jobs with detailed logs and retry capabilities
 - 🔐 **Security**: Secure SSH connections, webhook signature verification and OIDC authentication
-- 🗜️ **Optional Git Commit Squashing**: Automatically squash multiple dependency update commits to keep Git history clean
+- 🗜️ **Optional Git Commit Squashing**: Automatically squash multiple dependency update commits to keep Git history clean - 15 minutes after last merge (configurable) to prevent PR conflicts
 
 ## Screenshot
 
@@ -39,7 +39,7 @@ The app can be started using the following `compose.yml`:
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:1.4.2
+    image: ghcr.io/digitallyrefined/containers-up:1.4.3
     restart: unless-stopped
     ports:
       - 3000:3000
@@ -63,7 +63,7 @@ Optional system wide configuration can be changed by copying `.env.default` to `
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:1.4.2
+    image: ghcr.io/digitallyrefined/containers-up:1.4.3
     restart: unless-stopped
     volumes:
       - ./containers-up/storage:/storage
@@ -286,5 +286,6 @@ All environment variables are _optional_ and can be set in the `compose.yml` fil
 | `CONTAINER_REGISTRY_USERNAME` | Custom container image registry username                                                                                                                                                                                        |                       |
 | `CONTAINER_REGISTRY_TOKEN`    | Custom container image registry token                                                                                                                                                                                           |                       |
 | `SQUASH_UPDATE_MESSAGE`       | Commit message prefix used when squashing dependency update commits (requires squash updates enabled per host)                                                                                                                  | `Update dependencies` |
+| `SQUASH_UPDATE_DELAY_MINUTES` | Minutes to wait before running squash updates; new attempts reset the timer                                                                                                                                                     | `15`                  |
 | `SQUASH_DAYS_AGO`             | Number of days before considering a commit too old to squash with newer dependency updates                                                                                                                                      | `5`                   |
 | `SQUASH_MAX_UPDATE_COMMITS`   | Maximum number of dependency update commits to keep before squashing the oldest two together                                                                                                                                    | `5`                   |

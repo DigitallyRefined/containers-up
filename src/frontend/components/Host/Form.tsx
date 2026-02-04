@@ -300,6 +300,10 @@ export const HostForm = ({
                 commit after pulling updates.
               </p>
               <p>
+                This happens automatically 15 minutes after the last merge (configurable) to prevent
+                PR conflicts.
+              </p>
+              <p>
                 Note: Requires repositories to use the Git pull request squash merge strategy and
                 may not work in all scenarios.
               </p>
