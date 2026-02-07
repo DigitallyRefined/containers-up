@@ -9,6 +9,8 @@ const logger = mainLogger.child({ event });
 const SQUASH_UPDATE_MESSAGE = process.env.SQUASH_UPDATE_MESSAGE || 'Update dependencies';
 const SQUASH_DEPS_DAYS_AGO = Number.parseInt(process.env.SQUASH_DAYS_AGO || '5');
 const SQUASH_MAX_UPDATE_COMMITS = Number.parseInt(process.env.SQUASH_MAX_UPDATE_COMMITS || '5');
+const GIT_SQUASH_USER =
+  "GIT_AUTHOR_NAME='Containers Up!' GIT_AUTHOR_EMAIL='260200075+containers-up@users.noreply.github.com'";
 
 const buildMessage = (subject: string, body?: string) => {
   const parts = [subject, body].filter(Boolean);
@@ -19,13 +21,15 @@ const gitCommitWithMessage = async (
   sshRun: (cmd: string) => Promise<{ stdout: string }>,
   message: string,
   amend = false,
-  authorDate?: string
+  authorDate: string
 ) => {
   const amendFlag = amend ? ' --amend' : '';
-  const dateFlag = authorDate ? ` --date='${authorDate}'` : '';
+  const dateFlag = ` --date='${authorDate}'`;
   // Use base64 encoding to avoid all shell escaping issues
   const base64Message = Buffer.from(message).toString('base64');
-  await sshRun(`echo '${base64Message}' | base64 -d | git commit${amendFlag}${dateFlag} -F -`);
+  await sshRun(
+    `echo '${base64Message}' | base64 -d | env ${GIT_SQUASH_USER} git commit${amendFlag}${dateFlag} -F -`
+  );
 };
 
 const hasUncommittedChanges = async (
@@ -59,9 +63,10 @@ const getCommitMetadata = async (
 const updateCurrentCommit = async (
   sshRun: (cmd: string) => Promise<{ stdout: string }>,
   subject: string,
-  body: string
+  body: string,
+  authorDate?: string
 ) => {
-  await gitCommitWithMessage(sshRun, buildMessage(subject, body), true);
+  await gitCommitWithMessage(sshRun, buildMessage(subject, body), true, authorDate);
 };
 
 const squashLastTwoCommits = async (
@@ -113,7 +118,7 @@ const squashOldestTwoCommits = async (
   const base64Msg = Buffer.from(squashedMessage).toString('base64');
   const newHash = (
     await sshRun(
-      `echo '${base64Msg}' | base64 -d | env GIT_AUTHOR_DATE='${commits[0].authorDate}' git commit-tree ${commits[1].tree} -p HEAD`
+      `echo '${base64Msg}' | base64 -d | env ${GIT_SQUASH_USER} GIT_AUTHOR_DATE='${commits[0].authorDate}' git commit-tree ${commits[1].tree} -p HEAD`
     )
   ).stdout.trim();
   await sshRun(`git reset --hard ${newHash}`);
@@ -126,7 +131,7 @@ const squashOldestTwoCommits = async (
     const b64 = Buffer.from(msg).toString('base64');
     const hash = (
       await sshRun(
-        `echo '${b64}' | base64 -d | env GIT_AUTHOR_DATE='${commits[i].authorDate}' git commit-tree ${commits[i].tree} -p HEAD`
+        `echo '${b64}' | base64 -d | env ${GIT_SQUASH_USER} GIT_AUTHOR_DATE='${commits[i].authorDate}' git commit-tree ${commits[i].tree} -p HEAD`
       )
     ).stdout.trim();
     await sshRun(`git reset --hard ${hash}`);
@@ -173,12 +178,14 @@ export const squashUpdates = async (
     // Get previous commit info
     const prevCommit = await getCommitMetadata(sshRun, 1);
 
-    const isAutomatedAuthor = /dependabot|renovate/i.test(prevCommit.authorName);
+    const isAutomatedAuthor = (authorName: string) =>
+      /dependabot|renovate|containers-up/i.test(authorName);
     const X_DAYS_AGO = Date.now() - SQUASH_DEPS_DAYS_AGO * 24 * 60 * 60 * 1000;
 
     if (
-      isAutomatedAuthor ||
-      (prevCommit.timestamp > X_DAYS_AGO && prevCommit.subject.includes(SQUASH_UPDATE_MESSAGE))
+      isAutomatedAuthor(lastCommit.authorName) &&
+      isAutomatedAuthor(prevCommit.authorName) &&
+      prevCommit.timestamp > X_DAYS_AGO
     ) {
       // Previous commit is from automated author, squash them together
       logger.info(`Squashing last 2 commits together (previous author: ${prevCommit.authorName})`);
@@ -192,9 +199,12 @@ export const squashUpdates = async (
       continue;
     }
 
-    if (!lastCommit.subject.includes(SQUASH_UPDATE_MESSAGE)) {
+    if (
+      isAutomatedAuthor(lastCommit.authorName) &&
+      !lastCommit.subject.includes(SQUASH_UPDATE_MESSAGE)
+    ) {
       logger.info('Updating current commit message only (previous is old or not an update commit)');
-      await updateCurrentCommit(sshRun, lastCommit.subject, lastCommit.body);
+      await updateCurrentCommit(sshRun, lastCommit.subject, lastCommit.body, lastCommit.authorDate);
     }
 
     break;
