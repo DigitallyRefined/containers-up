@@ -10,7 +10,7 @@ const SQUASH_UPDATE_MESSAGE = process.env.SQUASH_UPDATE_MESSAGE || 'Update depen
 const SQUASH_DEPS_DAYS_AGO = Number.parseInt(process.env.SQUASH_DAYS_AGO || '5');
 const SQUASH_MAX_UPDATE_COMMITS = Number.parseInt(process.env.SQUASH_MAX_UPDATE_COMMITS || '5');
 const GIT_SQUASH_USER =
-  "GIT_AUTHOR_NAME='Containers Up!' GIT_AUTHOR_EMAIL='260200075+containers-up@users.noreply.github.com'";
+  'GIT_AUTHOR_NAME="Containers Up!" GIT_AUTHOR_EMAIL="260200075+containers-up@users.noreply.github.com"';
 
 const buildMessage = (subject: string, body?: string) => {
   const parts = [subject, body].filter(Boolean);
@@ -179,7 +179,7 @@ export const squashUpdates = async (
     const prevCommit = await getCommitMetadata(sshRun, 1);
 
     const isAutomatedAuthor = (authorName: string) =>
-      /dependabot|renovate|containers-up/i.test(authorName);
+      /dependabot|renovate|containers up/i.test(authorName);
     const X_DAYS_AGO = Date.now() - SQUASH_DEPS_DAYS_AGO * 24 * 60 * 60 * 1000;
 
     if (

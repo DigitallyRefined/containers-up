@@ -1,7 +1,7 @@
 services:
   containers-up:
     # https://github.com/DigitallyRefined/containers-up/releases
-    image: ghcr.io/digitallyrefined/containers-up:1.4.4
+    image: ghcr.io/digitallyrefined/containers-up:1.4.5
     container_name: containers-up
     restart: unless-stopped
     volumes:

@@ -5,9 +5,7 @@ const event = 'notification';
 const logger = mainLogger.child({ event });
 const exec = createExec(logger);
 
-const bashEscapeSingleQuoted = (content: string) => {
-  return `'${content.replace(/'/g, `'\\''`)}'`;
-};
+const bashEscapeSingleQuoted = (content: string) => `'${content.replace(/'/g, "'\\''")}'`;
 
 export const sendNotification = async ({
   hostName,
