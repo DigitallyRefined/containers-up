@@ -27,4 +27,4 @@ const AccordionTrigger = React.forwardRef<
 ));
 AccordionTrigger.displayName = 'AccordionTrigger';
 
-export { Accordion, AccordionItem, AccordionTrigger, AccordionContent };
+export { Accordion, AccordionContent, AccordionItem, AccordionTrigger };
