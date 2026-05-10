@@ -73,6 +73,7 @@ export const handleWebhookRequest = async (
     number: webhookData.pull_request?.number,
     action: webhookData.action,
     merged: webhookData.pull_request?.merged,
+    userLogin: webhookData.pull_request?.user?.login,
     title: webhookData.pull_request?.title,
     body: webhookData.pull_request?.body,
     labels: webhookData.pull_request?.labels,

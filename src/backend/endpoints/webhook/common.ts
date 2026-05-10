@@ -13,6 +13,7 @@ export type WebhookEvent = {
   number: number;
   action: string;
   merged: boolean | string;
+  userLogin?: string;
   title: string;
   body?: string;
   labels?: { name: string }[];
@@ -29,11 +30,13 @@ export const commonWebhookHandler = async (
   hostConfig: Host,
   options: WebhookHandlerOptions
 ) => {
-  const { action, merged, title, number, body } = webhookEvent;
+  const { number, action, merged, userLogin, title, body } = webhookEvent;
   const { eventName, folder } = options;
 
   const botKeyword = hostConfig.botType === 'renovate' ? 'renovate' : 'dependabot';
-  const isBot = body?.toLowerCase().includes(botKeyword) ?? false;
+  const isBot =
+    (userLogin?.toLowerCase().includes(botKeyword) || body?.toLowerCase().includes(botKeyword)) ??
+    false;
 
   const event = `${eventName} ${hostConfig.name} ${folder || 'auto'}`;
   const logger = mainLogger.child({ event });
