@@ -154,13 +154,16 @@ networks:
 
 ```yaml
 version: 2
-enable-beta-ecosystems: true # Remove once docker-compose updates become stable
 updates:
   - package-ecosystem: 'docker-compose'
     directory: '**/compose.yml' # change this based on if you call your files compose.yml or docker-compose.yml
+    cooldown:
+      default-days: 5
 
   - package-ecosystem: 'github-actions'
     directory: '/'
+    cooldown:
+      default-days: 5
 ```
 
 6. Create a `.github/workflows/generate_dependabot.yml` file with the following content:

@@ -1,5 +1,4 @@
 version: 2
-enable-beta-ecosystems: true
 updates:
   - package-ecosystem: github-actions
     directory: /
@@ -8,6 +7,8 @@ updates:
       day: saturday
       time: '03:23'
       timezone: Europe/London
+    cooldown:
+      default-days: 5
 
   - package-ecosystem: docker
     directory: /
@@ -16,6 +17,8 @@ updates:
       day: "saturday"
       time: "03:33"
       timezone: "Europe/London"
+    cooldown:
+      default-days: 5
 
   - package-ecosystem: docker-compose
     directory: /
@@ -24,6 +27,8 @@ updates:
       day: saturday
       time: '03:43'
       timezone: Europe/London
+    cooldown:
+      default-days: 5
 
   - package-ecosystem: npm
     directory: /
@@ -32,3 +37,5 @@ updates:
       day: saturday
       time: '03:53'
       timezone: Europe/London
+    cooldown:
+      default-days: 5
