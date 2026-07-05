@@ -2,6 +2,7 @@ import type { Logger } from 'pino';
 
 import { log as logDb } from '@/backend/db/log';
 import { getLogs, mainLogger } from '@/backend/utils/logger';
+import {  encodeBase64CommitMessage } from './base64Message';
 
 const event = 'git-squash-updates';
 const logger = mainLogger.child({ event });
@@ -26,7 +27,12 @@ const gitCommitWithMessage = async (
   const amendFlag = amend ? ' --amend' : '';
   const dateFlag = ` --date='${authorDate}'`;
   // Use base64 encoding to avoid all shell escaping issues
-  const base64Message = Buffer.from(message).toString('base64');
+  const sep = '\n\n';
+  const sepIdx = message.indexOf(sep);
+  const base64Message =
+    sepIdx >= 0
+      ? encodeBase64CommitMessage(message.slice(0, sepIdx), message.slice(sepIdx + sep.length))
+      : encodeBase64CommitMessage(message, undefined);
   await sshRun(
     `echo '${base64Message}' | base64 -d | env ${GIT_SQUASH_USER} git commit${amendFlag}${dateFlag} -F -`
   );
@@ -64,7 +70,7 @@ const updateCurrentCommit = async (
   sshRun: (cmd: string) => Promise<{ stdout: string }>,
   subject: string,
   body: string,
-  authorDate?: string
+  authorDate: string
 ) => {
   await gitCommitWithMessage(sshRun, buildMessage(subject, body), true, authorDate);
 };
@@ -73,19 +79,40 @@ const squashLastTwoCommits = async (
   sshRun: (cmd: string) => Promise<{ stdout: string }>,
   lastSubject: string,
   lastBody: string,
+  prevSubject: string,
   prevBody: string,
   prevAuthorDate: string
 ) => {
-  const messageParts = [lastSubject, lastBody, prevBody]
-    .filter(Boolean)
-    .filter((part) => !part.includes(SQUASH_UPDATE_MESSAGE));
+  const commitsInfo = [
+    { subject: lastSubject, body: lastBody },
+    { subject: prevSubject, body: prevBody },
+  ];
 
-  const finalMessage = messageParts.length
-    ? `${SQUASH_UPDATE_MESSAGE}\n\n${messageParts.join('\n')}`
-    : SQUASH_UPDATE_MESSAGE;
+  const combinedBodyParts = commitsInfo
+    .map((c) => {
+      const parts: string[] = [];
+      if (c.subject && !c.subject.includes(SQUASH_UPDATE_MESSAGE)) {
+        parts.push(c.subject);
+      }
+      if (c.body) {
+        parts.push(c.body);
+      }
+      return parts.join('\n\n');
+    })
+    .filter(Boolean);
+
+  const combinedBody = combinedBodyParts.join('\n\n');
+
+  // Use standard squash subject and keep original subjects/bodies in the commit body
+  const combinedSubject = SQUASH_UPDATE_MESSAGE;
 
   await sshRun('git reset --soft HEAD~2');
-  await gitCommitWithMessage(sshRun, finalMessage, false, prevAuthorDate);
+  await gitCommitWithMessage(
+    sshRun,
+    combinedBody ? `${combinedSubject}\n\n${combinedBody}` : combinedSubject,
+    false,
+    prevAuthorDate
+  );
 };
 
 const squashOldestTwoCommits = async (
@@ -107,15 +134,21 @@ const squashOldestTwoCommits = async (
     .filter(Boolean)
     .filter((part) => !part.includes(SQUASH_UPDATE_MESSAGE));
 
-  const squashedMessage = squashedParts.length
-    ? `${SQUASH_UPDATE_MESSAGE}\n\n${squashedParts.join('\n')}`
+  const squashedBody = squashedParts.join('\n');
+
+  const subjectParts = [commits[0].subject, commits[1].subject]
+    .filter(Boolean)
+    .filter((part) => !part.includes(SQUASH_UPDATE_MESSAGE));
+
+  const combinedSubject = subjectParts.length
+    ? `${SQUASH_UPDATE_MESSAGE}: ${subjectParts.join(' / ')}`
     : SQUASH_UPDATE_MESSAGE;
 
   // Reset to parent commit
   await sshRun(`git reset --hard HEAD~${checkCommitCount}`);
 
   // Create squashed commit with tree from 2nd oldest, preserving oldest author date
-  const base64Msg = Buffer.from(squashedMessage).toString('base64');
+  const base64Msg = encodeBase64CommitMessage(combinedSubject, squashedBody);
   const newHash = (
     await sshRun(
       `echo '${base64Msg}' | base64 -d | env ${GIT_SQUASH_USER} GIT_AUTHOR_DATE='${commits[0].authorDate}' git commit-tree ${commits[1].tree} -p HEAD`
@@ -125,10 +158,7 @@ const squashOldestTwoCommits = async (
 
   // Recreate remaining commits with their original author dates
   for (let i = 2; i < commits.length; i++) {
-    const msg = commits[i].body
-      ? `${commits[i].subject}\n\n${commits[i].body}`
-      : commits[i].subject;
-    const b64 = Buffer.from(msg).toString('base64');
+    const b64 = encodeBase64CommitMessage(commits[i].subject, commits[i].body);
     const hash = (
       await sshRun(
         `echo '${b64}' | base64 -d | env ${GIT_SQUASH_USER} GIT_AUTHOR_DATE='${commits[i].authorDate}' git commit-tree ${commits[i].tree} -p HEAD`
@@ -193,6 +223,7 @@ export const squashUpdates = async (
         sshRun,
         lastCommit.subject,
         lastCommit.body,
+        prevCommit.subject,
         prevCommit.body,
         prevCommit.authorDate
       );
