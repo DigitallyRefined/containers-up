@@ -9,13 +9,13 @@ export const getDependabotRepoFolder = (title: string) => {
   // Extract folder from title (like sed -E 's/.* in (.*)/\1/')
   // Dependabot format: "Bump ... in /folder" (folder maybe empty if watching a single file)
   const folderMatch = title.match(/ in (.*)/);
-  return folderMatch ? folderMatch[1] : null;
+  return folderMatch ? folderMatch[1] : undefined;
 };
 
 export const githubWebhookHandler = async (webhookEvent: GitHubWebhookEvent, hostConfig: Host) => {
   return commonWebhookHandler(webhookEvent, hostConfig, {
     eventName: baseEvent,
     folder:
-      hostConfig.botType === 'dependabot' ? getDependabotRepoFolder(webhookEvent.title) : null,
+      hostConfig.botType === 'dependabot' ? getDependabotRepoFolder(webhookEvent.title) : undefined,
   });
 };

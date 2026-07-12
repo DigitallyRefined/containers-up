@@ -13,14 +13,14 @@ const SQUASH_UPDATE_DELAY_MINUTES = Number.parseInt(
 const SQUASH_UPDATE_DELAY_MS = SQUASH_UPDATE_DELAY_MINUTES * 60 * 1000;
 const squashUpdateTimers = new Map<number, ReturnType<typeof setTimeout>>();
 
-const folderExcluded = (folder: string, excludeFolders: string | null): boolean => {
+const folderExcluded = (folder: string, excludeFolders: string | undefined): boolean => {
   if (!excludeFolders || excludeFolders === 'null') return false;
   const regex = new RegExp(excludeFolders);
   return regex.test(folder);
 };
 
 export const pullRestartUpdatedContainers = async (
-  folder: string | null,
+  folder: string | undefined,
   repoConfig: Host,
   logger: Logger
 ) => {
@@ -73,7 +73,7 @@ export const pullRestartUpdatedContainers = async (
   let containerFolder = '';
 
   if (folder) {
-    containerFolder = path.join(workingFolder, folder);
+    containerFolder = path.join(workingFolder ?? '', folder);
     const { stdout } = await sshRun(`test -d "${containerFolder}" && echo exists || echo missing`);
     composeFolderExists = stdout;
   }
@@ -91,7 +91,7 @@ export const pullRestartUpdatedContainers = async (
     }
 
     for (const changedFile of changedFiles) {
-      const composeFolder = path.dirname(path.join(workingFolder, changedFile));
+      const composeFolder = path.dirname(path.join(workingFolder ?? '', changedFile));
       await restartComposeIfNotExcluded(composeFolder);
     }
   }

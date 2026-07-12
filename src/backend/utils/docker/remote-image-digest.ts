@@ -179,7 +179,7 @@ const getRemoteImageDigest = async ({
   return digest;
 };
 
-export const getRemoteImageDigestFromRef = async (imageRef: string): Promise<string | null> => {
+export const getRemoteImageDigestFromRef = async (imageRef: string): Promise<string> => {
   const options = createRegistryOptionsFromRef(imageRef);
   return getRemoteImageDigest(options);
 };

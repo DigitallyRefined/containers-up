@@ -47,7 +47,7 @@ if (isOidcEnabled && OIDC_JWKS_URL) {
 const requireOidc = async (req: Request) => {
   if (!isOidcEnabled) return null;
   const authz = req.headers.get('authorization') || req.headers.get('Authorization');
-  if (!authz || !authz.toLowerCase().startsWith('bearer ')) {
+  if (!authz?.toLowerCase().startsWith('bearer ')) {
     return new Response('Unauthorized', { status: 401 });
   }
   const token = authz.slice(7).trim();
@@ -95,7 +95,7 @@ const resolveAndValidateComposeFolder = async (
   const composeFolder =
     data.composeFolder !== '/' && data.composeFolder.startsWith('/')
       ? data.composeFolder
-      : path.join(selectedHost.workingFolder, data.composeFolder);
+      : path.join(selectedHost.workingFolder ?? '', data.composeFolder);
   if (await dockerExec.isInvalidComposeFolder(selectedHost, composeFolder)) {
     return {
       composeError: Response.json({ error: 'Invalid or missing compose folder' }, { status: 400 }),
@@ -196,7 +196,7 @@ export const startServer = () => {
             return new Response('File not found', { status: 404 });
           }
           return new Response(file);
-        } catch (error) {
+        } catch {
           return new Response('Error serving file', { status: 500 });
         }
       },

@@ -1,11 +1,11 @@
 export class Log {
   id?: number;
   jobId?: number;
-  hostId: number;
-  level: number;
-  time: string;
-  event: string;
-  msg: string;
+  hostId!: number;
+  level!: number;
+  time!: string;
+  event!: string;
+  msg!: string;
 }
 
 export const logCreateTableSql = `

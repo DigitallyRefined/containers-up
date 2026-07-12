@@ -52,7 +52,7 @@ const getImagesToCheck = async (
   return { imagesToCheck, composedContainers };
 };
 
-const isRunning = {};
+const isRunning: Record<string, boolean> = {};
 export const checkHostForImageUpdates = async (
   selectedHost: Host,
   checkService?: string | undefined
@@ -73,7 +73,7 @@ export const checkHostForImageUpdates = async (
   const digests = await batchPromises(
     Array.from(imagesToCheck),
     2,
-    async ([localDigest, imageName]) => {
+    async ([localDigest, imageName]: [string, string]) => {
       let remoteDigest = localDigest;
       try {
         remoteDigest = await getRemoteImageDigestFromRef(imageName);
@@ -88,8 +88,10 @@ export const checkHostForImageUpdates = async (
     }
   );
 
-  const imagesToUpdate = [];
-  digests.forEach(async ({ imageName, localDigest, remoteDigest }) => {
+  type Image = { imageName: string; localDigest: string; remoteDigest: string };
+
+  const imagesToUpdate: Image[] = [];
+  digests.forEach(async ({ imageName, localDigest, remoteDigest }: Image) => {
     if (!localDigest || !remoteDigest) {
       logger.error(`Could not retrieve both local and remote digests for "${imageName}"`);
       return;
@@ -125,6 +127,7 @@ export const checkHostForImageUpdates = async (
           )}\` to \`${getSmallHash(imageToUpdate.remoteDigest)}\` in ${folder}`;
           await jobDb.upsert({
             hostId: selectedHost.id,
+            repoPr: `container:${imageToUpdate.imageName}:${getSmallHash(imageToUpdate.remoteDigest)}`,
             folder,
             title,
             status: JobStatus.open,

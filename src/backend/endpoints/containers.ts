@@ -14,7 +14,7 @@ const event = 'containers';
 const logger = mainLogger.child({ event });
 const dockerExec = createDockerExec(logger);
 
-const getUnusedDockerImages = async (containers, images) => {
+const getUnusedDockerImages = async (containers: { Image: string }[], images: { ID: string }[]) => {
   const usedImageIds = new Set(containers.map((container) => container.Image));
   return images.filter((img) => !usedImageIds.has(img.ID));
 };
@@ -85,7 +85,7 @@ export const getContainers = async (selectedHost: Host, sort: SortOptions = 'upd
         container.urls.push(`http${isTls ? 's' : ''}://${getTraefikUrl(ruleLabel)}`);
       });
 
-    const workingFolder = path.join(selectedHost.workingFolder, '/');
+    const workingFolder = path.join(selectedHost.workingFolder ?? '', '/');
     const relativeComposeFile = workingFolder
       ? composeFile.replace(workingFolder, '')
       : composeFile;
@@ -145,7 +145,11 @@ export const getContainers = async (selectedHost: Host, sort: SortOptions = 'upd
     composedContainersByComposeFileEntries.sort((a, b) => {
       const getLatestStartedAt = (entry: (typeof composedContainersByComposeFileEntries)[0]) => {
         if (!entry[1].services || entry[1].services.length === 0) return 0;
-        return Math.max(...entry[1].services.map((s) => new Date(s.State.StartedAt).getTime()));
+        return Math.max(
+          ...entry[1].services.map((s: { State: { StartedAt: string } }) =>
+            new Date(s.State.StartedAt).getTime()
+          )
+        );
       };
 
       const aLatest = getLatestStartedAt(a);

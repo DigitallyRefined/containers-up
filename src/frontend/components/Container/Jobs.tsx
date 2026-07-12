@@ -136,7 +136,7 @@ export const Jobs = ({
             )}
           </h5>
         </div>
-        {job.repoPr && (
+        {!job.repoPr.startsWith('container:') && (
           <p className="text-xs  mb-2">
             PR: <RepoPrLink repoPr={job.repoPr} url={prUrl} status={job.status} />
           </p>

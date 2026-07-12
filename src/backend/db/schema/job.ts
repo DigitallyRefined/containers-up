@@ -11,21 +11,21 @@ export enum JobStatus {
 
 export class Job {
   id?: number;
-  hostId: number;
-  repoPr?: string;
-  folder: string;
-  title: string;
-  status: JobStatus;
+  hostId!: number;
+  repoPr!: string;
+  folder!: string;
+  title!: string;
+  status!: JobStatus;
   created?: number;
   updated?: number;
 }
 
 export class JobWithLogs extends Job {
-  logs: Log[];
+  logs!: Log[];
 }
 
 export class JobEnriched extends JobWithLogs {
-  composeFile: string;
+  composeFile!: string;
 }
 
 export const jobCreateTableSql = `

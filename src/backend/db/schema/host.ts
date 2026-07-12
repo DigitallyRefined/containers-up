@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 export class Host {
-  id?: number;
-  name: string;
-  sshHost: string;
-  sshKey: string;
+  id!: number;
+  name!: string;
+  sshHost!: string;
+  sshKey!: string;
   repoHost?: string;
   repo?: string;
   botType?: 'dependabot' | 'renovate';

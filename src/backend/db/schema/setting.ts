@@ -1,7 +1,7 @@
 export class Setting {
   id?: number;
-  key: string;
-  value: string;
+  key!: string;
+  value!: string;
 }
 
 export const settingCreateTableSql = `

@@ -2,7 +2,7 @@ import type { Logger } from 'pino';
 
 import { log as logDb } from '@/backend/db/log';
 import { getLogs, mainLogger } from '@/backend/utils/logger';
-import {  encodeBase64CommitMessage } from './base64Message';
+import { encodeBase64CommitMessage } from './base64Message';
 
 const event = 'git-squash-updates';
 const logger = mainLogger.child({ event });

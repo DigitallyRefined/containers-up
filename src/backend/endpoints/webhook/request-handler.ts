@@ -69,15 +69,15 @@ export const handleWebhookRequest = async (
   }
 
   const webhookEvent: WebhookEvent = {
-    repo: webhookData.repository.full_name,
-    number: webhookData.pull_request?.number,
-    action: webhookData.action,
-    merged: webhookData.pull_request?.merged,
-    userLogin: webhookData.pull_request?.user?.login,
-    title: webhookData.pull_request?.title,
-    body: webhookData.pull_request?.body,
-    labels: webhookData.pull_request?.labels,
-    url: webhookData.pull_request?.html_url,
+    repo: webhookData?.repository.full_name,
+    number: webhookData?.pull_request?.number,
+    action: webhookData?.action,
+    merged: webhookData?.pull_request?.merged,
+    userLogin: webhookData?.pull_request?.user?.login,
+    title: webhookData?.pull_request?.title,
+    body: webhookData?.pull_request?.body,
+    labels: webhookData?.pull_request?.labels,
+    url: webhookData?.pull_request?.html_url,
   };
 
   // Check Pull Request Labels

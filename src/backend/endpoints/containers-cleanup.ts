@@ -16,7 +16,7 @@ export const containersCleanup = async (context: string) => {
   const { stdout: imagesStdout } = await exec.run(
     `${getDockerCmd(context)} images --format "{{.Repository}}:{{.Tag}}"`
   );
-  const images = imagesStdout.split('\n').filter((img) => img);
+  const images = imagesStdout.split('\n').filter((img: string) => img);
 
   const seenImageMap: { [key: string]: boolean } = {};
 

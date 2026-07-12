@@ -22,7 +22,7 @@ export type WebhookEvent = {
 
 type WebhookHandlerOptions = {
   eventName: string;
-  folder?: string | null;
+  folder?: string;
 };
 
 export const commonWebhookHandler = async (
@@ -42,7 +42,7 @@ export const commonWebhookHandler = async (
   const logger = mainLogger.child({ event });
 
   let containersCleanupLogs: any[] = [];
-  let jobId: number;
+  let jobId: number | undefined;
 
   const saveLogs = async () => {
     const logs = [getLogs(event), containersCleanupLogs].filter(Boolean).flat();

@@ -37,7 +37,7 @@ export const postHost = async (host: Host, options: { createSshKey?: boolean } =
     });
   }
 
-  if (host.workingFolder.endsWith('/')) {
+  if (host.workingFolder?.endsWith('/')) {
     host.workingFolder = host.workingFolder.slice(0, -1);
   }
 

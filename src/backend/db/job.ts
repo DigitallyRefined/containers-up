@@ -24,7 +24,7 @@ export const job = {
       status,
       updated: getDatetime(),
     };
-    await upsert({ table: 'job', data, conflictKey: ['hostId', 'title'] });
+    await upsert({ table: 'job', data, conflictKey: ['hostId', 'repoPr'] });
 
     const row = db.query('SELECT id FROM job WHERE title = $title').as(Job).get({ title });
     return row ? row.id : undefined;
