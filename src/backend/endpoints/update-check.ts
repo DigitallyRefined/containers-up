@@ -127,7 +127,7 @@ export const checkHostForImageUpdates = async (
           )}\` to \`${getSmallHash(imageToUpdate.remoteDigest)}\` in ${folder}`;
           await jobDb.upsert({
             hostId: selectedHost.id,
-            repoPr: `container:${imageToUpdate.imageName}:${getSmallHash(imageToUpdate.remoteDigest)}`,
+            source: `container:${imageToUpdate.imageName}:${getSmallHash(imageToUpdate.remoteDigest)}`,
             folder,
             title,
             status: JobStatus.open,

@@ -64,7 +64,7 @@ export const commonWebhookHandler = async (
 
   const jobData = {
     hostId: hostConfig.id,
-    repoPr: `${hostConfig.repo}#${number}`,
+    source: `${hostConfig.repo}#${number}`,
     folder: folder || '',
     title,
   };

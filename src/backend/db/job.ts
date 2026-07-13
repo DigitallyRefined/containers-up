@@ -11,20 +11,20 @@ const addLogsToJobs = async (jobs: JobWithLogs[]) => {
 };
 
 export const job = {
-  upsert: async ({ hostId, repoPr, folder, title, status }: Job) => {
+  upsert: async ({ hostId, source, folder, title, status }: Job) => {
     const db = await getDb();
 
     db.query(jobCreateTableSql).run();
 
     const data = {
       hostId,
-      repoPr,
+      source,
       folder: folder !== '/' ? folder : '',
       title,
       status,
       updated: getDatetime(),
     };
-    await upsert({ table: 'job', data, conflictKey: ['hostId', 'repoPr'] });
+    await upsert({ table: 'job', data, conflictKey: ['hostId', 'source'] });
 
     const row = db.query('SELECT id FROM job WHERE title = $title').as(Job).get({ title });
     return row ? row.id : undefined;
@@ -65,7 +65,7 @@ export const job = {
     const db = await getDb();
     return db
       .query(
-        `SELECT * FROM job WHERE hostId = $hostId AND status != ${JobStatus.completed} AND status != ${JobStatus.closed} AND repoPr IS NOT NULL ORDER BY status, updated DESC LIMIT 50`
+        `SELECT * FROM job WHERE hostId = $hostId AND status != ${JobStatus.completed} AND status != ${JobStatus.closed} AND source IS NOT NULL ORDER BY status, updated DESC LIMIT 50`
       )
       .as(JobWithLogs)
       .all({ hostId });

@@ -12,7 +12,7 @@ export enum JobStatus {
 export class Job {
   id?: number;
   hostId!: number;
-  repoPr!: string;
+  source!: string;
   folder!: string;
   title!: string;
   status!: JobStatus;
@@ -32,12 +32,12 @@ export const jobCreateTableSql = `
   CREATE TABLE IF NOT EXISTS job (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     hostId INTEGER NOT NULL,
-    repoPr TEXT,
+    source TEXT NOT NULL,
     folder TEXT NOT NULL,
     title TEXT NOT NULL,
     status INTEGER NOT NULL,
     created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(hostId, title)
+    UNIQUE(hostId, source)
   )
 `;

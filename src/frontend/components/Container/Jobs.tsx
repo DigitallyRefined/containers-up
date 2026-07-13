@@ -24,12 +24,12 @@ import { Tooltip } from '@/frontend/components/ui/Tooltip';
 import { useRestartJob, useUpdateJob } from '@/frontend/hooks/useApi';
 import { getRelativeTime } from '@/frontend/lib/utils';
 
-export const RepoPrLink = ({
-  repoPr,
+export const SourceLink = ({
+  source,
   url,
   status,
 }: {
-  repoPr: string;
+  source: string;
   url: string;
   status: JobStatus;
 }) => {
@@ -40,14 +40,14 @@ export const RepoPrLink = ({
     return (
       <Link href={url}>
         <Icon className="" color={iconColor} size={16} />
-        {repoPr}
+        {source}
       </Link>
     );
   }
   return (
     <span className="inline-flex items-center gap-1">
       <Icon color={iconColor} size={16} />
-      {repoPr}
+      {source}
     </span>
   );
 };
@@ -102,7 +102,7 @@ export const Jobs = ({
   };
 
   let prUrl = '';
-  const prUrlMatch = job.repoPr?.match(/^([^/]+\/[^#]+)#(\d+)$/);
+  const prUrlMatch = job.source?.match(/^([^/]+\/[^#]+)#(\d+)$/);
   if (prUrlMatch) {
     const [, repo, prId] = prUrlMatch;
     prUrl = repoHost.includes('github')
@@ -136,16 +136,16 @@ export const Jobs = ({
             )}
           </h5>
         </div>
-        {!job.repoPr.startsWith('container:') && (
+        {!job.source.startsWith('container:') && (
           <p className="text-xs  mb-2">
-            PR: <RepoPrLink repoPr={job.repoPr} url={prUrl} status={job.status} />
+            PR: <SourceLink source={job.source} url={prUrl} status={job.status} />
           </p>
         )}
         <Tooltip content={job.updated}>
           <p className="text-xs ">{getRelativeTime(`${job.updated}Z`)}</p>
         </Tooltip>
         <div className="mt-3 w-full flex items-center justify-center gap-2">
-          {!job.repoPr && (
+          {!job.source && (
             <StreamingDialog
               url={`/api/host/${hostName}/compose`}
               method="PUT"
@@ -184,7 +184,7 @@ export const Jobs = ({
             </Dialog>
           )}
 
-          {job.repoPr &&
+          {job.source &&
             (repoHost.includes('github') ||
               (!repoHost.includes('github') && job.status !== JobStatus.open)) && (
               <Tooltip content="Restart Job">
@@ -195,8 +195,8 @@ export const Jobs = ({
                     repoHost.includes('github') && job.status === JobStatus.open
                       ? () => {
                           window.open(
-                            `https://github.com/${job.repoPr.split('/')[0]}/${
-                              job.repoPr.split('/')[1].split('#')[0]
+                            `https://github.com/${job.source.split('/')[0]}/${
+                              job.source.split('/')[1].split('#')[0]
                             }/settings/hooks`,
                             '_blank'
                           );
