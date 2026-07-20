@@ -65,7 +65,7 @@ export const job = {
     const db = await getDb();
     return db
       .query(
-        `SELECT * FROM job WHERE hostId = $hostId AND status != ${JobStatus.completed} AND status != ${JobStatus.closed} AND source IS NOT NULL ORDER BY status, updated DESC LIMIT 50`
+        `SELECT * FROM job WHERE hostId = $hostId AND status != ${JobStatus.completed} AND status != ${JobStatus.closed} AND source NOT LIKE 'container:%' ORDER BY status, updated DESC LIMIT 50`
       )
       .as(JobWithLogs)
       .all({ hostId });

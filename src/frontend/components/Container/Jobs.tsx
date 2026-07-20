@@ -115,6 +115,8 @@ export const Jobs = ({
     return parts.map((part, index) => (index % 2 === 1 ? <code key={index}>{part}</code> : part));
   };
 
+  const isContainerUpdate = job.source.startsWith('container:');
+
   return (
     <Card key={job.id}>
       <CardContent className="p-2 sm:p-3 md:p-4 relative">
@@ -136,7 +138,7 @@ export const Jobs = ({
             )}
           </h5>
         </div>
-        {!job.source.startsWith('container:') && (
+        {!isContainerUpdate && (
           <p className="text-xs  mb-2">
             PR: <SourceLink source={job.source} url={prUrl} status={job.status} />
           </p>
@@ -145,11 +147,11 @@ export const Jobs = ({
           <p className="text-xs ">{getRelativeTime(`${job.updated}Z`)}</p>
         </Tooltip>
         <div className="mt-3 w-full flex items-center justify-center gap-2">
-          {!job.source && (
+          {isContainerUpdate && (
             <StreamingDialog
               url={`/api/host/${hostName}/compose`}
               method="PUT"
-              body={{ composeFolder, pullFirst: true, jobTitle: job.title, jobFolder: job.folder }}
+              body={{ composeFolder, pullFirst: true, job }}
               dialogTitle="Pull image & restart"
               tooltipText="Pull image & restart"
             >
@@ -184,7 +186,7 @@ export const Jobs = ({
             </Dialog>
           )}
 
-          {job.source &&
+          {!isContainerUpdate &&
             (repoHost.includes('github') ||
               (!repoHost.includes('github') && job.status !== JobStatus.open)) && (
               <Tooltip content="Restart Job">

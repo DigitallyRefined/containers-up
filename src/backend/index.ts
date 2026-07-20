@@ -381,11 +381,10 @@ export const startServer = () => {
           );
           if (composeError) return composeError;
 
-          if (data.jobTitle) {
+          if (data.job.title) {
             jobDb.upsert({
+              ...data.job,
               hostId: selectedHost.id,
-              folder: data.jobFolder,
-              title: data.jobTitle,
               status: JobStatus.completed,
             });
           }
