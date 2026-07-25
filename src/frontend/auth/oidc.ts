@@ -1,15 +1,9 @@
 import { type User, UserManager, WebStorageStateStore } from 'oidc-client-ts';
 import config from '../lib/config';
 
-type OidcConfig = {
-  enabled: boolean;
-  issuer?: string | null;
-  audience?: string | null;
-  clientId?: string | null;
-};
-
 let userManager: UserManager | null = null;
 let currentUser: User | null = null;
+let loginRedirectInProgress = false;
 
 export const isOidcEnabled = Boolean(config.get('OIDC_ISSUER_URI') && config.get('OIDC_CLIENT_ID'));
 
@@ -27,7 +21,7 @@ export const getAccessToken = async (): Promise<string | null> => {
   }
 
   // If token is expired or doesn't exist, try to refresh
-  if (currentUser && currentUser.expired) {
+  if (currentUser?.expired) {
     try {
       // Try silent renewal first (if enabled)
       currentUser = await userManager.signinSilent();
@@ -68,13 +62,25 @@ export const handleCallbackIfPresent = async () => {
     url.hash.includes('access_token');
   if (!isCallbackPath && !hasOidcParams) return false;
 
+  // Check if the OIDC provider returned an error (e.g. access_denied)
+  const oidcError = url.searchParams.get('error');
+  if (oidcError) {
+    const errorDescription = url.searchParams.get('error_description') || oidcError;
+    window.history.replaceState(null, document.title, window.location.origin);
+    throw new Error(`Authentication denied: ${errorDescription}`);
+  }
+
   try {
     currentUser = await userManager.signinCallback();
-  } catch (_) {
+  } catch (firstErr) {
     // Some providers use hash; try hash callback
     try {
       currentUser = await userManager.signinRedirectCallback();
-    } catch (_) {}
+    } catch (_) {
+      // Both callback methods failed — surface the original error
+      window.history.replaceState(null, document.title, window.location.origin);
+      throw firstErr;
+    }
   }
 
   // Clean URL after callback
@@ -140,18 +146,22 @@ export async function authFetch(input: RequestInfo | URL, initOpts: RequestInit 
 
   // If we get a 401 and OIDC is enabled, try to re-authenticate
   if (response.status === 401) {
-    // Clear any existing user data
-    if (userManager) {
-      await userManager.removeUser();
-      currentUser = null;
+    // Prevent multiple parallel API calls from triggering multiple login redirects
+    if (!loginRedirectInProgress) {
+      loginRedirectInProgress = true;
+      // Clear any existing user data
+      if (userManager) {
+        await userManager.removeUser();
+        currentUser = null;
+      }
+      // Save host query parameter if present before redirecting
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('host')) {
+        localStorage.setItem('selectedHost:global', JSON.stringify(url.searchParams.get('host')));
+      }
+      // Redirect to login
+      await login();
     }
-    // Save host query parameter if present before redirecting
-    const url = new URL(window.location.href);
-    if (url.searchParams.has('host')) {
-      localStorage.setItem('selectedHost:global', JSON.stringify(url.searchParams.get('host')));
-    }
-    // Redirect to login
-    await login();
     // Return a never-resolving promise to halt callers; after redirect the app reloads
     return new Promise<Response>(() => {});
   }
