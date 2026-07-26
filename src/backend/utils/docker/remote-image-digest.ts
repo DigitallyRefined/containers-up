@@ -97,7 +97,9 @@ const getAuthToken = async (
   try {
     const encodedAuth =
       username && token ? Buffer.from(`${username}:${token}`).toString('base64') : null;
-    const headers = encodedAuth ? { Authorization: `Basic ${encodedAuth}` } : {};
+    const headers: Record<string, string> = encodedAuth
+      ? { Authorization: `Basic ${encodedAuth}` }
+      : {};
 
     const url = `${realm}?service=${service}&scope=${scope}`;
     const response = await fetch(url, { headers });
@@ -107,7 +109,7 @@ const getAuthToken = async (
     const data = await response.json();
     return data.token || data.access_token;
   } catch (error) {
-    throw new Error(`Failed to get auth token: ${error.message ?? ''}`);
+    throw new Error(`Failed to get auth token: ${(error as Error).message ?? ''}`);
   }
 };
 

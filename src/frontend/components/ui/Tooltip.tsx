@@ -13,7 +13,7 @@ export function Tooltip({ content, children, ...rootProps }: TooltipProps) {
   const isTouch = React.useRef(false);
 
   // Handlers for long press
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = (_e: React.TouchEvent) => {
     isTouch.current = true;
     if (closeTimeout.current) {
       clearTimeout(closeTimeout.current);
@@ -41,17 +41,18 @@ export function Tooltip({ content, children, ...rootProps }: TooltipProps) {
   const handleTouchCancel = handleTouchEnd;
 
   // Clone the child to add touch handlers
+  // biome-ignore lint/suspicious/noExplicitAny: needed for React.cloneElement typing
   const child = children as React.ReactElement<any>;
   const trigger = React.cloneElement(child, {
-    onTouchStart: (e: React.TouchEvent<any>) => {
+    onTouchStart: (e: React.TouchEvent<HTMLElement>) => {
       child.props.onTouchStart?.(e);
       handleTouchStart(e);
     },
-    onTouchEnd: (e: React.TouchEvent<any>) => {
+    onTouchEnd: (e: React.TouchEvent<HTMLElement>) => {
       child.props.onTouchEnd?.(e);
       handleTouchEnd();
     },
-    onTouchCancel: (e: React.TouchEvent<any>) => {
+    onTouchCancel: (e: React.TouchEvent<HTMLElement>) => {
       child.props.onTouchCancel?.(e);
       handleTouchCancel();
     },

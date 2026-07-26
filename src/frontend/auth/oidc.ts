@@ -5,14 +5,20 @@ let userManager: UserManager | null = null;
 let currentUser: User | null = null;
 let loginRedirectInProgress = false;
 
+const getUserManager = async (): Promise<UserManager> => {
+  if (!userManager) await init();
+  if (!userManager) throw new Error('UserManager failed to initialize');
+  return userManager;
+};
+
 export const isOidcEnabled = Boolean(config.get('OIDC_ISSUER_URI') && config.get('OIDC_CLIENT_ID'));
 
 export const getAccessToken = async (): Promise<string | null> => {
   if (!isOidcEnabled) return null;
-  if (!userManager) await init();
+  const um = await getUserManager();
 
   if (!currentUser) {
-    currentUser = await userManager.getUser();
+    currentUser = await um.getUser();
   }
 
   // If user exists and token is not expired, return it
@@ -24,12 +30,12 @@ export const getAccessToken = async (): Promise<string | null> => {
   if (currentUser?.expired) {
     try {
       // Try silent renewal first (if enabled)
-      currentUser = await userManager.signinSilent();
+      currentUser = (await um.signinSilent()) ?? null;
       return currentUser?.access_token ?? null;
     } catch (_) {
       // If silent renewal fails, clear the user and require re-authentication
       currentUser = null;
-      await userManager.removeUser();
+      await um.removeUser();
       return null;
     }
   }
@@ -39,19 +45,19 @@ export const getAccessToken = async (): Promise<string | null> => {
 
 export const login = async () => {
   if (!isOidcEnabled) return;
-  if (!userManager) await init();
-  await userManager.signinRedirect();
+  const um = await getUserManager();
+  await um.signinRedirect();
 };
 
 export const logout = async () => {
   if (!isOidcEnabled) return;
-  if (!userManager) await init();
-  await userManager.signoutRedirect();
+  const um = await getUserManager();
+  await um.signoutRedirect();
 };
 
 export const handleCallbackIfPresent = async () => {
   if (!isOidcEnabled) return false;
-  if (!userManager) await init();
+  const um = await getUserManager();
 
   const url = new URL(window.location.href);
   // Support both /auth-callback path and implicit/query fragment callback
@@ -71,11 +77,11 @@ export const handleCallbackIfPresent = async () => {
   }
 
   try {
-    currentUser = await userManager.signinCallback();
+    currentUser = (await um.signinCallback()) ?? null;
   } catch (firstErr) {
     // Some providers use hash; try hash callback
     try {
-      currentUser = await userManager.signinRedirectCallback();
+      currentUser = (await um.signinRedirectCallback()) ?? null;
     } catch (_) {
       // Both callback methods failed — surface the original error
       window.history.replaceState(null, document.title, window.location.origin);
@@ -127,7 +133,7 @@ export async function init() {
   });
 
   try {
-    currentUser = await userManager.getUser();
+    currentUser = (await userManager.getUser()) ?? null;
   } catch {}
 }
 

@@ -68,7 +68,7 @@ export const Jobs = ({
   const updateJobMutation = useUpdateJob();
 
   useEffect(() => {
-    if (job.title.includes('containers-up') && job.status === JobStatus.running) {
+    if (job.id != null && job.title.includes('containers-up') && job.status === JobStatus.running) {
       updateJobMutation.mutate(job.id);
     }
   }, [job.id, job.status, job.title, updateJobMutation]);
@@ -91,12 +91,13 @@ export const Jobs = ({
   };
 
   const handleRestart = () => {
+    if (job.id == null) return;
     restartJobMutation.mutate(job.id, {
       onSuccess: () => {
-        (window as any).showToast('Job restart requested!');
+        window.showToast?.('Job restart requested!');
       },
       onError: (error) => {
-        (window as any).showToast(error.message || 'Failed to restart job');
+        window.showToast?.(error.message || 'Failed to restart job');
       },
     });
   };
@@ -112,7 +113,10 @@ export const Jobs = ({
 
   const renderTitleWithCode = (title: string) => {
     const parts = title.split(/`([^`]+)`/);
-    return parts.map((part, index) => (index % 2 === 1 ? <code key={index}>{part}</code> : part));
+    return parts.map((part, index) =>
+      // biome-ignore lint/suspicious/noArrayIndexKey: static parsed content, order never changes
+      index % 2 === 1 ? <code key={`code-${index}`}>{part}</code> : part
+    );
   };
 
   const isContainerUpdate = job.source.startsWith('container:');
@@ -164,7 +168,7 @@ export const Jobs = ({
           {job.logs.length > 0 && (
             <Dialog
               open={openJobId === job.id}
-              onOpenChange={(open) => setOpenJobId(open ? job.id : null)}
+              onOpenChange={(open) => setOpenJobId(open ? (job.id ?? null) : null)}
             >
               <Tooltip content="View Logs">
                 <DialogTrigger asChild>
@@ -178,8 +182,8 @@ export const Jobs = ({
                   <DialogTitle>Logs for {job.title}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-2 max-h-[80vh] overflow-y-auto">
-                  {job.logs.map((log, logIndex) => (
-                    <Logs key={logIndex} log={log} />
+                  {job.logs.map((log) => (
+                    <Logs key={JSON.stringify(log)} log={log} />
                   ))}
                 </div>
               </DialogContent>

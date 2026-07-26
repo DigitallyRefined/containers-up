@@ -10,6 +10,8 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
     "target": "esnext",
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
 
     "paths": {
       "@/*": ["./src/*"]

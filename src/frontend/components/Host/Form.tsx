@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Info, MailQuestionMark, Save, Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import type { z } from 'zod';
 import { hostEditSchema, hostSchema } from '@/backend/db/schema/host';
@@ -37,10 +37,10 @@ export const HostForm = ({
   type HostForm = z.infer<typeof hostSchema>;
   type HostEditForm = z.infer<typeof hostEditSchema>;
 
-  function normalizeNulls<T extends object>(obj?: T): T {
+  const normalizeNulls = useCallback(<T extends object>(obj?: T): T => {
     if (!obj) return {} as T;
     return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, v === null ? '' : v])) as T;
-  }
+  }, []);
 
   const lastSuccess = useRef(false);
   const createHostMutation = useCreateHost();
@@ -85,7 +85,7 @@ export const HostForm = ({
       botType: (initialValues?.botType || 'dependabot') as 'dependabot' | 'renovate',
       squashUpdates: initialValues?.squashUpdates ?? false,
     }),
-    [initialValues]
+    [initialValues, normalizeNulls]
   );
 
   const {
@@ -321,7 +321,7 @@ export const HostForm = ({
         error={errors.sortOrder?.message}
         disabled={isSubmitting}
         {...register('sortOrder', {
-          setValueAs: (v: string) => (!v ? undefined : parseInt(v)),
+          setValueAs: (v: string) => (!v ? undefined : parseInt(v, 10)),
         })}
       />
 

@@ -1,12 +1,27 @@
 import { host } from '@/backend/db/host';
 import { log as logDb } from '@/backend/db/log';
+import type { Host } from '@/backend/db/schema/host';
 import type { WebhookEvent } from '@/backend/endpoints/webhook/common';
 import { createExec } from '@/backend/utils/exec';
 import { mainLogger } from '@/backend/utils/logger';
 
 type WebhookRouteOptions = {
-  handler: (event: WebhookEvent, hostConfig: any) => Promise<void>;
+  handler: (event: WebhookEvent, hostConfig: Host) => Promise<void>;
   name: string; // for logging ('GitHub' or 'Forgejo')
+};
+
+type WebhookPayload = {
+  repository?: { full_name?: string };
+  pull_request?: {
+    number?: number;
+    merged?: boolean;
+    title?: string;
+    body?: string;
+    labels?: { name: string }[];
+    html_url?: string;
+    user?: { login?: string };
+  };
+  action?: string;
 };
 
 export const handleWebhookRequest = async (
@@ -59,7 +74,7 @@ export const handleWebhookRequest = async (
   }
 
   const json = new TextDecoder().decode(bodyBuffer);
-  let webhookData: Record<string, any> | undefined;
+  let webhookData: WebhookPayload | undefined;
   if (!json) {
     return Response.json({ message: 'JSON payload is empty' }, { status: 400 });
   }
@@ -70,12 +85,12 @@ export const handleWebhookRequest = async (
   }
 
   const webhookEvent: WebhookEvent = {
-    repo: webhookData?.repository.full_name,
-    number: webhookData?.pull_request?.number,
-    action: webhookData?.action,
-    merged: webhookData?.pull_request?.merged,
+    repo: webhookData?.repository?.full_name,
+    number: webhookData?.pull_request?.number ?? 0,
+    action: webhookData?.action ?? '',
+    merged: webhookData?.pull_request?.merged ?? false,
     userLogin: webhookData?.pull_request?.user?.login,
-    title: webhookData?.pull_request?.title,
+    title: webhookData?.pull_request?.title ?? '',
     body: webhookData?.pull_request?.body,
     labels: webhookData?.pull_request?.labels,
     url: webhookData?.pull_request?.html_url,

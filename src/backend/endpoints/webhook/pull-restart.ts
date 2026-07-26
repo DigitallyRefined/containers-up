@@ -8,7 +8,8 @@ import { createExec } from '@/backend/utils/exec';
 import { squashUpdates } from '@/backend/utils/git';
 
 const SQUASH_UPDATE_DELAY_MINUTES = Number.parseInt(
-  process.env.SQUASH_UPDATE_DELAY_MINUTES || '15'
+  process.env.SQUASH_UPDATE_DELAY_MINUTES || '15',
+  10
 );
 const SQUASH_UPDATE_DELAY_MS = SQUASH_UPDATE_DELAY_MINUTES * 60 * 1000;
 const squashUpdateTimers = new Map<number, ReturnType<typeof setTimeout>>();

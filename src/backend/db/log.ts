@@ -17,7 +17,7 @@ export const log = {
 
     db.query(
       `INSERT INTO log (jobId, hostId, level, time, event, msg) VALUES ($jobId, $hostId, $level, $time, $event, $msg)`
-    ).run({ jobId, hostId, level, time: getDatetime(time), event, msg });
+    ).run({ jobId: jobId ?? null, hostId, level, time: getDatetime(time), event, msg });
   },
   get: async (jobId?: number) => {
     const db = await getDb();
@@ -27,7 +27,7 @@ export const log = {
     return db
       .query(`SELECT * FROM log ${jobId ? `WHERE jobId = $jobId` : ''} ORDER BY time DESC LIMIT 50`)
       .as(Log)
-      .all(jobId ? { jobId } : undefined);
+      .all(jobId !== undefined ? { jobId } : {});
   },
   getByHostId: async (hostId: number) => {
     const db = await getDb();

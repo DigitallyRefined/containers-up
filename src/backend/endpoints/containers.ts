@@ -37,7 +37,7 @@ const getGroupedContainersRunning = async (context: string, sort: SortOptions) =
 
 const enrichJobsWithComposeFile = (
   jobs: JobWithLogs[],
-  composedContainers: Record<string, any>
+  composedContainers: Record<string, unknown>
 ) => {
   return jobs.map((job) => {
     const composeFile = Object.keys(composedContainers).find((file) =>

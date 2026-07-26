@@ -20,14 +20,11 @@ export const getTraefikUrl = (ruleLabel: string) => {
   let firstUrl = '';
   const hostMatch = ruleLabel.match(/Host\(`([^`]*)`\)/);
   const host = hostMatch ? hostMatch[1] : '';
-  const pathPrefixes = [];
-  const pathPrefixRegex = /PathPrefix\(`([^`]*)`\)/g;
-  let match: RegExpExecArray | null;
-  while ((match = pathPrefixRegex.exec(ruleLabel)) !== null) {
+  const pathPrefixes: string[] = [];
+  for (const match of ruleLabel.matchAll(/PathPrefix\(`([^`]*)`\)/g)) {
     pathPrefixes.push(match[1]);
   }
-  const pathRegex = /Path\(`([^`]*)`\)/g;
-  while ((match = pathRegex.exec(ruleLabel)) !== null) {
+  for (const match of ruleLabel.matchAll(/Path\(`([^`]*)`\)/g)) {
     pathPrefixes.push(match[1]);
   }
   if (host) {
@@ -57,7 +54,11 @@ export const isValidContainerIdOrName = (id: string) =>
 export const isComposeFilename = (filename: string) =>
   typeof filename === 'string' && /compose.y(?:a?)ml$/.test(filename);
 
-export const batchPromises = async (items, batchSize, fn) => {
+export const batchPromises = async <T, R>(
+  items: T[],
+  batchSize: number,
+  fn: (item: T) => Promise<R> | R
+): Promise<R[]> => {
   const results = [];
   let i = 0;
   while (i < items.length) {

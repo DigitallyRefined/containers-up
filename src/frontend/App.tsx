@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { BrushCleaning, PencilIcon, SortDesc, WifiSync } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { version } from '@/../package.json';
 import type { Host } from '@/backend/db/schema/host';
 import { ComposeFiles } from '@/frontend/components/Compose/Files';
@@ -41,6 +41,14 @@ export function App() {
   const triggerImageUpdateMutation = useTriggerImageUpdate();
   const queryClient = useQueryClient();
 
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
+
+  const openAddDialog = useCallback(() => {
+    setDialogMode('add');
+    setDialogOpen(true);
+  }, []);
+
   // Handle host selection logic when hosts data changes
   useEffect(() => {
     if (hostsLoading || hostsError) return;
@@ -58,21 +66,13 @@ export function App() {
         setSelectedHost(String(hosts[0].name));
       }
     }
-  }, [hosts, hostsLoading, hostsError, selectedHost]);
-
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
+  }, [hosts, hostsLoading, hostsError, selectedHost, openAddDialog, setSelectedHost]);
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
     if (dialogMode === 'add') {
       setSelectedHost(undefined);
     }
-  };
-
-  const openAddDialog = () => {
-    setDialogMode('add');
-    setDialogOpen(true);
   };
 
   const openEditDialog = () => {
@@ -174,10 +174,10 @@ export function App() {
                       { hostName: selectedHost },
                       {
                         onSuccess: () => {
-                          (window as any).showToast('Checking for image tag updates, see logs');
+                          window.showToast?.('Checking for image tag updates, see logs');
                         },
                         onError: (error) => {
-                          (window as any).showToast(
+                          window.showToast?.(
                             error.message || 'Failed to trigger image tag update check'
                           );
                         },
@@ -196,7 +196,7 @@ export function App() {
           )}
         </div>
 
-        <ContainerLayout selectedHost={selectedHostObj} selectedSort={selectedSort} />
+        <ContainerLayout selectedHost={selectedHostObj} selectedSort={selectedSort ?? ''} />
 
         <HostDialog
           open={dialogOpen}

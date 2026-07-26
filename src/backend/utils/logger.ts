@@ -1,13 +1,20 @@
+import { Writable } from 'node:stream';
 import pino from 'pino';
 import pretty from 'pino-pretty';
-import { Writable } from 'stream';
+
+type PinoLogEntry = {
+  level: number;
+  time: number;
+  event: string;
+  msg: string;
+};
 
 // In-memory log storage
-const logs: any[] = [];
+const logs: PinoLogEntry[] = [];
 
 // Custom writable stream to capture logs in memory
 const logStream = new Writable({
-  write(chunk, encoding, callback) {
+  write(chunk, _encoding, callback) {
     try {
       const log = JSON.parse(chunk.toString());
       logs.push(log);
@@ -36,7 +43,7 @@ const streams = [
 export const mainLogger = pino({ level: logLevel }, pino.multistream(streams));
 
 export const getLogs = (event?: string) => {
-  let matchingLogs: any[] = [];
+  let matchingLogs: PinoLogEntry[] = [];
   if (!event) {
     matchingLogs = [...logs];
     logs.length = 0;

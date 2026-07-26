@@ -44,6 +44,6 @@ export const sendNotification = async ({
   } catch (err) {
     const msg = 'Error sending notification';
     logger.error(err, msg);
-    return err?.message ? `${msg}: ${err?.message}` : err;
+    return (err as Error)?.message ? `${msg}: ${(err as Error).message}` : err;
   }
 };

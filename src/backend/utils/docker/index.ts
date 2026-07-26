@@ -25,6 +25,7 @@ export const createDockerExec = (logger: Logger) => {
   };
 
   // Regex that removes ANSI color/control codes (even if ESC is missing)
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: standard ANSI escape sequence regex
   const stripAnsi = (input: string) => input.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '');
 
   const runStreamedCommand = (command: string, options?: { hostName: string; host: string }) => {
@@ -45,7 +46,7 @@ export const createDockerExec = (logger: Logger) => {
             const chunk = encoder.encode(clean);
             controller.enqueue(chunk);
           } catch (err) {
-            logger.warn(`Failed to enqueue data: ${err.message}`);
+            logger.warn(`Failed to enqueue data: ${(err as Error).message}`);
             closed = true;
           }
         };
@@ -56,7 +57,7 @@ export const createDockerExec = (logger: Logger) => {
             try {
               controller.close();
             } catch (err) {
-              logger.warn(`Failed to close controller: ${err.message}`);
+              logger.warn(`Failed to close controller: ${(err as Error).message}`);
             }
           }
         };

@@ -7,7 +7,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   // Expose a global function to show toast
   React.useEffect(() => {
-    (window as any).showToast = (msg: string) => {
+    window.showToast = (msg: string) => {
       setMessage(msg);
       setOpen(false);
       setTimeout(() => setOpen(true), 10);

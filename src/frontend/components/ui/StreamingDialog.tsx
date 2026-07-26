@@ -18,7 +18,7 @@ import { Tooltip } from '@/frontend/components/ui/Tooltip';
 interface StreamingDialogProps {
   url: string;
   method?: string;
-  body?: any;
+  body?: Record<string, unknown>;
   dialogTitle: string;
   children: ReactNode;
   tooltipText?: string;
@@ -42,11 +42,12 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
   const queryClient = useQueryClient();
   const logsEndRef = useRef<HTMLDivElement | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scrolls to bottom on new log entries
   useEffect(() => {
     if (logsEndRef.current) {
       logsEndRef.current.scrollIntoView({ behavior: 'auto' });
     }
-  }, [logs]);
+  }, [logs.length]);
 
   const handleOpenChange = async (isOpen: boolean) => {
     setOpen(isOpen);
@@ -85,7 +86,7 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
         if (buffer) setLogs((prev) => [...prev, buffer]);
         setStatus('done');
       } catch (e) {
-        if ((e as any).name === 'AbortError') return;
+        if ((e as Error).name === 'AbortError') return;
         setStatus('error');
       }
     } else if (!isOpen && abortRef.current) {
@@ -117,7 +118,8 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
         <div className="space-y-2 max-h-[80vh] overflow-y-auto text-left font-mono text-xs bg-muted p-2 rounded">
           {status === 'error' && <div className="text-destructive">Failed to fetch data.</div>}
           {logs.map((line, idx) => (
-            <div key={idx}>{line}</div>
+            // biome-ignore lint/suspicious/noArrayIndexKey: streaming log output, order is stable
+            <div key={`${idx}-${line}`}>{line}</div>
           ))}
           {status === 'done' && logs.length === 0 && (
             <div className="text-muted-foreground">No output.</div>

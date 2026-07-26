@@ -88,8 +88,8 @@ export const ComposedContainer = ({
         <div>
           <h4 className="text-lg font-medium mb-3 text-left">Services</h4>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {services.map((service, index) => (
-              <Card key={index}>
+            {services.map((service) => (
+              <Card key={service.Id}>
                 <CardContent className="p-2 pt-4 sm:p-3 md:p-4 relative">
                   <img
                     src={`/icons/${service.Config.Labels['com.docker.compose.service']}.webp`}
@@ -108,12 +108,10 @@ export const ComposedContainer = ({
                               { hostName, checkService: service.Config.Image },
                               {
                                 onSuccess: () => {
-                                  (window as any).showToast(
-                                    'Checking for image tag updates, see logs'
-                                  );
+                                  window.showToast?.('Checking for image tag updates, see logs');
                                 },
                                 onError: (error) => {
-                                  (window as any).showToast(
+                                  window.showToast?.(
                                     error.message || 'Failed to trigger image tag update check'
                                   );
                                 },
@@ -161,8 +159,8 @@ export const ComposedContainer = ({
                   {service.urls && service.urls.length > 0 && (
                     <div className="mt-2">
                       <ul>
-                        {service.urls.map((url, urlIndex) => (
-                          <li key={urlIndex}>
+                        {service.urls.map((url) => (
+                          <li key={url}>
                             <Link href={url} className="text-xs">
                               {url}
                             </Link>

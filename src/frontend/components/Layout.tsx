@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import type { Host } from '@/backend/db/schema/host';
 import type { JobEnriched } from '@/backend/db/schema/job';
 
-import { ComposedContainer } from '@/frontend/components/Compose/ComposedContainer';
+import { ComposedContainer as ComposedContainerComponent } from '@/frontend/components/Compose/ComposedContainer';
 import { PreviousRunningComposeFiles } from '@/frontend/components/Compose/PreviousRunningComposeFiles';
 import { Container } from '@/frontend/components/Container/Container';
 import { useContainerRefresh } from '@/frontend/components/Container/ContainerRefreshContext';
@@ -75,8 +75,8 @@ export const ContainerLayout = ({
   selectedHost?: Host;
   selectedSort: string;
 }) => {
-  const { refreshKey } = useContainerRefresh();
-  const selectedHostName = selectedHost?.name;
+  useContainerRefresh();
+  const selectedHostName = selectedHost?.name ?? '';
 
   // Use React Query to fetch containers data
   const {
@@ -84,7 +84,14 @@ export const ContainerLayout = ({
     isLoading: loading,
     error,
     refetch,
-  } = useContainers(selectedHostName || '', selectedSort);
+  } = useContainers(selectedHostName, selectedSort);
+
+  const incompleteJobs = containersData.incompleteJobs ?? [];
+  const separateContainers = containersData.separateContainers ?? [];
+  const images = containersData.images ?? [];
+  const unusedDockerImages = containersData.unusedDockerImages ?? [];
+  const otherComposedContainers = containersData.otherComposedContainers ?? {};
+  const composedContainers = containersData.composedContainers;
 
   const [openAccordionItems, setOpenAccordionItems] = useLocalStorage<string[]>(
     'openAccordionItems',
@@ -108,7 +115,7 @@ export const ContainerLayout = ({
     if (selectedHostName) {
       refetch();
     }
-  }, [refreshKey, selectedHostName, refetch]);
+  }, [selectedHostName, refetch]);
 
   if (error) {
     return (
@@ -134,7 +141,7 @@ export const ContainerLayout = ({
 
   return (
     <div className="container mx-auto p-2 sm:p-4 md:p-6 relative max-w-none">
-      {containersData.incompleteJobs?.length > 0 && (
+      {incompleteJobs.length > 0 && (
         <Card className="mb-4">
           <CardContent className="p-4 rounded-lg text-white font-semibold bg-blue-400 dark:bg-blue-900">
             <div className="flex items-center mb-2">
@@ -142,7 +149,7 @@ export const ContainerLayout = ({
               <span className="font-bold">Pending Updates</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-              {containersData.incompleteJobs.map((job) => (
+              {incompleteJobs.map((job) => (
                 <Jobs
                   key={job.id}
                   job={job}
@@ -156,11 +163,10 @@ export const ContainerLayout = ({
         </Card>
       )}
 
-      {containersData.composedContainers &&
-      (Object.keys(containersData.composedContainers).length ?? 0) > 0 ? (
+      {selectedHost && composedContainers && (Object.keys(composedContainers).length ?? 0) > 0 ? (
         <div className="grid gap-4 md:grid-cols-1 2xl:grid-cols-2 3xl:grid-cols-3 mb-8">
-          {Object.entries(containersData.composedContainers).map(([composeFile, containerData]) => (
-            <ComposedContainer
+          {Object.entries(composedContainers).map(([composeFile, containerData]) => (
+            <ComposedContainerComponent
               key={composeFile}
               composeFolder={getFolderName(composeFile)}
               services={containerData.services}
@@ -184,70 +190,71 @@ export const ContainerLayout = ({
         {selectedHost && (
           <PreviousRunningComposeFiles
             selectedHost={selectedHostName}
-            composedContainers={containersData.composedContainers}
-            otherComposedContainers={containersData.otherComposedContainers}
+            composedContainers={composedContainers}
+            otherComposedContainers={otherComposedContainers}
           />
         )}
 
-        {((containersData.otherComposedContainers &&
-          Object.keys(containersData.otherComposedContainers).length) ??
-          0) > 0 && (
+        {selectedHost && Object.keys(otherComposedContainers).length > 0 && (
           <AccordionItem value="otherComposedContainers">
             <AccordionTrigger>Other Composed Containers</AccordionTrigger>
             <AccordionContent>
               <div className="grid gap-4 md:grid-cols-1 2xl:grid-cols-2 3xl:grid-cols-3 mb-8">
-                {Object.entries(containersData.otherComposedContainers).map(
-                  ([filename, services]) => (
-                    <ComposedContainer
-                      key={filename}
-                      composeFolder={getFolderName(filename)}
-                      services={services}
-                      host={selectedHost}
-                      hideViewDependabot
-                      hideCheckForUpdates
-                      openAccordionItems={openAccordionItems}
-                      onAccordionChange={handleAccordionChange}
-                    />
-                  )
-                )}
+                {Object.entries(otherComposedContainers).map(([filename, services]) => (
+                  <ComposedContainerComponent
+                    key={filename}
+                    composeFolder={getFolderName(filename)}
+                    services={services}
+                    host={selectedHost}
+                    hideViewDependabot
+                    hideCheckForUpdates
+                    openAccordionItems={openAccordionItems}
+                    onAccordionChange={handleAccordionChange}
+                  />
+                ))}
               </div>
             </AccordionContent>
           </AccordionItem>
         )}
 
-        {(containersData.separateContainers?.length ?? 0) > 0 && (
+        {separateContainers.length > 0 && (
           <AccordionItem value="separateContainers">
             <AccordionTrigger>Separate Containers</AccordionTrigger>
             <AccordionContent>
               <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3 text-left">
-                {containersData.separateContainers.map((service, idx) => (
-                  <Container key={idx} service={service} hostName={selectedHostName} />
+                {separateContainers.map((service) => (
+                  <Container key={service.Id} service={service} hostName={selectedHostName} />
                 ))}
               </div>
             </AccordionContent>
           </AccordionItem>
         )}
 
-        {(containersData.images?.length ?? 0) > 0 && (
+        {images.length > 0 && (
           <AccordionItem value="images">
             <AccordionTrigger>Images</AccordionTrigger>
             <AccordionContent>
               <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3 text-left">
-                {containersData.images.map((image, idx) => (
-                  <ContainerImage key={idx} image={image} hostName={selectedHostName} />
+                {images.map((image) => (
+                  <ContainerImage key={image.ID} image={image} hostName={selectedHostName} />
                 ))}
               </div>
             </AccordionContent>
           </AccordionItem>
         )}
 
-        {(containersData.unusedDockerImages?.length ?? 0) > 0 && (
+        {unusedDockerImages.length > 0 && (
           <AccordionItem value="unusedDockerImages">
             <AccordionTrigger>Unused Docker Images</AccordionTrigger>
             <AccordionContent>
               <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3 text-left">
-                {containersData.unusedDockerImages.map((image, idx) => (
-                  <ContainerImage key={idx} image={image} hostName={selectedHostName} showDelete />
+                {unusedDockerImages.map((image) => (
+                  <ContainerImage
+                    key={image.ID}
+                    image={image}
+                    hostName={selectedHostName}
+                    showDelete
+                  />
                 ))}
               </div>
             </AccordionContent>

@@ -41,7 +41,8 @@ export const commonWebhookHandler = async (
   const event = `${eventName} ${hostConfig.name} ${folder || 'auto'}`;
   const logger = mainLogger.child({ event });
 
-  let containersCleanupLogs: any[] = [];
+  let containersCleanupLogs: Array<{ level: number; time: number; event: string; msg: string }> =
+    [];
   let jobId: number | undefined;
 
   const saveLogs = async () => {

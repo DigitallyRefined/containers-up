@@ -13,12 +13,13 @@ export const createExec = (logger: Logger) => {
         logger.info(stderr);
       }
       return { stdout: stdout.trim(), stderr, code: 0 };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { stdout?: string; stderr?: string; message?: string; code?: unknown };
       // error.code is the exit code, error.stdout and error.stderr may be present
       const errorData = {
-        stdout: error.stdout ? error.stdout.trim() : '',
-        stderr: error.stderr || error.message || '',
-        code: typeof error.code === 'number' ? error.code : 1,
+        stdout: err.stdout ? err.stdout.trim() : '',
+        stderr: err.stderr || err.message || '',
+        code: typeof err.code === 'number' ? err.code : 1,
       };
       if (throwOnError) {
         logger.error(

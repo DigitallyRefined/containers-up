@@ -38,7 +38,7 @@ export const PreviousRunningComposeFiles = ({
       otherComposedContainers
     );
     setSeenComposedFolders(newSeenComposedFolders);
-  }, [selectedHost, composedContainers, otherComposedContainers]);
+  }, [composedContainers, otherComposedContainers, setSeenComposedFolders]);
 
   const runningComposedFolders = getRunningComposedFolders(
     composedContainers,
@@ -63,7 +63,7 @@ export const PreviousRunningComposeFiles = ({
                 body={{ composeFolder }}
                 dialogTitle={`Run Compose File: ${composeFolder}`}
               >
-                <a href="#" className="text-sm flex items-center gap-1 hover:underline">
+                <button type="button" className="text-sm flex items-center gap-1 hover:underline">
                   <Play className="size-4" style={{ minWidth: '1rem' }} />
                   <BrushCleaning
                     onClick={(e) => {
@@ -74,7 +74,7 @@ export const PreviousRunningComposeFiles = ({
                     style={{ minWidth: '1rem' }}
                   />
                   <span className="text-sm">{composeFolder}</span>
-                </a>
+                </button>
               </StreamingDialog>
             </li>
           ))}

@@ -1,6 +1,7 @@
 import { LogsIcon } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
+import type { Log } from '@/backend/db/schema/log';
 import { Logs } from '@/frontend/components/Container/Logs';
 import { Button } from '@/frontend/components/ui/Button';
 import {
@@ -21,7 +22,7 @@ export const LogsDialog: React.FC<LogsDialogProps> = ({ selectedHost }) => {
   const [open, setOpen] = useState(false);
 
   // Use React Query to fetch logs
-  const { data: logs = [], isLoading, error, isError } = useLogs(selectedHost || '', open);
+  const { data: logs = [], isLoading, isError } = useLogs(selectedHost || '', open);
 
   if (!selectedHost) return null;
   return (
@@ -45,7 +46,7 @@ export const LogsDialog: React.FC<LogsDialogProps> = ({ selectedHost }) => {
           ) : Array.isArray(logs) && logs.length === 0 ? (
             <div className="text-muted-foreground">No logs to display.</div>
           ) : (
-            logs?.map((log, logIndex) => <Logs key={logIndex} log={log} />)
+            logs?.map((log: Log) => <Logs key={log.id} log={log} />)
           )}
         </div>
       </DialogContent>

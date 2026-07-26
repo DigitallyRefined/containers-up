@@ -63,9 +63,9 @@ const requireOidc = async (req: Request) => {
     // Optional: restrict by email/domain/groups in the future
     return null;
   } catch (err) {
-    if (err.message.startsWith('Expected 200 OK')) {
-      mainLogger.error(err, `Upstream OIDC metadata fetch failed`); // Log upstream error
-      return new Response(`Upstream: ${err.message}`, { status: 502 });
+    if ((err as Error).message.startsWith('Expected 200 OK')) {
+      mainLogger.error(err, `Upstream OIDC metadata fetch failed`);
+      return new Response(`Upstream: ${(err as Error).message}`, { status: 502 });
     }
 
     mainLogger.error(err, 'Invalid OIDC token');
@@ -76,15 +76,15 @@ const requireOidc = async (req: Request) => {
 const getAuthorizedHost = async (
   req: Request,
   repoHost: string
-): Promise<{ error?: Response; selectedHost?: Host }> => {
+): Promise<[Response, null] | [null, Host]> => {
   const auth = await requireOidc(req);
-  if (auth) return { error: auth };
+  if (auth) return [auth, null];
 
   const selectedHost = await host.getByName(repoHost);
   if (!selectedHost) {
-    return { error: new Response('Host not found', { status: 404 }) };
+    return [new Response('Host not found', { status: 404 }), null];
   }
-  return { selectedHost };
+  return [null, selectedHost];
 };
 
 const resolveAndValidateComposeFolder = async (
@@ -115,7 +115,7 @@ const serverOptions = {
           stack: error.stack,
           details: error.stderr,
         }),
-        ...(error.cause && { cause: error.cause }),
+        ...(error.cause ? { cause: error.cause } : {}),
       },
       {
         status: 500,
@@ -239,7 +239,7 @@ export const startServer = () => {
 
       '/api/host/:host/logs': {
         async GET(req) {
-          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          const [error, selectedHost] = await getAuthorizedHost(req, req.params.host);
           if (error) return error;
 
           return Response.json(await logDb.getByHostId(selectedHost.id));
@@ -248,7 +248,7 @@ export const startServer = () => {
 
       '/api/host/:host/jobs': {
         async GET(req) {
-          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          const [error, selectedHost] = await getAuthorizedHost(req, req.params.host);
           if (error) return error;
 
           return Response.json(await jobDb.getJobsWithLogs(selectedHost.id));
@@ -257,7 +257,7 @@ export const startServer = () => {
 
       '/api/host/:host/containers': {
         async GET(req) {
-          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          const [error, selectedHost] = await getAuthorizedHost(req, req.params.host);
           if (error) return error;
 
           const sort = (new URL(req.url).searchParams.get('sort') ?? 'updates') as SortOptions;
@@ -265,12 +265,12 @@ export const startServer = () => {
         },
 
         async DELETE(req) {
-          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          const [error, selectedHost] = await getAuthorizedHost(req, req.params.host);
           if (error) return error;
 
           const cleanupLogs = await containersCleanup(selectedHost.name);
 
-          let logs: string | any[] = 'Done';
+          let logs: string | unknown[] = 'Done';
           if (cleanupLogs.length) {
             cleanupLogs.forEach(
               async (log) => await logDb.create({ hostId: selectedHost.id, ...log })
@@ -284,7 +284,7 @@ export const startServer = () => {
 
       '/api/host/:host/container/:containerId': {
         async POST(req) {
-          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          const [error, selectedHost] = await getAuthorizedHost(req, req.params.host);
           if (error) return error;
 
           const containerId = req.params.containerId;
@@ -296,7 +296,7 @@ export const startServer = () => {
         },
 
         async PUT(req) {
-          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          const [error, selectedHost] = await getAuthorizedHost(req, req.params.host);
           if (error) return error;
 
           const containerId = req.params.containerId;
@@ -308,7 +308,7 @@ export const startServer = () => {
         },
 
         async DELETE(req) {
-          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          const [error, selectedHost] = await getAuthorizedHost(req, req.params.host);
           if (error) return error;
 
           const containerId = req.params.containerId;
@@ -322,7 +322,7 @@ export const startServer = () => {
 
       '/api/host/:host/container/:containerId/logs': {
         async GET(req) {
-          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          const [error, selectedHost] = await getAuthorizedHost(req, req.params.host);
           if (error) return error;
 
           const containerId = req.params.containerId;
@@ -336,7 +336,7 @@ export const startServer = () => {
 
       '/api/host/:host/image/:imageId': {
         async DELETE(req) {
-          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          const [error, selectedHost] = await getAuthorizedHost(req, req.params.host);
           if (error) return error;
 
           const imageId = req.params.imageId;
@@ -350,14 +350,14 @@ export const startServer = () => {
 
       '/api/host/:host/compose': {
         async GET(req) {
-          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          const [error, selectedHost] = await getAuthorizedHost(req, req.params.host);
           if (error) return error;
 
           return Response.json(await findNonRunningComposeFiles(selectedHost));
         },
 
         async POST(req) {
-          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          const [error, selectedHost] = await getAuthorizedHost(req, req.params.host);
           if (error) return error;
 
           const data = await req.json();
@@ -371,7 +371,7 @@ export const startServer = () => {
         },
 
         async PUT(req) {
-          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          const [error, selectedHost] = await getAuthorizedHost(req, req.params.host);
           if (error) return error;
 
           const data = await req.json();
@@ -398,7 +398,7 @@ export const startServer = () => {
         },
 
         async DELETE(req) {
-          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          const [error, selectedHost] = await getAuthorizedHost(req, req.params.host);
           if (error) return error;
 
           const data = await req.json();
@@ -414,7 +414,7 @@ export const startServer = () => {
 
       '/api/host/:host/update': {
         async POST(req) {
-          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          const [error, selectedHost] = await getAuthorizedHost(req, req.params.host);
           if (error) return error;
 
           const data = await req.json();
@@ -426,7 +426,7 @@ export const startServer = () => {
 
       '/api/host/:host/notification/test': {
         async POST(req) {
-          const { error, selectedHost } = await getAuthorizedHost(req, req.params.host);
+          const [error, selectedHost] = await getAuthorizedHost(req, req.params.host);
           if (error) return error;
 
           return Response.json(
@@ -476,9 +476,9 @@ export const startServer = () => {
 
           const formData = await req.formData();
 
-          const data: any = {};
+          const data: Record<string, string> = {};
           for (const [key, value] of formData.entries()) {
-            data[key] = value;
+            data[key] = String(value);
           }
 
           const { code, code_verifier, redirect_uri, client_id } = data;

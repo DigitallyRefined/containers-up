@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Host } from '@/backend/db/schema/host';
+import type { Log } from '@/backend/db/schema/log';
 import { authFetch } from '@/frontend/auth/oidc';
 import type { ContainersResponse } from '@/frontend/components/Layout';
+
+type HostInput = Pick<Host, 'name'> & Partial<Host>;
 
 // Query Keys
 export const queryKeys = {
@@ -50,7 +53,7 @@ const api = {
     return Array.isArray(data) ? data : [];
   },
 
-  fetchLogs: async (hostName: string): Promise<any[]> => {
+  fetchLogs: async (hostName: string): Promise<Log[]> => {
     const response = await authFetch(`/api/host/${hostName}/logs`);
     if (!response.ok) {
       throw new Error('Failed to fetch logs');
@@ -58,7 +61,7 @@ const api = {
     return response.json();
   },
 
-  createHost: async (hostData: any): Promise<Host> => {
+  createHost: async (hostData: HostInput): Promise<Host> => {
     const response = await authFetch(`/api/host/${encodeURIComponent(hostData.name)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -71,7 +74,7 @@ const api = {
     return response.json();
   },
 
-  updateHost: async (hostData: any): Promise<Host> => {
+  updateHost: async (hostData: HostInput): Promise<Host> => {
     const response = await authFetch(`/api/host/${encodeURIComponent(hostData.name)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

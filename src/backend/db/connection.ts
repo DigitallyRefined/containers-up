@@ -25,7 +25,7 @@ export const upsert = async ({
   conflictKey,
 }: {
   table: string;
-  data: Record<string, any>;
+  data: Record<string, string | number | null | boolean | undefined>;
   conflictKey: string | string[];
 }) => {
   const db = await getDb();
@@ -33,7 +33,7 @@ export const upsert = async ({
 
   // Check if the table has an 'id' column
   const pragma = db.query(`PRAGMA table_info(${table})`).all();
-  const hasId = pragma.some((col: any) => col.name === 'id');
+  const hasId = pragma.some((col) => (col as Record<string, unknown>).name === 'id');
   if (hasId && (insertData.id === undefined || insertData.id === null)) {
     // Only set id for insert, not for update on conflict
     // Get the current max id
@@ -56,5 +56,7 @@ export const upsert = async ({
       VALUES (${placeholders.join(', ')})
       ON CONFLICT(${conflictKeys.join(', ')}) DO UPDATE SET ${updates}`;
 
-  return db.query(sql).run(insertData);
+  // Bun's SQLite run() accepts named bindings as an object but the TS types don't model it
+  // biome-ignore lint/suspicious/noExplicitAny: Bun SQLite run() type mismatch
+  return db.query(sql).run(insertData as any);
 };

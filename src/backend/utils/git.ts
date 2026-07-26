@@ -8,8 +8,8 @@ const event = 'git-squash-updates';
 const logger = mainLogger.child({ event });
 
 const SQUASH_UPDATE_MESSAGE = process.env.SQUASH_UPDATE_MESSAGE || 'Update dependencies';
-const SQUASH_DEPS_DAYS_AGO = Number.parseInt(process.env.SQUASH_DAYS_AGO || '5');
-const SQUASH_MAX_UPDATE_COMMITS = Number.parseInt(process.env.SQUASH_MAX_UPDATE_COMMITS || '5');
+const SQUASH_DEPS_DAYS_AGO = Number.parseInt(process.env.SQUASH_DAYS_AGO || '5', 10);
+const SQUASH_MAX_UPDATE_COMMITS = Number.parseInt(process.env.SQUASH_MAX_UPDATE_COMMITS || '5', 10);
 const GIT_SQUASH_USER =
   'GIT_AUTHOR_NAME="Containers Up!" GIT_AUTHOR_EMAIL="260200075+containers-up@users.noreply.github.com"';
 
@@ -55,7 +55,7 @@ const getCommitMetadata = async (
   const authorDate = (await sshRun(`git log -1 ${skip}--format=%aI`)).stdout.trim();
   const authorName = (await sshRun(`git log -1 ${skip}--format=%an`)).stdout.trim();
   const timestamp =
-    Number.parseInt((await sshRun(`git log -1 ${skip}--format=%at`)).stdout.trim()) * 1000;
+    Number.parseInt((await sshRun(`git log -1 ${skip}--format=%at`)).stdout.trim(), 10) * 1000;
 
   return {
     subject,

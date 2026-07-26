@@ -30,7 +30,10 @@ export const postHost = async (host: Host, options: { createSshKey?: boolean } =
     throw new Error('Host already exists', { cause: 'HOST_ALREADY_EXISTS' });
   }
 
-  const existingRepoHost = await hostDb.getByRepoAndHost(host.repoHost, host.repo);
+  const existingRepoHost = await hostDb.getByRepoAndHost(
+    host.repoHost ?? 'https://github.com',
+    host.repo ?? ''
+  );
   if (existingRepoHost && existingRepoHost.id !== host.id) {
     throw new Error('A host with this repository already exists for this Git provider', {
       cause: 'HOST_REPO_ALREADY_EXISTS',
@@ -49,14 +52,18 @@ export const postHost = async (host: Host, options: { createSshKey?: boolean } =
     await exec.run(`${getDockerCmd(host.name)} ps`);
   } catch (error) {
     if (host.id) {
-      await createFiles({ ...(await hostDb.get(host.id)), sshKey: host.sshKey }, options);
+      const existingHost = await hostDb.get(host.id);
+      if (existingHost) {
+        existingHost.sshKey = host.sshKey;
+        await createFiles(existingHost, options);
+      }
     } else {
       await deleteFiles(host);
     }
 
     throw new Error(
       `Failed to connect to host. Please check your SSH key is correct and Docker is running${
-        error.stderr ? `: ${error.stderr}` : ''
+        (error as { stderr?: string }).stderr ? `: ${(error as { stderr?: string }).stderr}` : ''
       }`,
       {
         cause: error,
@@ -158,7 +165,7 @@ export const putHost = async (host: Host) => {
     throw new Error('Host not found');
   }
 
-  const hasNewSshKey = host.sshKey && host.sshKey.trim() !== '';
+  const hasNewSshKey = Boolean(host.sshKey && host.sshKey.trim() !== '');
 
   await deleteFiles(existingHost, { deleteSshKey: hasNewSshKey });
 

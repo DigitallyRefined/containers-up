@@ -65,8 +65,8 @@ export const Container = ({ service, hostName }: { service: Service; hostName: s
         )}
         {service.urls && service.urls.length > 0 && (
           <div className="mt-2">
-            {service.urls.map((url, urlIndex) => (
-              <Link key={urlIndex} href={url} className="text-xs">
+            {service.urls.map((url) => (
+              <Link key={url} href={url} className="text-xs">
                 {url}
               </Link>
             ))}

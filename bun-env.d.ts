@@ -8,10 +8,25 @@ declare module "*.svg" {
   export = path;
 }
 
+declare module "*.css" {
+  const path: string;
+  export = path;
+}
+
 declare module "*.module.css" {
   /**
    * A record of class names to their corresponding CSS module classes
    */
   const classes: { readonly [key: string]: string };
   export = classes;
+}
+
+declare module "*.webp" {
+  const path: string;
+  export = path;
+}
+
+interface Window {
+  showToast?: (message: string) => void;
+  __APP_CONFIG__?: Record<string, string>;
 }

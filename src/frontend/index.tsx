@@ -24,7 +24,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const elem = document.getElementById('root')!;
+const elem = document.getElementById('root') ?? document.body;
 
 const start = async () => {
   let MainContent = App;
@@ -60,7 +60,11 @@ const start = async () => {
 
   if (import.meta.hot) {
     // With hot module reloading, `import.meta.hot.data` is persisted.
-    const root = (import.meta.hot.data.root ??= createRoot(elem));
+    const existingRoot = import.meta.hot.data.root;
+    const root = existingRoot ?? createRoot(elem);
+    if (!existingRoot) {
+      import.meta.hot.data.root = root;
+    }
     root.render(app);
   } else {
     // The hot module reloading API is not available in production.
