@@ -1,6 +1,6 @@
 {
   "name": "containers-up",
-  "version": "1.4.11",
+  "version": "1.4.12",
   "description": "Containers Up! a web based platform designed to manage and update containers",
   "author": "DigitallyRefined",
   "license": "ISC",
@@ -31,8 +31,8 @@
     "@radix-ui/react-slot": "^1.3.0",
     "@radix-ui/react-toast": "^1.2.20",
     "@radix-ui/react-tooltip": "^1.2.13",
-    "@tanstack/react-query": "^5.101.2",
-    "@tanstack/react-query-devtools": "^5.101.2",
+    "@tanstack/react-query": "^5.101.3",
+    "@tanstack/react-query-devtools": "^5.101.3",
     "bun-plugin-tailwind": "^0.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -50,7 +50,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.4",
+    "@biomejs/biome": "2.5.5",
     "@tailwindcss/cli": "^4.3.3",
     "@types/bun": "^1.3.14",
     "@types/pino": "^7.0.5",

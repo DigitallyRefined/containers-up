@@ -381,7 +381,7 @@ export const startServer = () => {
           );
           if (composeError) return composeError;
 
-          if (data.job.title) {
+          if (data.job?.title) {
             jobDb.upsert({
               ...data.job,
               hostId: selectedHost.id,
