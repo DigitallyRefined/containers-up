@@ -1,6 +1,7 @@
 import { host } from '@/backend/db/host';
 import { log as logDb } from '@/backend/db/log';
 import type { WebhookEvent } from '@/backend/endpoints/webhook/common';
+import { createExec } from '@/backend/utils/exec';
 import { mainLogger } from '@/backend/utils/logger';
 
 type WebhookRouteOptions = {
@@ -84,7 +85,17 @@ export const handleWebhookRequest = async (
   if (selectedHost.botType === 'dependabot') {
     const isDockerComposePr = webhookEvent.labels?.some((label) => label.name === 'docker_compose');
     if (!isDockerComposePr) {
-      return Response.json({ message: 'Not a Docker Compose PR' }, { status: 400 });
+      if (selectedHost.workingFolder) {
+        const exec = createExec(mainLogger);
+        const { name, sshHost } = selectedHost;
+        const { workingFolder } = selectedHost;
+        void exec
+          .sshRun(name, sshHost, `cd ${workingFolder} && git pull --prune`, false)
+          .catch((err) => {
+            mainLogger.error({ err }, `Failed to git pull for host ${name}`);
+          });
+      }
+      return Response.json({ message: 'Not a Docker Compose PR' }, { status: 202 });
     }
   }
 
