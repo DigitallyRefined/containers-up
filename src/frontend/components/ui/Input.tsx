@@ -81,5 +81,3 @@ export function LabeledInput(props: LabeledInputProps) {
     </div>
   );
 }
-
-export { Input };

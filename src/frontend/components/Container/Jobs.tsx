@@ -24,7 +24,7 @@ import { Tooltip } from '@/frontend/components/ui/Tooltip';
 import { useRestartJob, useUpdateJob } from '@/frontend/hooks/useApi';
 import { getRelativeTime } from '@/frontend/lib/utils';
 
-export const SourceLink = ({
+const SourceLink = ({
   source,
   url,
   status,

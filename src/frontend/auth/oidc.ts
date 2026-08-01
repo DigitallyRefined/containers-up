@@ -13,7 +13,7 @@ const getUserManager = async (): Promise<UserManager> => {
 
 export const isOidcEnabled = Boolean(config.get('OIDC_ISSUER_URI') && config.get('OIDC_CLIENT_ID'));
 
-export const getAccessToken = async (): Promise<string | null> => {
+const getAccessToken = async (): Promise<string | null> => {
   if (!isOidcEnabled) return null;
   const um = await getUserManager();
 
@@ -43,16 +43,10 @@ export const getAccessToken = async (): Promise<string | null> => {
   return null;
 };
 
-export const login = async () => {
+const login = async () => {
   if (!isOidcEnabled) return;
   const um = await getUserManager();
   await um.signinRedirect();
-};
-
-export const logout = async () => {
-  if (!isOidcEnabled) return;
-  const um = await getUserManager();
-  await um.signoutRedirect();
 };
 
 export const handleCallbackIfPresent = async () => {
@@ -99,7 +93,7 @@ export const handleCallbackIfPresent = async () => {
   return true;
 };
 
-export async function init() {
+async function init() {
   if (!isOidcEnabled || userManager) return;
 
   // Explicitly fetch metadata from our backend proxy

@@ -42,7 +42,7 @@ export interface Service {
   urls?: string[];
 }
 
-export interface ComposedContainer {
+interface ComposedContainer {
   services: Service[];
   jobs: JobEnriched[];
 }
