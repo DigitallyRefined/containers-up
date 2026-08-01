@@ -131,5 +131,3 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
     </Dialog>
   );
 };
-
-export default StreamingDialog;

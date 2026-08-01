@@ -221,5 +221,3 @@ export function App() {
     </ContainerRefreshProvider>
   );
 }
-
-export default App;

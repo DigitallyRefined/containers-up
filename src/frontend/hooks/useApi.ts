@@ -7,7 +7,7 @@ import type { ContainersResponse } from '@/frontend/components/Layout';
 type HostInput = Pick<Host, 'name'> & Partial<Host>;
 
 // Query Keys
-export const queryKeys = {
+const queryKeys = {
   hosts: ['hosts'] as const,
   containers: (hostName: string, sort?: string) => ['containers', hostName, sort] as const,
   composeFiles: (hostName: string) => ['composeFiles', hostName] as const,
