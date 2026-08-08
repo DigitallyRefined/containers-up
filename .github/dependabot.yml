@@ -30,7 +30,7 @@ updates:
     cooldown:
       default-days: 5
 
-  - package-ecosystem: npm
+  - package-ecosystem: bun
     directory: /
     schedule:
       interval: weekly
