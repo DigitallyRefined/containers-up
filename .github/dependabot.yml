@@ -4,7 +4,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
-      day: saturday
+      day: sunday
       time: '03:23'
       timezone: Europe/London
     cooldown:
@@ -14,7 +14,7 @@ updates:
     directory: /
     schedule:
       interval: "weekly"
-      day: "saturday"
+      day: "sunday"
       time: "03:33"
       timezone: "Europe/London"
     cooldown:
@@ -24,7 +24,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
-      day: saturday
+      day: sunday
       time: '03:43'
       timezone: Europe/London
     cooldown:
@@ -34,7 +34,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
-      day: saturday
+      day: sunday
       time: '03:53'
       timezone: Europe/London
     cooldown:
