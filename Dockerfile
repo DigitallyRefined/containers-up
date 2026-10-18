@@ -1,5 +1,5 @@
 # https://github.com/oven-sh/bun/releases
-FROM oven/bun:1.4.2-alpine AS base
+FROM oven/bun:1.4.3-alpine AS base
 
 RUN apk upgrade --no-cache
 
