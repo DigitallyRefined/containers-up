@@ -1,5 +1,6 @@
 {
   "$schema": "node_modules/knip/schema.json",
   "entry": ["src/frontend/index.tsx"],
-  "ignoreDependencies": ["@tailwindcss/cli"]
+  "ignoreDependencies": ["@tailwindcss/cli"],
+  "ignoreBinaries": ["fmt"]
 }

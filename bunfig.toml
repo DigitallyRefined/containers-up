@@ -2,6 +2,17 @@
 minimumReleaseAge = 432000
 peer = false
 
+[fmt]
+printWidth = 100
+singleQuote = true
+trailingComma = "es5"
+sortImports = true
+ignorePatterns = ["/*", "!/src"]
+
+[lint]
+ignorePatterns = ["/*", "!/src"]
+maxWarnings = 0
+
 [serve.static]
 plugins = ["bun-plugin-tailwind"]
 env = "ENV_PUBLIC_*"

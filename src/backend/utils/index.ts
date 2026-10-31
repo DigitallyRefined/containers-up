@@ -17,7 +17,7 @@ export const getDatetime = (unixTime?: number | string) => {
 export const waitASecond = async () => new Promise((resolve) => setTimeout(resolve, 1000));
 
 export const getTraefikUrl = (ruleLabel: string) => {
-  let firstUrl = '';
+  let firstUrl: string;
   const hostMatch = ruleLabel.match(/Host\(`([^`]*)`\)/);
   const host = hostMatch ? hostMatch[1] : '';
   const pathPrefixes: string[] = [];

@@ -31,9 +31,9 @@ export function useLocalStorage<T>(
   const [storedValue, setStoredValue] = useState<T>(readValueFromStorage);
 
   // Only re-sync when the storage key changes, not when the function reference changes
-  // biome-ignore lint/correctness/useExhaustiveDependencies: readValueFromStorage captures initialValue which changes ref each render
   useEffect(() => {
     setStoredValue(readValueFromStorage());
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- readValueFromStorage captures initialValue which changes ref each render
   }, [fullKey]);
 
   useEffect(() => {

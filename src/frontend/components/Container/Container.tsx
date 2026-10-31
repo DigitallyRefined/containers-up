@@ -1,4 +1,5 @@
 import { ContainerIcon, PowerOff, RotateCcw, Trash } from 'lucide-react';
+
 import type { Service } from '@/frontend/components/Layout';
 import { Button } from '@/frontend/components/ui/Button';
 import { Card, CardContent } from '@/frontend/components/ui/Card';

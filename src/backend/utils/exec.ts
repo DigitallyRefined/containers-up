@@ -1,5 +1,6 @@
 import { exec, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
+
 import type { Logger } from 'pino';
 
 const execAsync = promisify(exec);

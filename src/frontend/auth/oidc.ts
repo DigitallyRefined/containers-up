@@ -1,4 +1,5 @@
 import { type User, UserManager, WebStorageStateStore } from 'oidc-client-ts';
+
 import config from '../lib/config';
 
 let userManager: UserManager | null = null;
@@ -128,7 +129,9 @@ async function init() {
 
   try {
     currentUser = (await userManager.getUser()) ?? null;
-  } catch {}
+  } catch {
+    // Ignore errors restoring an existing session
+  }
 }
 
 export async function authFetch(input: RequestInfo | URL, initOpts: RequestInit = {}) {
