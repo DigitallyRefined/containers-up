@@ -1,4 +1,5 @@
 import type { Logger } from 'pino';
+
 import type { Host } from '@/backend/db/schema/host';
 import { createExec } from '@/backend/utils/exec';
 
@@ -25,7 +26,7 @@ export const createDockerExec = (logger: Logger) => {
   };
 
   // Regex that removes ANSI color/control codes (even if ESC is missing)
-  // biome-ignore lint/suspicious/noControlCharactersInRegex: standard ANSI escape sequence regex
+  // eslint-disable-next-line no-control-regex -- matching ANSI escape codes requires control characters
   const stripAnsi = (input: string) => input.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '');
 
   const runStreamedCommand = (command: string, options?: { hostName: string; host: string }) => {

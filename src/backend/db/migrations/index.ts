@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
 import { getDb, upsert } from '@/backend/db/connection';
 import { Setting, settingCreateTableSql } from '@/backend/db/schema/setting';
 import { mainLogger } from '@/backend/utils/logger';

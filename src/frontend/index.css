@@ -1,4 +1,4 @@
-@import "./styles/globals.css";
+@import './styles/globals.css';
 
 @layer base {
   :root {
@@ -14,7 +14,6 @@
   *,
   ::before,
   ::after {
-    /* biome-ignore lint/complexity/noImportantStyles: accessibility: forced reduced motion */
     animation: none !important;
   }
 }

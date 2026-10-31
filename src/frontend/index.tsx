@@ -10,6 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+
 import { App } from '@/frontend/App';
 import { handleCallbackIfPresent, isOidcEnabled } from '@/frontend/auth/oidc';
 import { ToastProvider } from '@/frontend/components/ui/Toast';

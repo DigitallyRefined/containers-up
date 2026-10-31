@@ -1,4 +1,5 @@
 import path from 'node:path';
+
 import { type ErrorLike, serve } from 'bun';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 

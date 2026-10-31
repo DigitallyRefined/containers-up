@@ -1,5 +1,5 @@
 const get = (key: string, defaultValue: string = ''): string => {
-  let value = '';
+  let value: string;
   try {
     if (key === 'OIDC_ISSUER_URI') {
       value = process.env.ENV_PUBLIC_OIDC_ISSUER_URI ?? '';

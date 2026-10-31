@@ -17,10 +17,9 @@
     "dev": "bun --hot src",
     "start": "NODE_ENV=production bun src",
     "build": "bun run build.ts",
-    "lint": "bun run lint:biome && bun run lint:knip && bun run typecheck",
-    "lint:biome": "biome check",
-    "lint:knip": "knip",
-    "lint:fix": "bun run lint:biome --write && bun run lint:knip --fix",
+    "check": "bun fmt --check && bun lint && bun run check:knip && bun run typecheck",
+    "check:knip": "knip",
+    "check:fix": "bun fmt && bun lint --fix && bun run check:knip --fix",
     "typecheck": "tsc --noEmit",
     "up": "bun update --interactive"
   },
@@ -52,7 +51,6 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.15",
     "@tailwindcss/cli": "^4.3.3",
     "@types/bun": "^1.4.3",
     "@types/react": "^19.3.0",
