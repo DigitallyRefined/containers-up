@@ -26,7 +26,7 @@ export const createDockerExec = (logger: Logger) => {
   };
 
   // Regex that removes ANSI color/control codes (even if ESC is missing)
-  // biome-ignore lint/suspicious/noControlCharactersInRegex: matching ANSI escape codes requires the ESC control character
+  // eslint-disable-next-line no-control-regex -- matching ANSI escape codes requires control characters
   const stripAnsi = (input: string) => input.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '');
 
   const runStreamedCommand = (command: string, options?: { hostName: string; host: string }) => {
