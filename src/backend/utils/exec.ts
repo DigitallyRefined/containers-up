@@ -56,15 +56,18 @@ export const createExec = (logger: Logger) => {
     hostName: string,
     host: string,
     command: string
-  ) => `if ! pgrep -u "$(whoami)" ssh-agent > /dev/null; then
-        ssh-agent -s
-      fi
-      export SSH_AUTH_SOCK=$(find /tmp -type s -name 'agent.*' 2>/dev/null | head -n1)
-      if [ -n "$SSH_AUTH_SOCK" ]; then
-        export SSH_AGENT_PID=$(echo "$SSH_AUTH_SOCK" | grep -oE 'agent.[0-9]+' | grep -oE '[0-9]+')
+  ) => `for socket in $(find /tmp "$HOME/.ssh/agent" -type s -name '*agent*' 2>/dev/null); do
+        SSH_AUTH_SOCK=$socket ssh-add -l > /dev/null 2>&1
+        case $? in
+          0|1) export SSH_AUTH_SOCK=$socket; break ;;
+        esac
+      done
+      if [ -z "$SSH_AUTH_SOCK" ]; then
+        eval "$(ssh-agent -s)" > /dev/null
       fi
       if ! ssh-add ~/.ssh/id_ed25519-${hostName} > /dev/null 2>&1; then
-        killall bun
+        echo "Failed to load SSH key for ${hostName}" >&2
+        exit 1
       fi
       ssh ${host} '${command}'`;
 
