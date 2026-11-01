@@ -1,4 +1,5 @@
 import { Bot, Logs, PowerOff, RotateCcw, WifiSync } from 'lucide-react';
+
 import type { Host } from '@/backend/db/schema/host';
 import type { JobWithLogs } from '@/backend/db/schema/job';
 import { Jobs } from '@/frontend/components/Container/Jobs';
@@ -10,6 +11,7 @@ import { StreamingDialog } from '@/frontend/components/ui/StreamingDialog';
 import { Tooltip } from '@/frontend/components/ui/Tooltip';
 import { useTriggerImageUpdate } from '@/frontend/hooks/useApi';
 import { getContainerStatusColor, getRelativeTime } from '@/frontend/lib/utils';
+
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/Accordion';
 
 interface ComposedContainerProps {

@@ -1,6 +1,7 @@
 import { LogsIcon } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
+
 import type { Log } from '@/backend/db/schema/log';
 import { Logs } from '@/frontend/components/Container/Logs';
 import { Button } from '@/frontend/components/ui/Button';

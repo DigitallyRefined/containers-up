@@ -14,7 +14,7 @@
   *,
   ::before,
   ::after {
-    /* biome-ignore lint/complexity/noImportantStyles: accessibility: forced reduced motion */
+    /* biome-ignore lint/complexity/noImportantStyles: must override every animation for reduced motion */
     animation: none !important;
   }
 }

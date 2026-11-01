@@ -7,6 +7,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
 import { JobStatus, type JobWithLogs } from '@/backend/db/schema/job';
 import { Logs } from '@/frontend/components/Container/Logs';
 import { Button } from '@/frontend/components/ui/Button';
@@ -113,10 +114,15 @@ export const Jobs = ({
 
   const renderTitleWithCode = (title: string) => {
     const parts = title.split(/`([^`]+)`/);
-    return parts.map((part, index) =>
-      // biome-ignore lint/suspicious/noArrayIndexKey: static parsed content, order never changes
-      index % 2 === 1 ? <code key={`code-${index}`}>{part}</code> : part
-    );
+    let offset = 0;
+    let isCode = false;
+    return parts.map((part) => {
+      const key = `${offset}:${part}`;
+      offset += part.length;
+      const renderAsCode = isCode;
+      isCode = !isCode;
+      return renderAsCode ? <code key={key}>{part}</code> : part;
+    });
   };
 
   const isContainerUpdate = job.source.startsWith('container:');
