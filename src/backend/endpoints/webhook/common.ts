@@ -8,6 +8,8 @@ import { waitASecond } from '@/backend/utils';
 import { getLogs, mainLogger } from '@/backend/utils/logger';
 import { sendNotification } from '@/backend/utils/notification';
 
+export const DOCKER_COMPOSE_LABEL = 'docker_compose';
+
 export type WebhookEvent = {
   repo?: string;
   number: number;
@@ -17,6 +19,7 @@ export type WebhookEvent = {
   title: string;
   body?: string;
   labels?: { name: string }[];
+  label?: { name?: string };
   url?: string;
 };
 
@@ -30,8 +33,13 @@ export const commonWebhookHandler = async (
   hostConfig: Host,
   options: WebhookHandlerOptions
 ) => {
-  const { number, action, merged, userLogin, title, body } = webhookEvent;
+  const { number, action, merged, userLogin, title, body, labels, label } = webhookEvent;
   const { eventName, folder } = options;
+
+  const isDockerComposeLabeledEvent =
+    action === 'labeled' &&
+    (!label?.name || label.name === DOCKER_COMPOSE_LABEL) &&
+    labels?.some((prLabel) => prLabel.name === DOCKER_COMPOSE_LABEL);
 
   const botKeyword = hostConfig.botType === 'renovate' ? 'renovate' : 'dependabot';
   const isBot =
@@ -101,7 +109,7 @@ export const commonWebhookHandler = async (
     }
   }
 
-  if (action === 'opened') {
+  if (action === 'opened' || isDockerComposeLabeledEvent) {
     jobId = await jobDb.upsert({ ...jobData, status: JobStatus.open });
 
     sendNotification({

@@ -1,7 +1,7 @@
 import { host } from '@/backend/db/host';
 import { log as logDb } from '@/backend/db/log';
 import type { Host } from '@/backend/db/schema/host';
-import type { WebhookEvent } from '@/backend/endpoints/webhook/common';
+import { DOCKER_COMPOSE_LABEL, type WebhookEvent } from '@/backend/endpoints/webhook/common';
 import { createExec } from '@/backend/utils/exec';
 import { mainLogger } from '@/backend/utils/logger';
 
@@ -21,6 +21,7 @@ type WebhookPayload = {
     html_url?: string;
     user?: { login?: string };
   };
+  label?: { name?: string };
   action?: string;
 };
 
@@ -93,12 +94,15 @@ export const handleWebhookRequest = async (
     title: webhookData?.pull_request?.title ?? '',
     body: webhookData?.pull_request?.body,
     labels: webhookData?.pull_request?.labels,
+    label: webhookData?.label,
     url: webhookData?.pull_request?.html_url,
   };
 
   // Check Pull Request Labels
   if (selectedHost.botType === 'dependabot') {
-    const isDockerComposePr = webhookEvent.labels?.some((label) => label.name === 'docker_compose');
+    const isDockerComposePr = webhookEvent.labels?.some(
+      (label) => label.name === DOCKER_COMPOSE_LABEL
+    );
     if (!isDockerComposePr) {
       if (selectedHost.workingFolder) {
         const exec = createExec(mainLogger);
@@ -111,6 +115,17 @@ export const handleWebhookRequest = async (
           });
       }
       return Response.json({ message: 'Not a Docker Compose PR' }, { status: 202 });
+    }
+
+    if (webhookEvent.action === 'labeled') {
+      const addedLabel = webhookData?.label?.name;
+      if (addedLabel && addedLabel !== DOCKER_COMPOSE_LABEL) {
+        return Response.json({ message: 'Not a Docker Compose label event' }, { status: 202 });
+      }
+
+      // The PR was opened before the label was applied, so treat adding the
+      // docker_compose label as the opening event to create the update job.
+      webhookEvent.action = 'opened';
     }
   }
 
