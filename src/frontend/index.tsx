@@ -26,8 +26,16 @@ const queryClient = new QueryClient({
 
 const elem = document.getElementById('root') ?? document.body;
 
+const AuthError = ({ error }: { error: unknown }) => (
+  <div className="container mx-auto p-8 text-center relative">
+    <p className="text-red-500">
+      Error during authentication: {(error as Error)?.message || 'Check OIDC configuration'}
+    </p>
+  </div>
+);
+
 const start = async () => {
-  let MainContent = App;
+  let authError: unknown;
 
   // Handle OIDC callback if present
   if (isOidcEnabled) {
@@ -35,13 +43,7 @@ const start = async () => {
       await handleCallbackIfPresent();
     } catch (error) {
       console.error('OIDC callback error:', error);
-      MainContent = () => (
-        <div className="container mx-auto p-8 text-center relative">
-          <p className="text-red-500">
-            Error during authentication: {(error as Error)?.message || 'Check OIDC configuration'}
-          </p>
-        </div>
-      );
+      authError = error;
     }
   }
 
@@ -49,9 +51,7 @@ const start = async () => {
     <StrictMode>
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
-          <TooltipProvider>
-            <MainContent />
-          </TooltipProvider>
+          <TooltipProvider>{authError ? <AuthError error={authError} /> : <App />}</TooltipProvider>
         </ToastProvider>
         {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
       </QueryClientProvider>
