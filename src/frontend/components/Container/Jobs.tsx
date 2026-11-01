@@ -188,8 +188,8 @@ export const Jobs = ({
                   <DialogTitle>Logs for {job.title}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-2 max-h-[80vh] overflow-y-auto">
-                  {job.logs.map((log) => (
-                    <Logs key={JSON.stringify(log)} log={log} />
+                  {job.logs.map((log, index) => (
+                    <Logs key={log.id ?? index} log={log} />
                   ))}
                 </div>
               </DialogContent>

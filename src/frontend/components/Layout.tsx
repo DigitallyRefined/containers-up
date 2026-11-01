@@ -236,7 +236,11 @@ export const ContainerLayout = ({
             <AccordionContent>
               <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3 text-left">
                 {images.map((image) => (
-                  <ContainerImage key={image.ID} image={image} hostName={selectedHostName} />
+                  <ContainerImage
+                    key={`${image.ID}-${image.Repository}:${image.Tag}`}
+                    image={image}
+                    hostName={selectedHostName}
+                  />
                 ))}
               </div>
             </AccordionContent>
@@ -250,7 +254,7 @@ export const ContainerLayout = ({
               <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3 text-left">
                 {unusedDockerImages.map((image) => (
                   <ContainerImage
-                    key={image.ID}
+                    key={`${image.ID}-${image.Repository}:${image.Tag}`}
                     image={image}
                     hostName={selectedHostName}
                     showDelete

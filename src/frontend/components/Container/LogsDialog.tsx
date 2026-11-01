@@ -47,7 +47,7 @@ export const LogsDialog: React.FC<LogsDialogProps> = ({ selectedHost }) => {
           ) : Array.isArray(logs) && logs.length === 0 ? (
             <div className="text-muted-foreground">No logs to display.</div>
           ) : (
-            logs?.map((log: Log) => <Logs key={log.id} log={log} />)
+            logs?.map((log: Log, index: number) => <Logs key={log.id ?? index} log={log} />)
           )}
         </div>
       </DialogContent>

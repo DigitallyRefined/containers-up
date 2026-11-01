@@ -44,21 +44,21 @@ export const ComposeFiles = ({ hostName }: { hostName: string }) => {
             </div>
           ) : files && files.length > 0 ? (
             <ul>
-              {files.map(getFolderName).map((composeFolder) => (
-                <li key={composeFolder} className="flex items-center gap-2">
+              {files.map((file) => (
+                <li key={file} className="flex items-center gap-2">
                   <StreamingDialog
                     url={`/api/host/${hostName}/compose`}
                     method="POST"
-                    body={{ composeFolder }}
-                    dialogTitle={`Run Compose File: ${composeFolder}`}
-                    tooltipText={composeFolder ? `Run ${composeFolder}` : undefined}
+                    body={{ composeFolder: getFolderName(file) }}
+                    dialogTitle={`Run Compose File: ${getFolderName(file)}`}
+                    tooltipText={file ? `Run ${getFolderName(file)}` : undefined}
                   >
                     <button
                       type="button"
                       className="text-sm flex items-center gap-1 hover:underline"
                     >
                       <Play className="size-4" />
-                      <span className="text-sm">{composeFolder}</span>
+                      <span className="text-sm">{getFolderName(file)}</span>
                     </button>
                   </StreamingDialog>
                 </li>

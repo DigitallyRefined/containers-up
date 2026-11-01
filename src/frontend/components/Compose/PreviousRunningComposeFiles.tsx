@@ -17,7 +17,7 @@ const getRunningComposedFolders = (
 ) => {
   const composedFiles = Object.keys(composedContainers || {});
   const otherComposedFiles = Object.keys(otherComposedContainers || {});
-  return [...composedFiles, ...otherComposedFiles].map(getFolderName);
+  return Array.from(new Set([...composedFiles, ...otherComposedFiles].map(getFolderName)));
 };
 
 export const PreviousRunningComposeFiles = ({
@@ -45,7 +45,7 @@ export const PreviousRunningComposeFiles = ({
     composedContainers,
     otherComposedContainers
   );
-  const previousRunningComposedFolders = seenComposedFolders.filter(
+  const previousRunningComposedFolders = Array.from(new Set(seenComposedFolders)).filter(
     (folder) => !runningComposedFolders.includes(folder)
   );
 

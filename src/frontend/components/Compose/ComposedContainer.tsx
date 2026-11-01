@@ -161,8 +161,9 @@ export const ComposedContainer = ({
                   {service.urls && service.urls.length > 0 && (
                     <div className="mt-2">
                       <ul>
-                        {service.urls.map((url) => (
-                          <li key={url}>
+                        {service.urls.map((url, index) => (
+                          // biome-ignore lint/suspicious/noArrayIndexKey: duplicate URLs are possible
+                          <li key={`${url}-${index}`}>
                             <Link href={url} className="text-xs">
                               {url}
                             </Link>
