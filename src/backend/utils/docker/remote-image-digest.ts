@@ -16,7 +16,6 @@ interface RegistryOptions {
  */
 const parseImageString = (imageStr: string) => {
   let registry = 'index.docker.io';
-  let repository = '';
   let tag = 'latest';
 
   // Check for tag
@@ -39,7 +38,7 @@ const parseImageString = (imageStr: string) => {
     parts.shift();
   }
 
-  repository = parts.join('/');
+  let repository = parts.join('/');
 
   // Normalize Docker Hub registry for API calls
   if (registry === 'docker.io') {
@@ -109,7 +108,9 @@ const getAuthToken = async (
     const data = await response.json();
     return data.token || data.access_token;
   } catch (error) {
-    throw new Error(`Failed to get auth token: ${(error as Error).message ?? ''}`);
+    throw new Error(`Failed to get auth token: ${(error as Error).message ?? ''}`, {
+      cause: error,
+    });
   }
 };
 

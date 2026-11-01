@@ -2,9 +2,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import type React from 'react';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
+
 import { authFetch } from '@/frontend/auth/oidc';
 import { useContainerRefresh } from '@/frontend/components/Container/ContainerRefreshContext';
-
 import {
   Dialog,
   DialogContent,
@@ -42,7 +42,6 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
   const queryClient = useQueryClient();
   const logsEndRef = useRef<HTMLDivElement | null>(null);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: scrolls to bottom on new log entries
   useEffect(() => {
     if (logsEndRef.current) {
       logsEndRef.current.scrollIntoView({ behavior: 'auto' });
@@ -118,7 +117,6 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
         <div className="space-y-2 max-h-[80vh] overflow-y-auto text-left font-mono text-xs bg-muted p-2 rounded">
           {status === 'error' && <div className="text-destructive">Failed to fetch data.</div>}
           {logs.map((line, idx) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: streaming log output, order is stable
             <div key={`${idx}-${line}`}>{line}</div>
           ))}
           {status === 'done' && logs.length === 0 && (

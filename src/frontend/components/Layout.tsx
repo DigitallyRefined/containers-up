@@ -1,8 +1,8 @@
 import { Info, RefreshCw } from 'lucide-react';
 import { useEffect } from 'react';
+
 import type { Host } from '@/backend/db/schema/host';
 import type { JobEnriched } from '@/backend/db/schema/job';
-
 import { ComposedContainer as ComposedContainerComponent } from '@/frontend/components/Compose/ComposedContainer';
 import { PreviousRunningComposeFiles } from '@/frontend/components/Compose/PreviousRunningComposeFiles';
 import { Container } from '@/frontend/components/Container/Container';

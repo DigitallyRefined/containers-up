@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { BrushCleaning, PencilIcon, SortDesc, WifiSync } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+
 import { version } from '@/../package.json';
 import type { Host } from '@/backend/db/schema/host';
 import { ComposeFiles } from '@/frontend/components/Compose/Files';

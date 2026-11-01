@@ -1,5 +1,6 @@
 import { BrushCleaning, Play } from 'lucide-react';
 import { useEffect } from 'react';
+
 import type { ContainersResponse } from '@/frontend/components/Layout';
 import {
   AccordionContent,

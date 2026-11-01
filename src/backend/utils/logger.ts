@@ -1,4 +1,5 @@
 import { Writable } from 'node:stream';
+
 import pino from 'pino';
 import pretty from 'pino-pretty';
 
@@ -43,7 +44,7 @@ const streams = [
 export const mainLogger = pino({ level: logLevel }, pino.multistream(streams));
 
 export const getLogs = (event?: string) => {
-  let matchingLogs: PinoLogEntry[] = [];
+  let matchingLogs: PinoLogEntry[];
   if (!event) {
     matchingLogs = [...logs];
     logs.length = 0;
