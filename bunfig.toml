@@ -1,5 +1,5 @@
 [install]
-minimumReleaseAge = 432000
+minimumReleaseAge = "5d"
 peer = false
 
 [serve.static]
