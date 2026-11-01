@@ -15,7 +15,7 @@ export function useLocalStorage<T>(
 
   const initialValueRef = useRef(initialValue);
 
-  const readValueFromStorage = () => {
+  const readValueFromStorage = useCallback(() => {
     if (typeof window === 'undefined') {
       return initialValueRef.current;
     }
@@ -26,15 +26,14 @@ export function useLocalStorage<T>(
       console.warn(`Error reading localStorage key "${fullKey}":`, error);
       return initialValueRef.current;
     }
-  };
+  }, [fullKey]);
 
   const [storedValue, setStoredValue] = useState<T>(readValueFromStorage);
 
-  // Only re-sync when the storage key changes, not when the function reference changes
+  // Re-sync whenever the storage key changes
   useEffect(() => {
     setStoredValue(readValueFromStorage());
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- readValueFromStorage captures initialValue which changes ref each render
-  }, [fullKey]);
+  }, [readValueFromStorage]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {

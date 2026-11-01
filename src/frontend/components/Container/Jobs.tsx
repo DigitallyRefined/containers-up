@@ -114,9 +114,15 @@ export const Jobs = ({
 
   const renderTitleWithCode = (title: string) => {
     const parts = title.split(/`([^`]+)`/);
-    return parts.map((part, index) =>
-      index % 2 === 1 ? <code key={`code-${index}`}>{part}</code> : part
-    );
+    let offset = 0;
+    let isCode = false;
+    return parts.map((part) => {
+      const key = `${offset}:${part}`;
+      offset += part.length;
+      const renderAsCode = isCode;
+      isCode = !isCode;
+      return renderAsCode ? <code key={key}>{part}</code> : part;
+    });
   };
 
   const isContainerUpdate = job.source.startsWith('container:');

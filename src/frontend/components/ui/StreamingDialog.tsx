@@ -43,7 +43,7 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
   const logsEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (logsEndRef.current) {
+    if (logs.length >= 0 && logsEndRef.current) {
       logsEndRef.current.scrollIntoView({ behavior: 'auto' });
     }
   }, [logs.length]);
@@ -117,6 +117,7 @@ export const StreamingDialog: React.FC<StreamingDialogProps> = ({
         <div className="space-y-2 max-h-[80vh] overflow-y-auto text-left font-mono text-xs bg-muted p-2 rounded">
           {status === 'error' && <div className="text-destructive">Failed to fetch data.</div>}
           {logs.map((line, idx) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: logs are append-only, so indices are stable
             <div key={`${idx}-${line}`}>{line}</div>
           ))}
           {status === 'done' && logs.length === 0 && (

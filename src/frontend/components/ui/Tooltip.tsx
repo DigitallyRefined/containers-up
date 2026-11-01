@@ -41,8 +41,7 @@ export function Tooltip({ content, children, ...rootProps }: TooltipProps) {
   const handleTouchCancel = handleTouchEnd;
 
   // Clone the child to add touch handlers
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- needed for React.cloneElement typing
-  const child = children as React.ReactElement<any>;
+  const child = children as React.ReactElement<React.HTMLAttributes<HTMLElement>>;
   const trigger = React.cloneElement(child, {
     onTouchStart: (e: React.TouchEvent<HTMLElement>) => {
       child.props.onTouchStart?.(e);
