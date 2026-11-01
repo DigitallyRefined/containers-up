@@ -36,6 +36,13 @@ const isOidcEnabled = Boolean(ENV_PUBLIC_OIDC_ISSUER_URI && ENV_PUBLIC_OIDC_CLIE
 
 const isDev = process.env.NODE_ENV !== 'production';
 
+// Bun's dev server only answers requests whose Host header is localhost, an IP, or the
+// hostname passed to serve(). When the dev server is reached through a reverse proxy,
+// set DEV_SERVER_HOSTNAME to the public hostname (without a port) in `.env` so those requests
+// and the HMR socket are allowed. The hostname must resolve inside the container; see
+// extra_hosts in compose.yml.
+const devServerHostname = isDev ? process.env.DEV_SERVER_HOSTNAME : undefined;
+
 let JWKS: ReturnType<typeof createRemoteJWKSet> | null = null;
 if (isOidcEnabled && OIDC_JWKS_URL) {
   try {
@@ -138,6 +145,8 @@ const serverOptions = {
 
 export const startServer = () => {
   const server = serve({
+    ...(devServerHostname ? { hostname: devServerHostname } : {}),
+
     routes: {
       ...(isDev
         ? // Serve index.html for all unmatched routes.

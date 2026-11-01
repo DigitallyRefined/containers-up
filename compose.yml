@@ -8,6 +8,12 @@ services:
       - ./storage:/storage
       - ./storage/.ssh:/root/.ssh
       - ./storage/.docker:/root/.docker
+    #   # Development mode
+    #   - .:/home/bun/app
+    # # Bun's dev server only accepts the hostname passed to Bun.serve(). Map
+    # # DEV_SERVER_HOSTNAME to 0.0.0.0 so the dev server can bind to it on all interfaces.
+    # extra_hosts:
+    #   - "containers-up.example.com:0.0.0.0"
     env_file:
       - ./.env
     # Disable Core Dumps
