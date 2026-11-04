@@ -56,14 +56,14 @@ export const createExec = (logger: Logger) => {
     hostName: string,
     host: string,
     command: string
-  ) => `for socket in $(find /tmp "$HOME/.ssh/agent" -type s -name '*agent*' 2>/dev/null); do
+  ) => `for socket in $(find ~/.ssh-agent.sock -type s 2>/dev/null); do
         SSH_AUTH_SOCK=$socket ssh-add -l > /dev/null 2>&1
         case $? in
           0|1) export SSH_AUTH_SOCK=$socket; break ;;
         esac
       done
       if [ -z "$SSH_AUTH_SOCK" ]; then
-        eval "$(ssh-agent -s)" > /dev/null
+        eval "$(ssh-agent -s -a ~/.ssh-agent.sock)" > /dev/null
       fi
       if ! ssh-add ~/.ssh/id_ed25519-${hostName} > /dev/null 2>&1; then
         echo "Failed to load SSH key for ${hostName}" >&2
