@@ -88,8 +88,7 @@ const createFiles = async (host: Host, options: { createSshKey?: boolean } = {})
       (r) => `Host ${r.name}
     HostName ${r.sshHost.split('@')[1]}
     User ${r.sshHost.split('@')[0]}
-    IdentityFile ~/.ssh/id_ed25519-${r.name}
-    ControlPath ~/.ssh/control-${r.name}`
+    IdentityFile ~/.ssh/id_ed25519-${r.name}`
     )
     .join('\n\n');
 
@@ -99,6 +98,7 @@ const createFiles = async (host: Host, options: { createSshKey?: boolean } = {})
     `Host *
     StrictHostKeyChecking no
     ControlMaster auto
+    ControlPath ~/.ssh-control-%C
     ControlPersist ${process.env.SSH_CONTROL_PERSIST || '20m'}
     ForwardAgent yes
     
