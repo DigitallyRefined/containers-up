@@ -58,6 +58,6 @@ export const upsert = async ({
       ON CONFLICT(${conflictKeys.join(', ')}) DO UPDATE SET ${updates}`;
 
   // Bun's SQLite run() accepts named bindings as an object but the TS types don't model it
-  // biome-ignore lint/suspicious/noExplicitAny: Bun's SQLite types don't model named bindings
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Bun's SQLite types don't model named bindings
   return db.query(sql).run(insertData as any);
 };
