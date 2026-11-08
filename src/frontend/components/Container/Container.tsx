@@ -67,7 +67,6 @@ export const Container = ({ service, hostName }: { service: Service; hostName: s
         {service.urls && service.urls.length > 0 && (
           <div className="mt-2">
             {service.urls.map((url, index) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: duplicate URLs are possible
               <Link key={`${url}-${index}`} href={url} className="text-xs">
                 {url}
               </Link>
