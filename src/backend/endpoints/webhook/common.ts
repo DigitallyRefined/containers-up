@@ -110,13 +110,17 @@ export const commonWebhookHandler = async (
   }
 
   if (action === 'opened' || isDockerComposeLabeledEvent) {
+    const existingJob = await jobDb.getByHostAndTitle(hostConfig.id, title);
+
     jobId = await jobDb.upsert({ ...jobData, status: JobStatus.open });
 
-    sendNotification({
-      hostName: hostConfig.name,
-      subject: `${title} on ${hostConfig.name}`,
-      message: `${body}\n\n${webhookEvent.url}`,
-    });
+    if (!existingJob) {
+      sendNotification({
+        hostName: hostConfig.name,
+        subject: `${title} on ${hostConfig.name}`,
+        message: `${body}\n\n${webhookEvent.url}`,
+      });
+    }
   } else if (action === 'closed') {
     if (merged) {
       jobId = await jobDb.upsert({ ...jobData, status: JobStatus.running });

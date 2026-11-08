@@ -77,6 +77,17 @@ export const job = {
       .as(Job)
       .all({ hostId });
   },
+  getByHostAndTitle: async (hostId: number, title: string) => {
+    const db = await getDb();
+    db.query(jobCreateTableSql).run();
+
+    const row = db
+      .query('SELECT * FROM job WHERE hostId = $hostId AND title = $title')
+      .as(Job)
+      .get({ hostId, title });
+
+    return row ?? undefined;
+  },
   markJobAsComplete: async (id: string) => {
     const db = await getDb();
     return db.query(`UPDATE job SET status = ${JobStatus.completed} WHERE id = $id`).run({ id });
